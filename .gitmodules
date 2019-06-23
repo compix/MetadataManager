@@ -1,3 +1,3 @@
 [submodule "MetadataManagerCore"]
 	path = MetadataManagerCore
-url=https://github.com/compix/MetadataManagerCore.git
+	url = https://github.com/compix/MetadataManagerCore.git
