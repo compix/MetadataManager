@@ -8,6 +8,7 @@ import qdarkstyle
 from enum import Enum
 from mongodb_manager import MongoDBManager
 import operator
+from util import timeit
 
 g_company = "WK"
 g_appName = "Metadata-Manager"
@@ -40,7 +41,7 @@ class TableModel(QtCore.QAbstractTableModel):
         return len(self.entries)
 
     def columnCount(self, parent):
-        return len(self.entries[0])
+        return len(self.entries[0]) if len(self.entries) > 0 else 0 
 
     def data(self, index, role):
         if not index.isValid():
@@ -94,7 +95,8 @@ class MainWindowManager(QObject):
         self.window.actionLight.triggered.connect(lambda : self.setStyle(Style.Light))
 
         self.dbManager = MongoDBManager(g_mongodbHost, g_databaseName)
-        self.dbManager.insertExampleEntries()
+        #for i in range(0,10000):
+        #    self.dbManager.insertExampleEntries()
 
         self.window.collectionsVLayout.setAlignment(QtCore.Qt.AlignTop)
 
@@ -104,7 +106,7 @@ class MainWindowManager(QObject):
 
         self.tableModel = TableModel(self.window, [], ["Name","Address"])
         self.window.tableView.setModel(self.tableModel)
-        self.viewItems()
+        timeit(self.viewItems())
 
     def updateCollections(self):
         self.clearContainer(self.window.collectionsVLayout)

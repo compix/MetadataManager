@@ -87,7 +87,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QTableView" name="tableView"/>
+        <widget class="QTableView" name="tableView">
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -256,20 +260,12 @@
              <x>0</x>
              <y>0</y>
              <width>252</width>
-             <height>87</height>
+             <height>135</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_10">
             <item>
-             <layout class="QVBoxLayout" name="collectionsVLayout">
-              <item>
-               <widget class="QCheckBox" name="checkBox">
-                <property name="text">
-                 <string>CheckBox</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
+             <layout class="QVBoxLayout" name="collectionsVLayout"/>
             </item>
            </layout>
           </widget>
