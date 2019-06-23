@@ -8,12 +8,15 @@ import qdarkstyle
 from enum import Enum
 from mongodb_manager import MongoDBManager
 import operator
-from util import timeit
+from MetadataManagerCore.util import timeit
 
 g_company = "WK"
 g_appName = "Metadata-Manager"
 g_mongodbHost = "mongodb://localhost:27017/"
 g_databaseName = "centralRepository"
+g_collectionsMD = "collectionsMD"
+g_usersCollection = "users"
+g_hiddenCollections = set([g_collectionsMD])
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -32,10 +35,11 @@ class Style(Enum):
     Light = 1
 
 class TableModel(QtCore.QAbstractTableModel):
-    def __init__(self, parent, entries, header, *args):
+    def __init__(self, parent, entries, header, displayedKeys, *args):
         QtCore.QAbstractTableModel.__init__(self, parent, *args)
         self.entries = entries
         self.header = header
+        self.displayedKeys = displayedKeys
 
     def rowCount(self, parent):
         return len(self.entries)
@@ -73,6 +77,14 @@ class TableModel(QtCore.QAbstractTableModel):
         self.entries.extend(entries)
         self.emit(QtCore.SIGNAL("layoutChanged()"))
 
+    def updateHeader(self, header, displayedKeys):
+        if self.header != header:
+            self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
+            self.displayedKeys = displayedKeys
+            self.entries = []
+            self.header = header
+            self.emit(QtCore.SIGNAL("layoutChanged()"))
+
 class MainWindowManager(QObject):
     def __init__(self, app):
         super(MainWindowManager, self).__init__()
@@ -100,21 +112,31 @@ class MainWindowManager(QObject):
 
         self.window.collectionsVLayout.setAlignment(QtCore.Qt.AlignTop)
 
+        self.dbManager.db[g_collectionsMD].delete_one({"_id":"test"})
+        self.dbManager.insertOne(g_collectionsMD, {"_id": "test", "tableHeader":[["Name", "name"], ["Address", "address"], ["Test", "test"]]})
+        #self.dbManager.db[g_collectionsMD].update_one({"_id": "test"}, {"$set": {"displayedTableKeys":["name", "address"]}})
+        #self.window.statusBar().showMessage("test")
         self.updateCollections()
 
         self.restoreState()
 
-        self.tableModel = TableModel(self.window, [], ["Name","Address"])
+        header, displayedKeys = self.extractTableHeaderAndDisplayedKeys()
+        self.tableModel = TableModel(self.window, [], header, displayedKeys)
         self.window.tableView.setModel(self.tableModel)
-        timeit(self.viewItems())
+        self.viewItems()
 
     def updateCollections(self):
         self.clearContainer(self.window.collectionsVLayout)
-        for collectionName in self.dbManager.getCollectionNames():
+        for collectionName in self.getAvailableCollectionNames():
             collectionCheckbox = QtWidgets.QCheckBox(self.window)
             collectionCheckbox.setText(collectionName)
             self.setCollectionCheckbox(collectionName, collectionCheckbox)
             self.window.collectionsVLayout.addWidget(collectionCheckbox)
+
+    def getAvailableCollectionNames(self):
+        for cn in self.dbManager.getCollectionNames():
+            if not cn in g_hiddenCollections:
+                yield cn
 
     # Container/Layout
     def clearContainer(self, container):
@@ -128,7 +150,7 @@ class MainWindowManager(QObject):
         return getattr(self.window, collectionName, None)
 
     def getSelectedCollectionNames(self):
-        for collectionName in self.dbManager.getCollectionNames():
+        for collectionName in self.getAvailableCollectionNames():
             if self.getCollectionCheckbox(collectionName).isChecked():
                 yield collectionName
 
@@ -137,10 +159,41 @@ class MainWindowManager(QObject):
 
     # TODO: Find the header for table by getting all unique displayed entries from all items.
     #       If a key is missing in a given item/document -> 'None' is displayed.
+    @timeit
     def viewItems(self):
+        if len(self.tableModel.displayedKeys) == 0:
+            return
+
         for collectionName in self.getSelectedCollectionNames():
             for item in self.filteredItems(self.dbManager.db[collectionName]):
-                self.tableModel.addEntry([item["name"], item["address"]])
+                self.tableModel.addEntry(self.extractTableEntry(self.tableModel.displayedKeys, item))
+
+    # item: mongodb document
+    def extractTableEntry(self, displayedKeys, item):
+        assert(len(displayedKeys) > 0)
+        entry = []
+        for e in displayedKeys:
+            val = item.get(e)
+            entry.append(val if val != None else "N.D.")
+
+        return entry
+
+    def extractTableHeaderAndDisplayedKeys(self):
+        header = []
+        keys = []
+        # Go through the selected collection metadata, check displayed table info
+        # and add unique entries:
+        collectionsMD = self.dbManager.db[g_collectionsMD]
+        for collectionName in self.getSelectedCollectionNames():
+            cMD = collectionsMD.find_one({"_id":collectionName})
+            if cMD:
+                cTableHeader = cMD["tableHeader"]
+                if cTableHeader != None:
+                    assert(len(e) == 2 for e in cTableHeader)
+                    header = header + [e[0] for e in cTableHeader if e[1] not in keys]
+                    keys = keys + [e[1] for e in cTableHeader if e[1] not in keys]
+
+        return header, keys
 
     def setStyle(self, style):
         if (style == Style.Dark or style == None) and self.currentStyle != style:
@@ -158,7 +211,7 @@ class MainWindowManager(QObject):
         settings.setValue("windowState", self.window.saveState())
         settings.setValue("style", self.currentStyle)
 
-        for collectionName in self.dbManager.getCollectionNames():
+        for collectionName in self.getAvailableCollectionNames():
             if self.getCollectionCheckbox(collectionName) != None:
                 settings.setValue(collectionName + "CheckboxState", 1 if self.getCollectionCheckbox(collectionName).isChecked() else 0)
 
@@ -168,7 +221,7 @@ class MainWindowManager(QObject):
         self.window.restoreState(settings.value("windowState"))
         self.setStyle(settings.value("style"))
 
-        for collectionName in self.dbManager.getCollectionNames():
+        for collectionName in self.getAvailableCollectionNames():
             if self.getCollectionCheckbox(collectionName) != None:
                 checkState = settings.value(collectionName + "CheckboxState")
                 if checkState != None:
