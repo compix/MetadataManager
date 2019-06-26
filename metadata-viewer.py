@@ -4,11 +4,15 @@ from PySide2 import QtCore, QtWidgets
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PySide2.QtCore import QFile, QObject, QEvent
+from PySide2.QtCore import QThreadPool, QRunnable
 import qdarkstyle
 from enum import Enum
 from mongodb_manager import MongoDBManager
 import operator
 from MetadataManagerCore.util import timeit
+from multiprocessing.dummy import Pool as ThreadPool 
+from time import sleep
+import qt_util
 
 g_company = "WK"
 g_appName = "Metadata-Manager"
@@ -33,6 +37,16 @@ def on_button_click():
 class Style(Enum):
     Dark = 0
     Light = 1
+
+class LambdaTask(QRunnable):
+    def __init__(self, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+        QRunnable.__init__(self)
+
+    def run(self):
+        self.func(*self.args, **self.kwargs)
 
 class TableModel(QtCore.QAbstractTableModel):
     def __init__(self, parent, entries, header, displayedKeys, *args):
@@ -90,6 +104,7 @@ class MainWindowManager(QObject):
         super(MainWindowManager, self).__init__()
         self.app = app
         self.currentStyle = None
+        self.applicationQuitting = False
 
         file = QFile("./main.ui")
         file.open(QFile.ReadOnly)
@@ -115,7 +130,8 @@ class MainWindowManager(QObject):
         self.dbManager.db[g_collectionsMD].delete_one({"_id":"test"})
         self.dbManager.insertOne(g_collectionsMD, {"_id": "test", "tableHeader":[["Name", "name"], ["Address", "address"], ["Test", "test"]]})
         #self.dbManager.db[g_collectionsMD].update_one({"_id": "test"}, {"$set": {"displayedTableKeys":["name", "address"]}})
-        #self.window.statusBar().showMessage("test")
+        self.mainProgressBar = QtWidgets.QProgressBar(self.window)
+        self.window.statusBar().addWidget(self.mainProgressBar)
         self.updateCollections()
 
         self.restoreState()
@@ -123,7 +139,8 @@ class MainWindowManager(QObject):
         header, displayedKeys = self.extractTableHeaderAndDisplayedKeys()
         self.tableModel = TableModel(self.window, [], header, displayedKeys)
         self.window.tableView.setModel(self.tableModel)
-        self.viewItems()
+
+        self.window.pushButton.clicked.connect(lambda:QThreadPool.globalInstance().start(LambdaTask(self.viewItems)))
 
     def updateCollections(self):
         self.clearContainer(self.window.collectionsVLayout)
@@ -157,16 +174,33 @@ class MainWindowManager(QObject):
     def filteredItems(self, collection):
         return collection.find({}, {'_id': False})
 
-    # TODO: Find the header for table by getting all unique displayed entries from all items.
-    #       If a key is missing in a given item/document -> 'None' is displayed.
+    def getMaxDisplayedTableItems(self):
+        num = 0
+        for collectionName in self.getSelectedCollectionNames():
+            num += self.filteredItems(self.dbManager.db[collectionName]).count()
+
+        return num
+
     @timeit
     def viewItems(self):
         if len(self.tableModel.displayedKeys) == 0:
             return
 
+        qt_util.runInMainThread(self.mainProgressBar.setMaximum, self.getMaxDisplayedTableItems())
+
+        entries = []
+        i = 0
         for collectionName in self.getSelectedCollectionNames():
             for item in self.filteredItems(self.dbManager.db[collectionName]):
-                self.tableModel.addEntry(self.extractTableEntry(self.tableModel.displayedKeys, item))
+                if self.applicationQuitting:
+                    return
+
+                i += 1
+                tableEntry = self.extractTableEntry(self.tableModel.displayedKeys, item)
+                entries.append(tableEntry)
+                qt_util.runInMainThread(self.mainProgressBar.setValue, i)
+        
+        qt_util.runInMainThread(self.tableModel.addEntries, entries)
 
     # item: mongodb document
     def extractTableEntry(self, displayedKeys, item):
@@ -238,6 +272,8 @@ class MainWindowManager(QObject):
     def quitApp(self):
         self.saveState()
         self.window.removeEventFilter(self)
+        self.applicationQuitting = True
+        QThreadPool.globalInstance().waitForDone()
         app.quit()
 
     def show(self):
