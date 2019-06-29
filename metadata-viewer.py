@@ -3,7 +3,7 @@ import sys
 from PySide2 import QtCore, QtWidgets
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
-from PySide2.QtCore import QFile, QObject, QEvent
+from PySide2.QtCore import QFile, QObject, QEvent, Qt
 from PySide2.QtCore import QThreadPool, QRunnable
 import qdarkstyle
 from enum import Enum
@@ -13,6 +13,8 @@ from MetadataManagerCore.util import timeit
 from multiprocessing.dummy import Pool as ThreadPool 
 from time import sleep
 import qt_util
+import json
+import numpy as np
 
 g_company = "WK"
 g_appName = "Metadata-Manager"
@@ -47,6 +49,18 @@ class LambdaTask(QRunnable):
 
     def run(self):
         self.func(*self.args, **self.kwargs)
+
+class Completer(QtWidgets.QCompleter):
+    def splitPath(self, path):
+        return path.split(' ')
+
+    def pathFromIndex(self, index):
+        result = []
+        while index.isValid():
+            result = [self.model().data(index, QtCore.Qt.DisplayRole)] + result
+            index = index.parent()
+        r = ' '.join(result)
+        return r
 
 class TableModel(QtCore.QAbstractTableModel):
     def __init__(self, parent, entries, header, displayedKeys, *args):
@@ -91,12 +105,22 @@ class TableModel(QtCore.QAbstractTableModel):
         self.entries.extend(entries)
         self.emit(QtCore.SIGNAL("layoutChanged()"))
 
+    """
+    The heaeder won't be updated if the current header is equal to the new given header (order and value comparison).
+    Note: Upadting the header removes all entries.
+    """
     def updateHeader(self, header, displayedKeys):
         if self.header != header:
             self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
             self.displayedKeys = displayedKeys
             self.entries = []
             self.header = header
+            self.emit(QtCore.SIGNAL("layoutChanged()"))
+
+    def clear(self):
+        if len(self.entries) > 0:
+            self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
+            self.entries = []
             self.emit(QtCore.SIGNAL("layoutChanged()"))
 
 class MainWindowManager(QObject):
@@ -132,6 +156,9 @@ class MainWindowManager(QObject):
         #self.dbManager.db[g_collectionsMD].update_one({"_id": "test"}, {"$set": {"displayedTableKeys":["name", "address"]}})
         self.mainProgressBar = QtWidgets.QProgressBar(self.window)
         self.window.statusBar().addWidget(self.mainProgressBar)
+
+        self.itemCountLabel = QtWidgets.QLabel(self.window)
+        self.window.statusBar().addWidget(self.itemCountLabel)
         self.updateCollections()
 
         self.restoreState()
@@ -140,7 +167,29 @@ class MainWindowManager(QObject):
         self.tableModel = TableModel(self.window, [], header, displayedKeys)
         self.window.tableView.setModel(self.tableModel)
 
-        self.window.pushButton.clicked.connect(lambda:QThreadPool.globalInstance().start(LambdaTask(self.viewItems)))
+        self.window.findPushButton.clicked.connect(lambda:QThreadPool.globalInstance().start(LambdaTask(self.viewItems)))
+
+        self.setupFilter()
+
+    def setupFilter(self):
+        wordList = [("\"" + f + "\"") for f in self.tableModel.displayedKeys]
+        filterCompleter = Completer(wordList, self)
+        filterCompleter.setCaseSensitivity(Qt.CaseInsensitive)
+        filterCompleter.setFilterMode(Qt.MatchContains)
+        filterCompleter.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
+        #filterCompleter.activated.connect(self.insertCompletion)
+        self.window.filterEdit.setCompleter(filterCompleter)
+
+        wordList = [f for f in self.tableModel.displayedKeys]
+        distinctCompleter = Completer(wordList, self)
+        distinctCompleter.setCaseSensitivity(Qt.CaseInsensitive)
+        distinctCompleter.setFilterMode(Qt.MatchContains)
+        distinctCompleter.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
+        #filterCompleter.activated.connect(self.insertCompletion)
+        self.window.distinctEdit.setCompleter(distinctCompleter)
+    
+    def insertCompletion(self, completionText):
+        print(completionText)
 
     def updateCollections(self):
         self.clearContainer(self.window.collectionsVLayout)
@@ -171,13 +220,45 @@ class MainWindowManager(QObject):
             if self.getCollectionCheckbox(collectionName).isChecked():
                 yield collectionName
 
+    def getItemsFilter(self):
+        try:
+            filterText = self.window.filterEdit.text()
+            if len(self.window.filterEdit.text()) == 0:
+                return {}
+            
+            filter = json.loads(filterText)
+            return filter
+        except:    
+            return {"_id":"None"}
+
     def filteredItems(self, collection):
-        return collection.find({}, {'_id': False})
+        filtered = collection.find(self.getItemsFilter(), {'_id': False})
+        distinctKey = self.window.distinctEdit.text()
+        
+        if len(distinctKey) > 0:
+            distinctKeys = filtered.distinct(distinctKey)
+            distinctMap = dict(zip(distinctKeys, np.repeat(False, len(distinctKeys))))
+            for item in filtered:
+                val = item.get(distinctKey)
+                if val != None:
+                    if not distinctMap.get(val):
+                        distinctMap[val] = True
+                        yield item
+        else:
+            for item in filtered:
+                yield item
 
     def getMaxDisplayedTableItems(self):
         num = 0
+        filter = self.getItemsFilter()
+        distinctKey = self.window.distinctEdit.text()
+
         for collectionName in self.getSelectedCollectionNames():
-            num += self.filteredItems(self.dbManager.db[collectionName]).count()
+            collection = self.dbManager.db[collectionName]
+            if len(distinctKey) > 0:
+                num += len(collection.find(self.getItemsFilter()).distinct(distinctKey))
+            else:
+                num += collection.count_documents(filter)
 
         return num
 
@@ -186,7 +267,13 @@ class MainWindowManager(QObject):
         if len(self.tableModel.displayedKeys) == 0:
             return
 
-        qt_util.runInMainThread(self.mainProgressBar.setMaximum, self.getMaxDisplayedTableItems())
+        qt_util.runInMainThread(self.tableModel.clear)
+        maxDisplayedItems = self.getMaxDisplayedTableItems()
+        qt_util.runInMainThread(lambda:self.itemCountLabel.setText("Item Count: " + str(maxDisplayedItems)))
+
+        if maxDisplayedItems == 0:
+            return
+        qt_util.runInMainThread(self.mainProgressBar.setMaximum, maxDisplayedItems)
 
         entries = []
         i = 0
