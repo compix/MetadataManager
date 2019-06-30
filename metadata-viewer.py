@@ -5,6 +5,7 @@ from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PySide2.QtCore import QFile, QObject, QEvent, Qt
 from PySide2.QtCore import QThreadPool, QRunnable
+from PySide2.QtGui import QPixmap
 import qdarkstyle
 from enum import Enum
 from mongodb_manager import MongoDBManager
@@ -73,14 +74,14 @@ class TableModel(QtCore.QAbstractTableModel):
         return len(self.entries)
 
     def columnCount(self, parent):
-        return len(self.entries[0]) if len(self.entries) > 0 else 0 
+        return len(self.entries[0]) - 1 if len(self.entries) > 1 else 0 
 
     def data(self, index, role):
         if not index.isValid():
             return None
         elif role != QtCore.Qt.DisplayRole:
             return None
-        return self.entries[index.row()][index.column()]
+        return self.entries[index.row()][index.column() + 1]
 
     def headerData(self, col, orientation, role):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
@@ -90,7 +91,7 @@ class TableModel(QtCore.QAbstractTableModel):
     def sort(self, col, order):
         # Sort table by given column number col
         self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
-        self.entries = sorted(self.entries, key=operator.itemgetter(col))
+        self.entries = sorted(self.entries, key=operator.itemgetter(col + 1))
         if order == QtCore.Qt.DescendingOrder:
             self.entries.reverse()
         self.emit(QtCore.SIGNAL("layoutChanged()"))
@@ -107,7 +108,7 @@ class TableModel(QtCore.QAbstractTableModel):
 
     """
     The heaeder won't be updated if the current header is equal to the new given header (order and value comparison).
-    Note: Upadting the header removes all entries.
+    Note: Updating the header removes all entries.
     """
     def updateHeader(self, header, displayedKeys):
         if self.header != header:
@@ -170,6 +171,39 @@ class MainWindowManager(QObject):
         self.window.findPushButton.clicked.connect(lambda:QThreadPool.globalInstance().start(LambdaTask(self.viewItems)))
 
         self.setupFilter()
+        
+        selModel = self.window.tableView.selectionModel()
+        selModel.selectionChanged.connect(self.onTableSelectionChanged)
+
+
+        #self.addPreviewToAllEntries()
+
+    def onTableSelectionChanged(self, newSelection, oldSelection):
+        for sel in newSelection:
+            for idx in sel.indexes():
+                id = self.tableModel.entries[idx.row()][0]
+                item = self.findOne(id)
+                if item != None:
+                    print("Selected: " + item["name"])
+                    self.showPreview(item["preview"])
+
+    def findOne(self, id):
+        for collectionName in self.getAvailableCollectionNames():
+            collection = self.dbManager.db[collectionName]
+            return collection.find_one({"_id":id})
+
+    def addPreviewToAllEntries(self):
+        for collectionName in self.getSelectedCollectionNames():
+            collection = self.dbManager.db[collectionName]
+            for item in collection.find({}):
+                collection.update_one({"_id":item["_id"]}, {"$set": {"preview":"C:/Users/compix/Desktop/surprised_pikachu.png"}})
+
+    def showPreview(self, path):
+        scene = QtWidgets.QGraphicsScene()
+        pixmap = QPixmap(path)
+        scene.addPixmap(pixmap)
+        self.window.preview.setScene(scene)
+        self.window.preview.fitInView(scene.sceneRect(), Qt.KeepAspectRatio)
 
     def setupFilter(self):
         wordList = [("\"" + f + "\"") for f in self.tableModel.displayedKeys]
@@ -232,7 +266,7 @@ class MainWindowManager(QObject):
             return {"_id":"None"}
 
     def filteredItems(self, collection):
-        filtered = collection.find(self.getItemsFilter(), {'_id': False})
+        filtered = collection.find(self.getItemsFilter()) # '_id': False
         distinctKey = self.window.distinctEdit.text()
         
         if len(distinctKey) > 0:
@@ -292,7 +326,7 @@ class MainWindowManager(QObject):
     # item: mongodb document
     def extractTableEntry(self, displayedKeys, item):
         assert(len(displayedKeys) > 0)
-        entry = []
+        entry = [item['_id']]
         for e in displayedKeys:
             val = item.get(e)
             entry.append(val if val != None else "N.D.")
