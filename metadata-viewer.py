@@ -16,6 +16,7 @@ from time import sleep
 import qt_util
 import json
 import numpy as np
+from qt_extentions import PhotoViewer
 
 g_company = "WK"
 g_appName = "Metadata-Manager"
@@ -74,7 +75,7 @@ class TableModel(QtCore.QAbstractTableModel):
         return len(self.entries)
 
     def columnCount(self, parent):
-        return len(self.entries[0]) - 1 if len(self.entries) > 1 else 0 
+        return len(self.entries[0]) - 1 if len(self.entries) > 0 else 0 
 
     def data(self, index, role):
         if not index.isValid():
@@ -138,10 +139,7 @@ class MainWindowManager(QObject):
 
         self.window.installEventFilter(self)
 
-        self.window.menuView.addAction(self.window.previewDockWidget.toggleViewAction())
-        self.window.menuView.addAction(self.window.inspectorDockWidget.toggleViewAction())
-        self.window.menuView.addAction(self.window.actionsDockWidget.toggleViewAction())
-        self.window.menuView.addAction(self.window.commentsDockWidget.toggleViewAction())
+
 
         self.window.actionDark.triggered.connect(lambda : self.setStyle(Style.Dark))
         self.window.actionLight.triggered.connect(lambda : self.setStyle(Style.Light))
@@ -151,6 +149,8 @@ class MainWindowManager(QObject):
         #    self.dbManager.insertExampleEntries()
 
         self.window.collectionsVLayout.setAlignment(QtCore.Qt.AlignTop)
+
+        self.setupDockWidgets()
 
         self.dbManager.db[g_collectionsMD].delete_one({"_id":"test"})
         self.dbManager.insertOne(g_collectionsMD, {"_id": "test", "tableHeader":[["Name", "name"], ["Address", "address"], ["Test", "test"]]})
@@ -168,15 +168,43 @@ class MainWindowManager(QObject):
         self.tableModel = TableModel(self.window, [], header, displayedKeys)
         self.window.tableView.setModel(self.tableModel)
 
-        self.window.findPushButton.clicked.connect(lambda:QThreadPool.globalInstance().start(LambdaTask(self.viewItems)))
+        #self.window.findPushButton.clicked.connect(lambda:QThreadPool.globalInstance().start(LambdaTask(self.viewItems)))
+        self.window.findPushButton.clicked.connect(self.viewItems)
 
         self.setupFilter()
         
         selModel = self.window.tableView.selectionModel()
         selModel.selectionChanged.connect(self.onTableSelectionChanged)
 
+        self.window.preview = PhotoViewer(self.window)
+        self.window.preview.toggleDragMode()
+        self.window.previewFrame.layout().addWidget(self.window.preview)
 
-        #self.addPreviewToAllEntries()
+
+    def setupDockWidgets(self):
+        self.setupDockWidget(self.window.previewDockWidget)
+        self.setupDockWidget(self.window.inspectorDockWidget)
+        self.setupDockWidget(self.window.actionsDockWidget)
+        self.setupDockWidget(self.window.collectionsDockWidget)
+        self.setupDockWidget(self.window.commentsDockWidget)
+
+    def setupDockWidget(self, dockWidget):
+        # Add visibility checkbox to view main menu:
+        self.window.menuView.addAction(dockWidget.toggleViewAction())
+        # Allow window functionality (e.g. maximize)
+        dockWidget.topLevelChanged.connect(self.dockWidgetTopLevelChanged)
+        self.setDockWidgetFlags(dockWidget)
+
+    def dockWidgetTopLevelChanged(self, changed):
+        self.setDockWidgetFlags(self.sender())
+
+    def setDockWidgetFlags(self, dockWidget):
+        if dockWidget.isFloating():
+            dockWidget.setWindowFlags(Qt.CustomizeWindowHint |
+                Qt.Window | Qt.WindowMinimizeButtonHint |
+                Qt.WindowMaximizeButtonHint |
+                Qt.WindowCloseButtonHint)
+            dockWidget.show()
 
     def onTableSelectionChanged(self, newSelection, oldSelection):
         for sel in newSelection:
@@ -202,8 +230,9 @@ class MainWindowManager(QObject):
         scene = QtWidgets.QGraphicsScene()
         pixmap = QPixmap(path)
         scene.addPixmap(pixmap)
-        self.window.preview.setScene(scene)
-        self.window.preview.fitInView(scene.sceneRect(), Qt.KeepAspectRatio)
+        #self.window.preview.setScene(scene)
+        self.window.preview.setPhoto(pixmap)
+        #self.window.preview.fitInView(scene.sceneRect(), Qt.KeepAspectRatio)
 
     def setupFilter(self):
         wordList = [("\"" + f + "\"") for f in self.tableModel.displayedKeys]
@@ -318,6 +347,7 @@ class MainWindowManager(QObject):
 
                 i += 1
                 tableEntry = self.extractTableEntry(self.tableModel.displayedKeys, item)
+                print(tableEntry)
                 entries.append(tableEntry)
                 qt_util.runInMainThread(self.mainProgressBar.setValue, i)
         
