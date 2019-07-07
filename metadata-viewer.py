@@ -17,6 +17,7 @@ import qt_util
 import json
 import numpy as np
 from qt_extentions import PhotoViewer
+import pymongo
 
 g_company = "WK"
 g_appName = "Metadata-Manager"
@@ -25,6 +26,11 @@ g_databaseName = "centralRepository"
 g_collectionsMD = "collectionsMD"
 g_usersCollection = "users"
 g_hiddenCollections = set([g_collectionsMD])
+# _id is a mongodb id and always unique, s_id is not unique but s_id + s_version is.
+g_systemKeys = ["_id", "s_id", "s_version"]
+g_notDefinedValue = "N.D."
+g_systemIDKey = "s_id"
+g_systemVersionKey = "s_version"
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -64,12 +70,43 @@ class Completer(QtWidgets.QCompleter):
         r = ' '.join(result)
         return r
 
+class DocumentModification:
+    def __init__(self, collection, sid, version, modificationDict):
+        self.sid = sid
+        self.collection = collection
+        self.version = version
+        self.modDict = modificationDict
+
+    def applyModification(self):
+        # Get the newest version and check if it matches the expected version
+        newestDoc = self.getNewestDocument()
+        if newestDoc != None:
+            if newestDoc[g_systemVersionKey] == self.version:
+                # Apply modifications:
+                newDict = newestDoc.to_mongo()
+                for key, val in self.modDict:
+                    newDict[key] = val
+
+                newDict[g_systemVersionKey] = self.version + 1
+                self.collection.insert_one(newDict)
+            else:
+                print("The document with sid " + self.sid + " was modified by a different user.")
+                # TODO: Handle modification conflict.
+        else:
+            print("Failed to apply modification on document with id " + self.sid + " and version " + str(self.version) + " because the newest document could not be found.")
+                
+    def getNewestDocument(self):
+        return self.collection.find_one({g_systemIDKey:self.sid}, sort=[(g_systemVersionKey, pymongo.DESCENDING)])
+
 class TableModel(QtCore.QAbstractTableModel):
     def __init__(self, parent, entries, header, displayedKeys, *args):
         QtCore.QAbstractTableModel.__init__(self, parent, *args)
         self.entries = entries
         self.header = header
         self.displayedKeys = displayedKeys
+
+    def getUID(self, rowIdx):
+        return self.entries[rowIdx][0]
 
     def rowCount(self, parent):
         return len(self.entries)
@@ -131,6 +168,7 @@ class MainWindowManager(QObject):
         self.app = app
         self.currentStyle = None
         self.applicationQuitting = False
+        self.documentMoficiations = []
 
         file = QFile("./main.ui")
         file.open(QFile.ReadOnly)
@@ -180,6 +218,17 @@ class MainWindowManager(QObject):
         self.window.preview.toggleDragMode()
         self.window.previewFrame.layout().addWidget(self.window.preview)
 
+    def applyAllDocumentModifications(self):
+        if len(self.documentMoficiations) > 0:
+            self.initProgress(len(self.documentMoficiations))
+            progressCounter = 0
+            self.updateProgress(progressCounter)
+
+            for i in reversed(range(len(self.documentMoficiations))):
+                progressCounter += 1
+                self.documentMoficiations[i].applyModification()
+                self.documentMoficiations.pop()
+                self.updateProgress(progressCounter)
 
     def setupDockWidgets(self):
         self.setupDockWidget(self.window.previewDockWidget)
@@ -209,16 +258,18 @@ class MainWindowManager(QObject):
     def onTableSelectionChanged(self, newSelection, oldSelection):
         for sel in newSelection:
             for idx in sel.indexes():
-                id = self.tableModel.entries[idx.row()][0]
-                item = self.findOne(id)
+                uid = self.tableModel.getUID(idx.row())
+                item = self.findOne(uid)
                 if item != None:
-                    print("Selected: " + item["name"])
                     self.showPreview(item["preview"])
+                    self.showItemInInspector(uid)
 
-    def findOne(self, id):
+    def findOne(self, uid):
         for collectionName in self.getAvailableCollectionNames():
             collection = self.dbManager.db[collectionName]
-            return collection.find_one({"_id":id})
+            val = collection.find_one({"_id":uid})
+            if val != None:
+                return val
 
     def addPreviewToAllEntries(self):
         for collectionName in self.getSelectedCollectionNames():
@@ -266,6 +317,15 @@ class MainWindowManager(QObject):
         for cn in self.dbManager.getCollectionNames():
             if not cn in g_hiddenCollections:
                 yield cn
+
+    def showItemInInspector(self, uid):
+        form = self.window.inspectorFormLayout
+        self.clearContainer(form)
+        item = self.findOne(uid)
+        if item != None:
+            for key, val in item.items():
+                form.addRow(self.window.tr(str(key)), QtWidgets.QLabel(str(val)))
+        #lineEdit = QLineEdit()
 
     # Container/Layout
     def clearContainer(self, container):
@@ -325,6 +385,12 @@ class MainWindowManager(QObject):
 
         return num
 
+    def initProgress(self, maxVal):
+        qt_util.runInMainThread(self.mainProgressBar.setMaximum, maxVal)
+
+    def updateProgress(self, val):
+        qt_util.runInMainThread(self.mainProgressBar.setValue, val)
+
     @timeit
     def viewItems(self):
         if len(self.tableModel.displayedKeys) == 0:
@@ -336,7 +402,8 @@ class MainWindowManager(QObject):
 
         if maxDisplayedItems == 0:
             return
-        qt_util.runInMainThread(self.mainProgressBar.setMaximum, maxDisplayedItems)
+
+        self.initProgress(maxDisplayedItems)
 
         entries = []
         i = 0
@@ -347,11 +414,18 @@ class MainWindowManager(QObject):
 
                 i += 1
                 tableEntry = self.extractTableEntry(self.tableModel.displayedKeys, item)
-                print(tableEntry)
                 entries.append(tableEntry)
-                qt_util.runInMainThread(self.mainProgressBar.setValue, i)
+                self.updateProgress(i)
         
         qt_util.runInMainThread(self.tableModel.addEntries, entries)
+
+    def extractSystemValues(self, item):
+        vals = []
+        for sysKey in g_systemKeys:
+            val = item.get(sysKey)
+            vals.append(val if val != None else g_notDefinedValue)
+        
+        return vals
 
     # item: mongodb document
     def extractTableEntry(self, displayedKeys, item):
@@ -359,7 +433,7 @@ class MainWindowManager(QObject):
         entry = [item['_id']]
         for e in displayedKeys:
             val = item.get(e)
-            entry.append(val if val != None else "N.D.")
+            entry.append(val if val != None else g_notDefinedValue)
 
         return entry
 
