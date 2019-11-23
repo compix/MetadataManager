@@ -1,3 +1,6 @@
 [submodule "MetadataManagerCore"]
 	path = MetadataManagerCore
 	url = https://github.com/compix/MetadataManagerCore.git
+[submodule "VisualScripting"]
+	path = VisualScripting
+	url = https://github.com/compix/NodeGraphQt
