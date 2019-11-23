@@ -1,4 +1,5 @@
 from PySide2 import QtCore
+from PySide2.QtCore import QRunnable
 
 # From https://stackoverflow.com/questions/10991991/pyside-easier-way-of-updating-gui-from-another-thread
 # by chfoo: https://stackoverflow.com/users/1524507/chfoo
@@ -24,3 +25,13 @@ def runInMainThread(fn, *args, **kwargs):
     QtCore.QCoreApplication.postEvent(_invoker, InvokeEvent(fn, *args, **kwargs))
 
 ############################################################################################################
+
+class LambdaTask(QRunnable):
+    def __init__(self, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+        QRunnable.__init__(self)
+
+    def run(self):
+        self.func(*self.args, **self.kwargs)

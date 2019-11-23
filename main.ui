@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1014</width>
-    <height>676</height>
+    <width>994</width>
+    <height>689</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Metadata Manager</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -150,7 +150,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1014</width>
+     <width>994</width>
      <height>21</height>
     </rect>
    </property>
@@ -175,7 +175,11 @@
    <addaction name="menuAbout"/>
    <addaction name="menuStyle"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="statusbar">
+   <property name="sizeGripEnabled">
+    <bool>true</bool>
+   </property>
+  </widget>
   <widget class="QDockWidget" name="previewDockWidget">
    <property name="windowTitle">
     <string>Preview</string>
@@ -240,7 +244,7 @@
              <x>0</x>
              <y>0</y>
              <width>69</width>
-             <height>97</height>
+             <height>208</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -351,7 +355,7 @@
              <x>0</x>
              <y>0</y>
              <width>69</width>
-             <height>274</height>
+             <height>209</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_10">

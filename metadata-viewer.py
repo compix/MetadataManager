@@ -1,11 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import sys
-from PySide2 import QtCore, QtWidgets
-from PySide2.QtUiTools import QUiLoader
-from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
-from PySide2.QtCore import QFile, QObject, QEvent, Qt
-from PySide2.QtCore import QThreadPool, QRunnable
-from PySide2.QtGui import QPixmap
+from PySide2 import QtCore, QtWidgets, QtUiTools, QtGui
 import qdarkstyle
 from enum import Enum
 from mongodb_manager import MongoDBManager
@@ -18,151 +13,20 @@ import json
 import numpy as np
 from qt_extentions import PhotoViewer
 import pymongo
+from TableModel import TableModel
+from qt_extentions import Completer
+from MetadataManagerCore import Keys
 
-g_company = "WK"
-g_appName = "Metadata-Manager"
-g_mongodbHost = "mongodb://localhost:27017/"
-g_databaseName = "centralRepository"
-g_collectionsMD = "collectionsMD"
-g_usersCollection = "users"
-g_hiddenCollections = set([g_collectionsMD])
-# _id is a mongodb id and always unique, s_id is not unique but s_id + s_version is.
-g_systemKeys = ["_id", "s_id", "s_version"]
-g_notDefinedValue = "N.D."
-g_systemIDKey = "s_id"
-g_systemVersionKey = "s_version"
-
-class MainWindow(QMainWindow):
-    def __init__(self):
-        QMainWindow.__init__(self)
-        self.setWindowTitle("Metadata Manager")
-
-def on_button_click():
-    ret = QMessageBox.warning(window, "TestDialog",
-                              "The document has been modified.\n" + \
-                              "Do you want to save your changes?",
-                              QMessageBox.Save | QMessageBox.Ok | QMessageBox.Cancel,
-                              QMessageBox.Save)
+company = "WK"
+appName = "Metadata-Manager"
+mongodbHost = "mongodb://localhost:27017/"
+databaseName = "centralRepository"
 
 class Style(Enum):
     Dark = 0
     Light = 1
 
-class LambdaTask(QRunnable):
-    def __init__(self, func, *args, **kwargs):
-        self.func = func
-        self.args = args
-        self.kwargs = kwargs
-        QRunnable.__init__(self)
-
-    def run(self):
-        self.func(*self.args, **self.kwargs)
-
-class Completer(QtWidgets.QCompleter):
-    def splitPath(self, path):
-        return path.split(' ')
-
-    def pathFromIndex(self, index):
-        result = []
-        while index.isValid():
-            result = [self.model().data(index, QtCore.Qt.DisplayRole)] + result
-            index = index.parent()
-        r = ' '.join(result)
-        return r
-
-class DocumentModification:
-    def __init__(self, collection, sid, version, modificationDict):
-        self.sid = sid
-        self.collection = collection
-        self.version = version
-        self.modDict = modificationDict
-
-    def applyModification(self):
-        # Get the newest version and check if it matches the expected version
-        newestDoc = self.getNewestDocument()
-        if newestDoc != None:
-            if newestDoc[g_systemVersionKey] == self.version:
-                # Apply modifications:
-                newDict = newestDoc.to_mongo()
-                for key, val in self.modDict:
-                    newDict[key] = val
-
-                newDict[g_systemVersionKey] = self.version + 1
-                self.collection.insert_one(newDict)
-            else:
-                print("The document with sid " + self.sid + " was modified by a different user.")
-                # TODO: Handle modification conflict.
-        else:
-            print("Failed to apply modification on document with id " + self.sid + " and version " + str(self.version) + " because the newest document could not be found.")
-                
-    def getNewestDocument(self):
-        return self.collection.find_one({g_systemIDKey:self.sid}, sort=[(g_systemVersionKey, pymongo.DESCENDING)])
-
-class TableModel(QtCore.QAbstractTableModel):
-    def __init__(self, parent, entries, header, displayedKeys, *args):
-        QtCore.QAbstractTableModel.__init__(self, parent, *args)
-        self.entries = entries
-        self.header = header
-        self.displayedKeys = displayedKeys
-
-    def getUID(self, rowIdx):
-        return self.entries[rowIdx][0]
-
-    def rowCount(self, parent):
-        return len(self.entries)
-
-    def columnCount(self, parent):
-        return len(self.entries[0]) - 1 if len(self.entries) > 0 else 0 
-
-    def data(self, index, role):
-        if not index.isValid():
-            return None
-        elif role != QtCore.Qt.DisplayRole:
-            return None
-        return self.entries[index.row()][index.column() + 1]
-
-    def headerData(self, col, orientation, role):
-        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
-            return self.header[col]
-        return None
-
-    def sort(self, col, order):
-        # Sort table by given column number col
-        self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
-        self.entries = sorted(self.entries, key=operator.itemgetter(col + 1))
-        if order == QtCore.Qt.DescendingOrder:
-            self.entries.reverse()
-        self.emit(QtCore.SIGNAL("layoutChanged()"))
-
-    def addEntry(self, entry):
-        self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
-        self.entries.append(entry)
-        self.emit(QtCore.SIGNAL("layoutChanged()"))
-
-    def addEntries(self, entries):
-        self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
-        self.entries.extend(entries)
-        self.emit(QtCore.SIGNAL("layoutChanged()"))
-
-    """
-    The heaeder won't be updated if the current header is equal to the new given header (order and value comparison).
-    Note: Updating the header removes all entries.
-    """
-    def updateHeader(self, header, displayedKeys):
-        if self.header != header:
-            self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
-            self.displayedKeys = displayedKeys
-            self.entries = []
-            self.header = header
-            self.emit(QtCore.SIGNAL("layoutChanged()"))
-
-    def clear(self):
-        if len(self.entries) > 0:
-            self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
-            self.entries = []
-            self.emit(QtCore.SIGNAL("layoutChanged()"))
-
-class MainWindowManager(QObject):
+class MainWindowManager(QtCore.QObject):
     def __init__(self, app):
         super(MainWindowManager, self).__init__()
         self.app = app
@@ -170,29 +34,32 @@ class MainWindowManager(QObject):
         self.applicationQuitting = False
         self.documentMoficiations = []
 
-        file = QFile("./main.ui")
-        file.open(QFile.ReadOnly)
-        loader = QUiLoader()
+        file = QtCore.QFile("./main.ui")
+        file.open(QtCore.QFile.ReadOnly)
+        loader = QtUiTools.QUiLoader()
         self.window = loader.load(file)
 
         self.window.installEventFilter(self)
 
-
-
         self.window.actionDark.triggered.connect(lambda : self.setStyle(Style.Dark))
         self.window.actionLight.triggered.connect(lambda : self.setStyle(Style.Light))
 
-        self.dbManager = MongoDBManager(g_mongodbHost, g_databaseName)
+        self.dbManager = MongoDBManager(mongodbHost, databaseName)
         #for i in range(0,10000):
         #    self.dbManager.insertExampleEntries()
 
         self.window.collectionsVLayout.setAlignment(QtCore.Qt.AlignTop)
 
+        settingsUIFile = QtCore.QFile("./settings.ui")
+        settingsUIFile.open(QtCore.QFile.ReadOnly)
+        self.settingsWindow = loader.load(settingsUIFile)
+        self.settingsWindow.setParent(self.window)
+
         self.setupDockWidgets()
 
-        self.dbManager.db[g_collectionsMD].delete_one({"_id":"test"})
-        self.dbManager.insertOne(g_collectionsMD, {"_id": "test", "tableHeader":[["Name", "name"], ["Address", "address"], ["Test", "test"]]})
-        #self.dbManager.db[g_collectionsMD].update_one({"_id": "test"}, {"$set": {"displayedTableKeys":["name", "address"]}})
+        self.dbManager.db[Keys.collectionsMD].delete_one({"_id":"test"})
+        self.dbManager.insertOne(Keys.collectionsMD, {"_id": "test", "tableHeader":[["Name", "name"], ["Address", "address"], ["Test", "test"]]})
+        #self.dbManager.db[collectionsMD].update_one({"_id": "test"}, {"$set": {"displayedTableKeys":["name", "address"]}})
         self.mainProgressBar = QtWidgets.QProgressBar(self.window)
         self.window.statusBar().addWidget(self.mainProgressBar)
 
@@ -236,6 +103,7 @@ class MainWindowManager(QObject):
         self.setupDockWidget(self.window.actionsDockWidget)
         self.setupDockWidget(self.window.collectionsDockWidget)
         self.setupDockWidget(self.window.commentsDockWidget)
+        self.setupDockWidget(self.settingsWindow)
 
     def setupDockWidget(self, dockWidget):
         # Add visibility checkbox to view main menu:
@@ -249,10 +117,10 @@ class MainWindowManager(QObject):
 
     def setDockWidgetFlags(self, dockWidget):
         if dockWidget.isFloating():
-            dockWidget.setWindowFlags(Qt.CustomizeWindowHint |
-                Qt.Window | Qt.WindowMinimizeButtonHint |
-                Qt.WindowMaximizeButtonHint |
-                Qt.WindowCloseButtonHint)
+            dockWidget.setWindowFlags(QtCore.Qt.CustomizeWindowHint |
+                QtCore.Qt.Window | QtCore.Qt.WindowMinimizeButtonHint |
+                QtCore.Qt.WindowMaximizeButtonHint |
+                QtCore.Qt.WindowCloseButtonHint)
             dockWidget.show()
 
     def onTableSelectionChanged(self, newSelection, oldSelection):
@@ -279,7 +147,7 @@ class MainWindowManager(QObject):
 
     def showPreview(self, path):
         scene = QtWidgets.QGraphicsScene()
-        pixmap = QPixmap(path)
+        pixmap = QtGui.QPixmap(path)
         scene.addPixmap(pixmap)
         #self.window.preview.setScene(scene)
         self.window.preview.setPhoto(pixmap)
@@ -288,16 +156,16 @@ class MainWindowManager(QObject):
     def setupFilter(self):
         wordList = [("\"" + f + "\"") for f in self.tableModel.displayedKeys]
         filterCompleter = Completer(wordList, self)
-        filterCompleter.setCaseSensitivity(Qt.CaseInsensitive)
-        filterCompleter.setFilterMode(Qt.MatchContains)
+        filterCompleter.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        filterCompleter.setFilterMode(QtCore.Qt.MatchContains)
         filterCompleter.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
         #filterCompleter.activated.connect(self.insertCompletion)
         self.window.filterEdit.setCompleter(filterCompleter)
 
         wordList = [f for f in self.tableModel.displayedKeys]
         distinctCompleter = Completer(wordList, self)
-        distinctCompleter.setCaseSensitivity(Qt.CaseInsensitive)
-        distinctCompleter.setFilterMode(Qt.MatchContains)
+        distinctCompleter.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        distinctCompleter.setFilterMode(QtCore.Qt.MatchContains)
         distinctCompleter.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
         #filterCompleter.activated.connect(self.insertCompletion)
         self.window.distinctEdit.setCompleter(distinctCompleter)
@@ -315,7 +183,7 @@ class MainWindowManager(QObject):
 
     def getAvailableCollectionNames(self):
         for cn in self.dbManager.getCollectionNames():
-            if not cn in g_hiddenCollections:
+            if not cn in Keys.hiddenCollections:
                 yield cn
 
     def showItemInInspector(self, uid):
@@ -421,9 +289,9 @@ class MainWindowManager(QObject):
 
     def extractSystemValues(self, item):
         vals = []
-        for sysKey in g_systemKeys:
+        for sysKey in Keys.systemKeys:
             val = item.get(sysKey)
-            vals.append(val if val != None else g_notDefinedValue)
+            vals.append(val if val != None else Keys.notDefinedValue)
         
         return vals
 
@@ -433,7 +301,7 @@ class MainWindowManager(QObject):
         entry = [item['_id']]
         for e in displayedKeys:
             val = item.get(e)
-            entry.append(val if val != None else g_notDefinedValue)
+            entry.append(val if val != None else Keys.notDefinedValue)
 
         return entry
 
@@ -442,7 +310,7 @@ class MainWindowManager(QObject):
         keys = []
         # Go through the selected collection metadata, check displayed table info
         # and add unique entries:
-        collectionsMD = self.dbManager.db[g_collectionsMD]
+        collectionsMD = self.dbManager.db[Keys.collectionsMD]
         for collectionName in self.getSelectedCollectionNames():
             cMD = collectionsMD.find_one({"_id":collectionName})
             if cMD:
@@ -465,7 +333,7 @@ class MainWindowManager(QObject):
         self.currentStyle = style
 
     def saveState(self):
-        settings = QtCore.QSettings(g_company, g_appName)
+        settings = QtCore.QSettings(company, appName)
         settings.setValue("geometry", self.window.saveGeometry())
         settings.setValue("windowState", self.window.saveState())
         settings.setValue("style", self.currentStyle)
@@ -475,7 +343,7 @@ class MainWindowManager(QObject):
                 settings.setValue(collectionName + "CheckboxState", 1 if self.getCollectionCheckbox(collectionName).isChecked() else 0)
 
     def restoreState(self):
-        settings = QtCore.QSettings(g_company, g_appName)
+        settings = QtCore.QSettings(company, appName)
         self.window.restoreGeometry(settings.value("geometry"))
         self.window.restoreState(settings.value("windowState"))
         self.setStyle(settings.value("style"))
@@ -487,7 +355,7 @@ class MainWindowManager(QObject):
                     self.getCollectionCheckbox(collectionName).setChecked(checkState)
 
     def eventFilter(self, obj, event):
-        if obj is self.window and event.type() == QEvent.Close:
+        if obj is self.window and event.type() == QtCore.QEvent.Close:
             self.quitApp()
             event.ignore()
             return True
@@ -498,14 +366,14 @@ class MainWindowManager(QObject):
         self.saveState()
         self.window.removeEventFilter(self)
         self.applicationQuitting = True
-        QThreadPool.globalInstance().waitForDone()
+        QtCore.QThreadPool.globalInstance().waitForDone()
         app.quit()
 
     def show(self):
         self.window.show()
 
 if __name__ == "__main__":
-    app = QApplication([])
+    app = QtWidgets.QApplication([])
     w = MainWindowManager(app)
     w.show()
     sys.exit(app.exec_())
