@@ -16,6 +16,9 @@ import pymongo
 from TableModel import TableModel
 from qt_extentions import Completer
 from MetadataManagerCore import Keys
+from VisualScripting.VisualScripting import VisualScripting
+from VisualScripting import NodeGraphQt
+from PySide2.QtCore import QFile, QTextStream
 
 company = "WK"
 appName = "Metadata-Manager"
@@ -41,6 +44,8 @@ class MainWindowManager(QtCore.QObject):
 
         self.window.installEventFilter(self)
 
+        self.visualScripting = VisualScripting("VisualScripting_SaveData", parentWindow=self.window)
+
         self.window.actionDark.triggered.connect(lambda : self.setStyle(Style.Dark))
         self.window.actionLight.triggered.connect(lambda : self.setStyle(Style.Light))
 
@@ -61,13 +66,12 @@ class MainWindowManager(QtCore.QObject):
         self.dbManager.insertOne(Keys.collectionsMD, {"_id": "test", "tableHeader":[["Name", "name"], ["Address", "address"], ["Test", "test"]]})
         #self.dbManager.db[collectionsMD].update_one({"_id": "test"}, {"$set": {"displayedTableKeys":["name", "address"]}})
         self.mainProgressBar = QtWidgets.QProgressBar(self.window)
-        self.window.statusBar().addWidget(self.mainProgressBar)
+        self.mainProgressBar.setMaximumWidth(100)
+        self.mainProgressBar.setMaximumHeight(15)
+        self.window.statusBar().addPermanentWidget(self.mainProgressBar)
 
-        self.itemCountLabel = QtWidgets.QLabel(self.window)
-        self.window.statusBar().addWidget(self.itemCountLabel)
+        self.window.statusBar().showMessage("Test")
         self.updateCollections()
-
-        self.restoreState()
 
         header, displayedKeys = self.extractTableHeaderAndDisplayedKeys()
         self.tableModel = TableModel(self.window, [], header, displayedKeys)
@@ -84,6 +88,8 @@ class MainWindowManager(QtCore.QObject):
         self.window.preview = PhotoViewer(self.window)
         self.window.preview.toggleDragMode()
         self.window.previewFrame.layout().addWidget(self.window.preview)
+
+        self.restoreState()
 
     def applyAllDocumentModifications(self):
         if len(self.documentMoficiations) > 0:
@@ -104,6 +110,7 @@ class MainWindowManager(QtCore.QObject):
         self.setupDockWidget(self.window.collectionsDockWidget)
         self.setupDockWidget(self.window.commentsDockWidget)
         self.setupDockWidget(self.settingsWindow)
+        self.setupDockWidget(self.visualScripting.getAsDockWidget(self.window))
 
     def setupDockWidget(self, dockWidget):
         # Add visibility checkbox to view main menu:
@@ -266,7 +273,7 @@ class MainWindowManager(QtCore.QObject):
 
         qt_util.runInMainThread(self.tableModel.clear)
         maxDisplayedItems = self.getMaxDisplayedTableItems()
-        qt_util.runInMainThread(lambda:self.itemCountLabel.setText("Item Count: " + str(maxDisplayedItems)))
+        qt_util.runInMainThread(lambda:self.window.itemCountLabel.setText("Item Count: " + str(maxDisplayedItems)))
 
         if maxDisplayedItems == 0:
             return
@@ -323,11 +330,28 @@ class MainWindowManager(QtCore.QObject):
         return header, keys
 
     def setStyle(self, style):
+        self.app.setStyleSheet(None)
+        self.app.setStyle("Fusion")
+
         if (style == Style.Dark or style == None) and self.currentStyle != style:
             self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyside2())
         elif style == Style.Light and self.currentStyle != style:
-            self.app.setStyleSheet(None)
-        
+            palette = QtGui.QPalette()
+            palette.setColor(QtGui.QPalette.Window, QtGui.QColor(53, 53, 53))
+            palette.setColor(QtGui.QPalette.WindowText, QtCore.Qt.white)
+            palette.setColor(QtGui.QPalette.Base, QtGui.QColor(25, 25, 25))
+            palette.setColor(QtGui.QPalette.AlternateBase, QtGui.QColor(53, 53, 53))
+            palette.setColor(QtGui.QPalette.ToolTipBase, QtCore.Qt.white)
+            palette.setColor(QtGui.QPalette.ToolTipText, QtCore.Qt.white)
+            palette.setColor(QtGui.QPalette.Text, QtCore.Qt.white)
+            palette.setColor(QtGui.QPalette.Button, QtGui.QColor(53, 53, 53))
+            palette.setColor(QtGui.QPalette.ButtonText, QtCore.Qt.white)
+            palette.setColor(QtGui.QPalette.BrightText, QtCore.Qt.red)
+            palette.setColor(QtGui.QPalette.Link, QtGui.QColor(42, 130, 218))
+            palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(42, 130, 218))
+            palette.setColor(QtGui.QPalette.HighlightedText, QtCore.Qt.black)
+            self.app.setPalette(palette)
+
         self.window.actionDark.setChecked(style == Style.Dark)
         self.window.actionLight.setChecked(style == Style.Light)
         self.currentStyle = style
@@ -337,6 +361,7 @@ class MainWindowManager(QtCore.QObject):
         settings.setValue("geometry", self.window.saveGeometry())
         settings.setValue("windowState", self.window.saveState())
         settings.setValue("style", self.currentStyle)
+        self.visualScripting.saveWindowState(settings)
 
         for collectionName in self.getAvailableCollectionNames():
             if self.getCollectionCheckbox(collectionName) != None:
@@ -347,7 +372,8 @@ class MainWindowManager(QtCore.QObject):
         self.window.restoreGeometry(settings.value("geometry"))
         self.window.restoreState(settings.value("windowState"))
         self.setStyle(settings.value("style"))
-
+        self.visualScripting.restoreWindowState(settings)
+        
         for collectionName in self.getAvailableCollectionNames():
             if self.getCollectionCheckbox(collectionName) != None:
                 checkState = settings.value(collectionName + "CheckboxState")
