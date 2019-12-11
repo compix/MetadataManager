@@ -88,3 +88,13 @@ class Completer(QtWidgets.QCompleter):
             index = index.parent()
         r = ' '.join(result)
         return r
+
+
+#################################### Utility functions #############################################
+
+def clearContainer(container):
+    for i in reversed(range(container.count())): 
+        container.itemAt(i).widget().setParent(None)
+
+
+####################################################################################################

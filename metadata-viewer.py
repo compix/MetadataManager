@@ -3,7 +3,7 @@ import sys
 from PySide2 import QtCore, QtWidgets, QtUiTools, QtGui
 import qdarkstyle
 from enum import Enum
-from mongodb_manager import MongoDBManager
+from MetadataManagerCore.mongodb_manager import MongoDBManager
 import operator
 from MetadataManagerCore.util import timeit
 from multiprocessing.dummy import Pool as ThreadPool 
@@ -19,6 +19,8 @@ from MetadataManagerCore import Keys
 from VisualScripting.VisualScripting import VisualScripting
 from VisualScripting import NodeGraphQt
 from PySide2.QtCore import QFile, QTextStream
+import qt_extentions
+from CollectionViewer import CollectionViewer
 
 company = "WK"
 appName = "Metadata-Manager"
@@ -28,6 +30,13 @@ databaseName = "centralRepository"
 class Style(Enum):
     Dark = 0
     Light = 1
+
+def constructTestCollection(dbManager : MongoDBManager):
+    dbManager.db.drop_collection("Test_Collection")
+
+    names = ["John", "Kevin", "Peter", "Klaus", "Leo"]
+    for i in range(0,5):
+        dbManager.insertOne("Test_Collection", { "name": names[i%len(names)], "address": f"Highway {i}" })
 
 class MainWindowManager(QtCore.QObject):
     def __init__(self, app):
@@ -50,20 +59,16 @@ class MainWindowManager(QtCore.QObject):
         self.window.actionLight.triggered.connect(lambda : self.setStyle(Style.Light))
 
         self.dbManager = MongoDBManager(mongodbHost, databaseName)
-        #for i in range(0,10000):
-        #    self.dbManager.insertExampleEntries()
 
-        self.window.collectionsVLayout.setAlignment(QtCore.Qt.AlignTop)
+        constructTestCollection(self.dbManager)
 
         settingsUIFile = QtCore.QFile("./settings.ui")
         settingsUIFile.open(QtCore.QFile.ReadOnly)
         self.settingsWindow = loader.load(settingsUIFile)
         self.settingsWindow.setParent(self.window)
 
-        self.setupDockWidgets()
-
-        self.dbManager.db[Keys.collectionsMD].delete_one({"_id":"test"})
-        self.dbManager.insertOne(Keys.collectionsMD, {"_id": "test", "tableHeader":[["Name", "name"], ["Address", "address"], ["Test", "test"]]})
+        #self.dbManager.db[Keys.collectionsMD].delete_one({"_id":"test"})
+        #self.dbManager.insertOne(Keys.collectionsMD, {"_id": "test", "tableHeader":[["Name", "name"], ["Address", "address"], ["Test", "test"]]})
         #self.dbManager.db[collectionsMD].update_one({"_id": "test"}, {"$set": {"displayedTableKeys":["name", "address"]}})
         self.mainProgressBar = QtWidgets.QProgressBar(self.window)
         self.mainProgressBar.setMaximumWidth(100)
@@ -71,25 +76,35 @@ class MainWindowManager(QtCore.QObject):
         self.window.statusBar().addPermanentWidget(self.mainProgressBar)
 
         self.window.statusBar().showMessage("Test")
-        self.updateCollections()
 
-        header, displayedKeys = self.extractTableHeaderAndDisplayedKeys()
-        self.tableModel = TableModel(self.window, [], header, displayedKeys)
-        self.window.tableView.setModel(self.tableModel)
+        self.collectionViewer = CollectionViewer(self.window, self.dbManager)
+        self.collectionViewer.updateCollections()
+
+        self.setupDockWidgets()
 
         #self.window.findPushButton.clicked.connect(lambda:QThreadPool.globalInstance().start(LambdaTask(self.viewItems)))
         self.window.findPushButton.clicked.connect(self.viewItems)
-
-        self.setupFilter()
-        
-        selModel = self.window.tableView.selectionModel()
-        selModel.selectionChanged.connect(self.onTableSelectionChanged)
 
         self.window.preview = PhotoViewer(self.window)
         self.window.preview.toggleDragMode()
         self.window.previewFrame.layout().addWidget(self.window.preview)
 
         self.restoreState()
+
+        header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.getSelectedCollectionNames())
+        self.tableModel = TableModel(self.window, [], header, displayedKeys)
+        self.window.tableView.setModel(self.tableModel)
+
+        self.collectionViewer.connectCollectionSelectionUpdateHandler(self.updateTableModelHeader)
+
+        self.setupFilter()
+
+        selModel = self.window.tableView.selectionModel()
+        selModel.selectionChanged.connect(self.onTableSelectionChanged)
+
+    def updateTableModelHeader(self):
+        header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.getSelectedCollectionNames())
+        self.tableModel.updateHeader(header, displayedKeys)
 
     def applyAllDocumentModifications(self):
         if len(self.documentMoficiations) > 0:
@@ -107,7 +122,7 @@ class MainWindowManager(QtCore.QObject):
         self.setupDockWidget(self.window.previewDockWidget)
         self.setupDockWidget(self.window.inspectorDockWidget)
         self.setupDockWidget(self.window.actionsDockWidget)
-        self.setupDockWidget(self.window.collectionsDockWidget)
+        self.setupDockWidget(self.collectionViewer.dockWidget)
         self.setupDockWidget(self.window.commentsDockWidget)
         self.setupDockWidget(self.settingsWindow)
         self.setupDockWidget(self.visualScripting.getAsDockWidget(self.window))
@@ -134,25 +149,21 @@ class MainWindowManager(QtCore.QObject):
         for sel in newSelection:
             for idx in sel.indexes():
                 uid = self.tableModel.getUID(idx.row())
-                item = self.findOne(uid)
+                item = self.dbManager.findOne(uid)
                 if item != None:
-                    self.showPreview(item["preview"])
+                    self.showPreview(item.get("preview"))
                     self.showItemInInspector(uid)
 
-    def findOne(self, uid):
-        for collectionName in self.getAvailableCollectionNames():
-            collection = self.dbManager.db[collectionName]
-            val = collection.find_one({"_id":uid})
-            if val != None:
-                return val
-
     def addPreviewToAllEntries(self):
-        for collectionName in self.getSelectedCollectionNames():
+        for collectionName in self.collectionViewer.getSelectedCollectionNames():
             collection = self.dbManager.db[collectionName]
             for item in collection.find({}):
                 collection.update_one({"_id":item["_id"]}, {"$set": {"preview":"C:/Users/compix/Desktop/surprised_pikachu.png"}})
 
     def showPreview(self, path):
+        if path == None:
+            return
+
         scene = QtWidgets.QGraphicsScene()
         pixmap = QtGui.QPixmap(path)
         scene.addPixmap(pixmap)
@@ -176,47 +187,14 @@ class MainWindowManager(QtCore.QObject):
         distinctCompleter.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
         #filterCompleter.activated.connect(self.insertCompletion)
         self.window.distinctEdit.setCompleter(distinctCompleter)
-    
-    def insertCompletion(self, completionText):
-        print(completionText)
-
-    def updateCollections(self):
-        self.clearContainer(self.window.collectionsVLayout)
-        for collectionName in self.getAvailableCollectionNames():
-            collectionCheckbox = QtWidgets.QCheckBox(self.window)
-            collectionCheckbox.setText(collectionName)
-            self.setCollectionCheckbox(collectionName, collectionCheckbox)
-            self.window.collectionsVLayout.addWidget(collectionCheckbox)
-
-    def getAvailableCollectionNames(self):
-        for cn in self.dbManager.getCollectionNames():
-            if not cn in Keys.hiddenCollections:
-                yield cn
 
     def showItemInInspector(self, uid):
         form = self.window.inspectorFormLayout
-        self.clearContainer(form)
-        item = self.findOne(uid)
+        qt_extentions.clearContainer(form)
+        item = self.dbManager.findOne(uid)
         if item != None:
             for key, val in item.items():
                 form.addRow(self.window.tr(str(key)), QtWidgets.QLabel(str(val)))
-        #lineEdit = QLineEdit()
-
-    # Container/Layout
-    def clearContainer(self, container):
-        for i in reversed(range(container.count())): 
-            container.itemAt(i).widget().setParent(None)
-
-    def setCollectionCheckbox(self, collectionName, collectionCheckbox):
-        setattr(self.window, collectionName, collectionCheckbox)
-
-    def getCollectionCheckbox(self, collectionName):
-        return getattr(self.window, collectionName, None)
-
-    def getSelectedCollectionNames(self):
-        for collectionName in self.getAvailableCollectionNames():
-            if self.getCollectionCheckbox(collectionName).isChecked():
-                yield collectionName
 
     def getItemsFilter(self):
         try:
@@ -251,7 +229,7 @@ class MainWindowManager(QtCore.QObject):
         filter = self.getItemsFilter()
         distinctKey = self.window.distinctEdit.text()
 
-        for collectionName in self.getSelectedCollectionNames():
+        for collectionName in self.collectionViewer.getSelectedCollectionNames():
             collection = self.dbManager.db[collectionName]
             if len(distinctKey) > 0:
                 num += len(collection.find(self.getItemsFilter()).distinct(distinctKey))
@@ -282,7 +260,7 @@ class MainWindowManager(QtCore.QObject):
 
         entries = []
         i = 0
-        for collectionName in self.getSelectedCollectionNames():
+        for collectionName in self.collectionViewer.getSelectedCollectionNames():
             for item in self.filteredItems(self.dbManager.db[collectionName]):
                 if self.applicationQuitting:
                     return
@@ -311,23 +289,6 @@ class MainWindowManager(QtCore.QObject):
             entry.append(val if val != None else Keys.notDefinedValue)
 
         return entry
-
-    def extractTableHeaderAndDisplayedKeys(self):
-        header = []
-        keys = []
-        # Go through the selected collection metadata, check displayed table info
-        # and add unique entries:
-        collectionsMD = self.dbManager.db[Keys.collectionsMD]
-        for collectionName in self.getSelectedCollectionNames():
-            cMD = collectionsMD.find_one({"_id":collectionName})
-            if cMD:
-                cTableHeader = cMD["tableHeader"]
-                if cTableHeader != None:
-                    assert(len(e) == 2 for e in cTableHeader)
-                    header = header + [e[0] for e in cTableHeader if e[1] not in keys]
-                    keys = keys + [e[1] for e in cTableHeader if e[1] not in keys]
-
-        return header, keys
 
     def setStyle(self, style):
         self.app.setStyleSheet(None)
@@ -362,10 +323,7 @@ class MainWindowManager(QtCore.QObject):
         settings.setValue("windowState", self.window.saveState())
         settings.setValue("style", self.currentStyle)
         self.visualScripting.saveWindowState(settings)
-
-        for collectionName in self.getAvailableCollectionNames():
-            if self.getCollectionCheckbox(collectionName) != None:
-                settings.setValue(collectionName + "CheckboxState", 1 if self.getCollectionCheckbox(collectionName).isChecked() else 0)
+        self.collectionViewer.saveState(settings)
 
     def restoreState(self):
         settings = QtCore.QSettings(company, appName)
@@ -373,12 +331,7 @@ class MainWindowManager(QtCore.QObject):
         self.window.restoreState(settings.value("windowState"))
         self.setStyle(settings.value("style"))
         self.visualScripting.restoreWindowState(settings)
-        
-        for collectionName in self.getAvailableCollectionNames():
-            if self.getCollectionCheckbox(collectionName) != None:
-                checkState = settings.value(collectionName + "CheckboxState")
-                if checkState != None:
-                    self.getCollectionCheckbox(collectionName).setChecked(checkState)
+        self.collectionViewer.restoreState(settings)
 
     def eventFilter(self, obj, event):
         if obj is self.window and event.type() == QtCore.QEvent.Close:
