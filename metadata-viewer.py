@@ -8,22 +8,28 @@ import operator
 from MetadataManagerCore.util import timeit
 from multiprocessing.dummy import Pool as ThreadPool 
 from time import sleep
-import qt_util
+from qt_extensions import qt_util
 import json
 import numpy as np
-from qt_extentions import PhotoViewer
 import pymongo
 from TableModel import TableModel
-from qt_extentions import Completer
+from qt_extensions.Completer import Completer
 from MetadataManagerCore import Keys
 from VisualScripting.VisualScripting import VisualScripting
 from VisualScripting import NodeGraphQt
 from PySide2.QtCore import QFile, QTextStream
-import qt_extentions
-from CollectionViewer import CollectionViewer
 
-company = "WK"
-appName = "Metadata-Manager"
+from assets import asset_manager
+from qt_extensions.DockWidget import DockWidget
+
+from viewers.CollectionViewer import CollectionViewer
+from viewers.PreviewViewer import PreviewViewer
+from viewers.SettingsViewer import SettingsViewer
+from viewers.Inspector import Inspector
+
+
+COMPANY = "WK"
+APP_NAME = "Metadata-Manager"
 mongodbHost = "mongodb://localhost:27017/"
 databaseName = "centralRepository"
 
@@ -46,7 +52,7 @@ class MainWindowManager(QtCore.QObject):
         self.applicationQuitting = False
         self.documentMoficiations = []
 
-        file = QtCore.QFile("./main.ui")
+        file = QtCore.QFile(asset_manager.getUIFilePath("main.ui"))
         file.open(QtCore.QFile.ReadOnly)
         loader = QtUiTools.QUiLoader()
         self.window = loader.load(file)
@@ -55,6 +61,8 @@ class MainWindowManager(QtCore.QObject):
 
         self.visualScripting = VisualScripting("VisualScripting_SaveData", parentWindow=self.window)
 
+        self.setStyle(Style.Light)
+
         self.window.actionDark.triggered.connect(lambda : self.setStyle(Style.Dark))
         self.window.actionLight.triggered.connect(lambda : self.setStyle(Style.Light))
 
@@ -62,10 +70,7 @@ class MainWindowManager(QtCore.QObject):
 
         constructTestCollection(self.dbManager)
 
-        settingsUIFile = QtCore.QFile("./settings.ui")
-        settingsUIFile.open(QtCore.QFile.ReadOnly)
-        self.settingsWindow = loader.load(settingsUIFile)
-        self.settingsWindow.setParent(self.window)
+        self.settingsViewer = SettingsViewer(self.window)
 
         #self.dbManager.db[Keys.collectionsMD].delete_one({"_id":"test"})
         #self.dbManager.insertOne(Keys.collectionsMD, {"_id": "test", "tableHeader":[["Name", "name"], ["Address", "address"], ["Test", "test"]]})
@@ -80,14 +85,14 @@ class MainWindowManager(QtCore.QObject):
         self.collectionViewer = CollectionViewer(self.window, self.dbManager)
         self.collectionViewer.updateCollections()
 
+        self.previewViewer = PreviewViewer(self.window)
+
+        self.inspector = Inspector(self.window, self.dbManager)
+
         self.setupDockWidgets()
 
         #self.window.findPushButton.clicked.connect(lambda:QThreadPool.globalInstance().start(LambdaTask(self.viewItems)))
         self.window.findPushButton.clicked.connect(self.viewItems)
-
-        self.window.preview = PhotoViewer(self.window)
-        self.window.preview.toggleDragMode()
-        self.window.previewFrame.layout().addWidget(self.window.preview)
 
         self.restoreState()
 
@@ -119,20 +124,28 @@ class MainWindowManager(QtCore.QObject):
                 self.updateProgress(progressCounter)
 
     def setupDockWidgets(self):
-        self.setupDockWidget(self.window.previewDockWidget)
-        self.setupDockWidget(self.window.inspectorDockWidget)
+        self.setupDockWidget(self.previewViewer)
+        
         self.setupDockWidget(self.window.actionsDockWidget)
-        self.setupDockWidget(self.collectionViewer.dockWidget)
+        self.setupDockWidget(self.collectionViewer, initialDockArea=QtCore.Qt.LeftDockWidgetArea)
         self.setupDockWidget(self.window.commentsDockWidget)
-        self.setupDockWidget(self.settingsWindow)
-        self.setupDockWidget(self.visualScripting.getAsDockWidget(self.window))
+        self.setupDockWidget(self.settingsViewer, initialDockArea=QtCore.Qt.LeftDockWidgetArea)
+        self.setupDockWidget(self.visualScripting.getAsDockWidget(self.window), initialDockArea=QtCore.Qt.BottomDockWidgetArea)
 
-    def setupDockWidget(self, dockWidget):
+        self.setupDockWidget(self.inspector)
+
+    def setupDockWidget(self, dockWidget : DockWidget, initialDockArea=None):
         # Add visibility checkbox to view main menu:
         self.window.menuView.addAction(dockWidget.toggleViewAction())
         # Allow window functionality (e.g. maximize)
         dockWidget.topLevelChanged.connect(self.dockWidgetTopLevelChanged)
         self.setDockWidgetFlags(dockWidget)
+
+        if initialDockArea != None:
+            self.window.addDockWidget(initialDockArea, dockWidget)
+        else:
+            self.window.addDockWidget(QtCore.Qt.RightDockWidgetArea, dockWidget)
+            dockWidget.toggleViewAction()
 
     def dockWidgetTopLevelChanged(self, changed):
         self.setDockWidgetFlags(self.sender())
@@ -151,25 +164,14 @@ class MainWindowManager(QtCore.QObject):
                 uid = self.tableModel.getUID(idx.row())
                 item = self.dbManager.findOne(uid)
                 if item != None:
-                    self.showPreview(item.get("preview"))
-                    self.showItemInInspector(uid)
+                    self.previewViewer.show(item.get("preview"))
+                    self.inspector.showItem(uid)
 
     def addPreviewToAllEntries(self):
         for collectionName in self.collectionViewer.getSelectedCollectionNames():
             collection = self.dbManager.db[collectionName]
             for item in collection.find({}):
                 collection.update_one({"_id":item["_id"]}, {"$set": {"preview":"C:/Users/compix/Desktop/surprised_pikachu.png"}})
-
-    def showPreview(self, path):
-        if path == None:
-            return
-
-        scene = QtWidgets.QGraphicsScene()
-        pixmap = QtGui.QPixmap(path)
-        scene.addPixmap(pixmap)
-        #self.window.preview.setScene(scene)
-        self.window.preview.setPhoto(pixmap)
-        #self.window.preview.fitInView(scene.sceneRect(), Qt.KeepAspectRatio)
 
     def setupFilter(self):
         wordList = [("\"" + f + "\"") for f in self.tableModel.displayedKeys]
@@ -190,7 +192,7 @@ class MainWindowManager(QtCore.QObject):
 
     def showItemInInspector(self, uid):
         form = self.window.inspectorFormLayout
-        qt_extentions.clearContainer(form)
+        qt_util.clearContainer(form)
         item = self.dbManager.findOne(uid)
         if item != None:
             for key, val in item.items():
@@ -317,16 +319,32 @@ class MainWindowManager(QtCore.QObject):
         self.window.actionLight.setChecked(style == Style.Light)
         self.currentStyle = style
 
-    def saveState(self):
-        settings = QtCore.QSettings(company, appName)
+        self.window.actionSave_Default_Layout.triggered.connect(self.saveDefaultLayout)
+        self.window.actionRestore_Default_Layout.triggered.connect(self.restoreDefaultLayout)
+        
+    def saveDefaultLayout(self):
+        settings = QtCore.QSettings(asset_manager.getDefaultLayoutFilePath("default.ini"), QtCore.QSettings.IniFormat)
+        self.saveState(settings)
+
+    def restoreDefaultLayout(self):
+        settings = QtCore.QSettings(asset_manager.getDefaultLayoutFilePath("default.ini"), QtCore.QSettings.IniFormat)
+        self.restoreState(settings)
+
+    def saveState(self, settings = None):
+        if settings == None:
+            settings = QtCore.QSettings(COMPANY, APP_NAME)
+
+        print(settings.fileName())
         settings.setValue("geometry", self.window.saveGeometry())
         settings.setValue("windowState", self.window.saveState())
         settings.setValue("style", self.currentStyle)
         self.visualScripting.saveWindowState(settings)
         self.collectionViewer.saveState(settings)
 
-    def restoreState(self):
-        settings = QtCore.QSettings(company, appName)
+    def restoreState(self, settings = None):
+        if settings == None:
+            settings = QtCore.QSettings(COMPANY, APP_NAME)
+
         self.window.restoreGeometry(settings.value("geometry"))
         self.window.restoreState(settings.value("windowState"))
         self.setStyle(settings.value("style"))
@@ -349,7 +367,7 @@ class MainWindowManager(QtCore.QObject):
         app.quit()
 
     def show(self):
-        self.window.show()
+        self.window.showMaximized()
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])

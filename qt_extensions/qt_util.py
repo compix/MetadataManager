@@ -35,3 +35,7 @@ class LambdaTask(QRunnable):
 
     def run(self):
         self.func(*self.args, **self.kwargs)
+        
+def clearContainer(container):
+    for i in reversed(range(container.count())): 
+        container.itemAt(i).widget().setParent(None)

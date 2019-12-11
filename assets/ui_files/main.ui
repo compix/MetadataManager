@@ -178,6 +178,14 @@
     <addaction name="actionLight"/>
     <addaction name="actionDark"/>
    </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionSave_Default_Layout"/>
+    <addaction name="actionRestore_Default_Layout"/>
+   </widget>
+   <addaction name="menuFile"/>
    <addaction name="menuView"/>
    <addaction name="menuAbout"/>
    <addaction name="menuStyle"/>
@@ -186,87 +194,6 @@
    <property name="sizeGripEnabled">
     <bool>true</bool>
    </property>
-  </widget>
-  <widget class="QDockWidget" name="previewDockWidget">
-   <property name="windowTitle">
-    <string>Preview</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>1</number>
-   </attribute>
-   <widget class="QWidget" name="previewContents">
-    <layout class="QVBoxLayout" name="verticalLayout_2">
-     <item>
-      <widget class="QFrame" name="previewFrame">
-       <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
-       </property>
-       <layout class="QVBoxLayout" name="layout"/>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-  </widget>
-  <widget class="QDockWidget" name="inspectorDockWidget">
-   <property name="windowTitle">
-    <string>Inspector</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>1</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContents_10">
-    <layout class="QVBoxLayout" name="verticalLayout_4">
-     <item>
-      <widget class="QFrame" name="inspectorFrame">
-       <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_9">
-        <property name="leftMargin">
-         <number>0</number>
-        </property>
-        <property name="topMargin">
-         <number>0</number>
-        </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
-         <number>0</number>
-        </property>
-        <item>
-         <widget class="QScrollArea" name="scrollArea_2">
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents_2">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>69</width>
-             <height>375</height>
-            </rect>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_3">
-            <item>
-             <layout class="QFormLayout" name="inspectorFormLayout"/>
-            </item>
-           </layout>
-          </widget>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-    </layout>
-   </widget>
   </widget>
   <widget class="QDockWidget" name="actionsDockWidget">
    <property name="floating">
@@ -378,11 +305,20 @@
     <string>Dark</string>
    </property>
   </action>
+  <action name="actionSave_Default_Layout">
+   <property name="text">
+    <string>Save Default Layout</string>
+   </property>
+  </action>
+  <action name="actionRestore_Default_Layout">
+   <property name="text">
+    <string>Restore Default Layout</string>
+   </property>
+  </action>
  </widget>
  <tabstops>
   <tabstop>filterEdit</tabstop>
   <tabstop>tableView</tabstop>
-  <tabstop>scrollArea</tabstop>
  </tabstops>
  <resources/>
  <connections/>
