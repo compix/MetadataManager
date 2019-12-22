@@ -177,13 +177,13 @@
     </property>
     <addaction name="actionLight"/>
     <addaction name="actionDark"/>
+    <addaction name="actionSave_Default_Layout"/>
+    <addaction name="actionRestore_Default_Layout"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionSave_Default_Layout"/>
-    <addaction name="actionRestore_Default_Layout"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
