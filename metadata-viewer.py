@@ -1,7 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import sys
 from PySide2 import QtCore, QtWidgets, QtUiTools, QtGui
-import qdarkstyle
 from enum import Enum
 from MetadataManagerCore.mongodb_manager import MongoDBManager
 import operator
@@ -17,7 +16,8 @@ from qt_extensions.Completer import Completer
 from MetadataManagerCore import Keys
 from VisualScripting.VisualScripting import VisualScripting
 from VisualScripting import NodeGraphQt
-from PySide2.QtCore import QFile, QTextStream
+from PySide2.QtCore import QFile, QTextStream, QThreadPool
+from LoaderWindow import LoaderWindow
 
 from assets import asset_manager
 from qt_extensions.DockWidget import DockWidget
@@ -27,22 +27,25 @@ from viewers.PreviewViewer import PreviewViewer
 from viewers.SettingsViewer import SettingsViewer
 from viewers.Inspector import Inspector
 
-
-COMPANY = "WK"
-APP_NAME = "Metadata-Manager"
-mongodbHost = "mongodb://localhost:27017/"
-databaseName = "centralRepository"
+COMPANY = None
+APP_NAME = None
+MONGODB_HOST = None
+DATABASE_NAME = None
+SETTINGS = None
 
 class Style(Enum):
     Dark = 0
     Light = 1
 
 def constructTestCollection(dbManager : MongoDBManager):
-    dbManager.db.drop_collection("Test_Collection")
+    try:
+        dbManager.db.drop_collection("Test_Collection")
 
-    names = ["John", "Kevin", "Peter", "Klaus", "Leo"]
-    for i in range(0,5):
-        dbManager.insertOne("Test_Collection", { "name": names[i%len(names)], "address": f"Highway {i}" })
+        names = ["John", "Kevin", "Peter", "Klaus", "Leo"]
+        for i in range(0,5):
+            dbManager.insertOne("Test_Collection", { "name": names[i%len(names)], "address": f"Highway {i}" })
+    except Exception as e:
+        print(str(e))
 
 class MainWindowManager(QtCore.QObject):
     def __init__(self, app):
@@ -51,6 +54,7 @@ class MainWindowManager(QtCore.QObject):
         self.currentStyle = None
         self.applicationQuitting = False
         self.documentMoficiations = []
+        self.dbManager = None
 
         file = QtCore.QFile(asset_manager.getUIFilePath("main.ui"))
         file.open(QtCore.QFile.ReadOnly)
@@ -66,15 +70,23 @@ class MainWindowManager(QtCore.QObject):
         self.window.actionDark.triggered.connect(lambda : self.setStyle(Style.Dark))
         self.window.actionLight.triggered.connect(lambda : self.setStyle(Style.Light))
 
-        self.dbManager = MongoDBManager(mongodbHost, databaseName)
-
-        constructTestCollection(self.dbManager)
-
         self.settingsViewer = SettingsViewer(self.window)
 
-        #self.dbManager.db[Keys.collectionsMD].delete_one({"_id":"test"})
-        #self.dbManager.insertOne(Keys.collectionsMD, {"_id": "test", "tableHeader":[["Name", "name"], ["Address", "address"], ["Test", "test"]]})
-        #self.dbManager.db[collectionsMD].update_one({"_id": "test"}, {"$set": {"displayedTableKeys":["name", "address"]}})
+        self.initStatusInfo()
+
+        self.collectionViewer = CollectionViewer(self.window)
+
+        self.previewViewer = PreviewViewer(self.window)
+
+        self.inspector = Inspector(self.window)
+
+        self.setupDockWidgets()
+
+        self.window.findPushButton.clicked.connect(self.viewItems)
+
+        self.restoreState()
+
+    def initStatusInfo(self):
         self.mainProgressBar = QtWidgets.QProgressBar(self.window)
         self.mainProgressBar.setMaximumWidth(100)
         self.mainProgressBar.setMaximumHeight(15)
@@ -82,30 +94,27 @@ class MainWindowManager(QtCore.QObject):
 
         self.window.statusBar().showMessage("Test")
 
-        self.collectionViewer = CollectionViewer(self.window, self.dbManager)
+    def setup(self, dbManager):
+        self.dbManager = dbManager
+        constructTestCollection(self.dbManager)
+        self.collectionViewer.setDataBaseManager(self.dbManager)
+        self.inspector.setDatabaseManager(self.dbManager)
+
         self.collectionViewer.updateCollections()
 
-        self.previewViewer = PreviewViewer(self.window)
-
-        self.inspector = Inspector(self.window, self.dbManager)
-
-        self.setupDockWidgets()
-
-        #self.window.findPushButton.clicked.connect(lambda:QThreadPool.globalInstance().start(LambdaTask(self.viewItems)))
-        self.window.findPushButton.clicked.connect(self.viewItems)
-
-        self.restoreState()
+        self.collectionViewer.restoreState(self.settings)
 
         header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.getSelectedCollectionNames())
         self.tableModel = TableModel(self.window, [], header, displayedKeys)
         self.window.tableView.setModel(self.tableModel)
 
-        self.collectionViewer.connectCollectionSelectionUpdateHandler(self.updateTableModelHeader)
+        selModel = self.window.tableView.selectionModel()
+        selModel.selectionChanged.connect(self.onTableSelectionChanged)
 
         self.setupFilter()
 
-        selModel = self.window.tableView.selectionModel()
-        selModel.selectionChanged.connect(self.onTableSelectionChanged)
+
+        self.collectionViewer.connectCollectionSelectionUpdateHandler(self.updateTableModelHeader)
 
     def updateTableModelHeader(self):
         header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.getSelectedCollectionNames())
@@ -296,9 +305,7 @@ class MainWindowManager(QtCore.QObject):
         self.app.setStyleSheet(None)
         self.app.setStyle("Fusion")
 
-        if (style == Style.Dark or style == None) and self.currentStyle != style:
-            self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyside2())
-        elif style == Style.Light and self.currentStyle != style:
+        if (style == Style.Dark) and self.currentStyle != style:
             palette = QtGui.QPalette()
             palette.setColor(QtGui.QPalette.Window, QtGui.QColor(53, 53, 53))
             palette.setColor(QtGui.QPalette.WindowText, QtCore.Qt.white)
@@ -314,6 +321,9 @@ class MainWindowManager(QtCore.QObject):
             palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(42, 130, 218))
             palette.setColor(QtGui.QPalette.HighlightedText, QtCore.Qt.black)
             self.app.setPalette(palette)
+        elif (style == Style.Light or style == None) and self.currentStyle != style:
+            self.app.setStyleSheet(None)
+            self.app.setPalette(QtWidgets.QApplication.style().standardPalette())
 
         self.window.actionDark.setChecked(style == Style.Dark)
         self.window.actionLight.setChecked(style == Style.Light)
@@ -334,7 +344,6 @@ class MainWindowManager(QtCore.QObject):
         if settings == None:
             settings = QtCore.QSettings(COMPANY, APP_NAME)
 
-        print(settings.fileName())
         settings.setValue("geometry", self.window.saveGeometry())
         settings.setValue("windowState", self.window.saveState())
         settings.setValue("style", self.currentStyle)
@@ -345,11 +354,11 @@ class MainWindowManager(QtCore.QObject):
         if settings == None:
             settings = QtCore.QSettings(COMPANY, APP_NAME)
 
+        self.settings = settings
         self.window.restoreGeometry(settings.value("geometry"))
         self.window.restoreState(settings.value("windowState"))
         self.setStyle(settings.value("style"))
         self.visualScripting.restoreWindowState(settings)
-        self.collectionViewer.restoreState(settings)
 
     def eventFilter(self, obj, event):
         if obj is self.window and event.type() == QtCore.QEvent.Close:
@@ -359,8 +368,9 @@ class MainWindowManager(QtCore.QObject):
         return super(MainWindowManager, self).eventFilter(obj, event)
 
     @QtCore.Slot()
-    def quitApp(self):
-        self.saveState()
+    def quitApp(self, bSaveState = True):
+        if bSaveState:
+            self.saveState()
         self.window.removeEventFilter(self)
         self.applicationQuitting = True
         QtCore.QThreadPool.globalInstance().waitForDone()
@@ -371,6 +381,16 @@ class MainWindowManager(QtCore.QObject):
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
-    w = MainWindowManager(app)
-    w.show()
+
+    SETTINGS = QtCore.QSettings(asset_manager.getMainSettingsPath(), QtCore.QSettings.IniFormat)
+
+    COMPANY = SETTINGS.value("company")
+    APP_NAME = SETTINGS.value("app_name")
+    MONGODB_HOST = SETTINGS.value("mongodb_host")
+    DATABASE_NAME = SETTINGS.value("db_name")
+
+    mainWindow = MainWindowManager(app)
+
+    loaderWindow = LoaderWindow(app, mainWindow, MONGODB_HOST, DATABASE_NAME)
+
     sys.exit(app.exec_())

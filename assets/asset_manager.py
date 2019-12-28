@@ -9,3 +9,6 @@ def getUIFilePath(uiFileName):
 
 def getDefaultLayoutFilePath(layoutName):
     return path.join(BASE_DEFAULT_LAYOUT_FILES_PATH, layoutName)
+
+def getMainSettingsPath():
+    return path.join(BASE_PATH, "settings.ini")

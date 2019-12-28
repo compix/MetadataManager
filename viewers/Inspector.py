@@ -4,9 +4,12 @@ from qt_extensions import qt_util
 from PySide2 import QtWidgets
 
 class Inspector(DockWidget):
-    def __init__(self, parentWindow, dbManager):
+    def __init__(self, parentWindow):
         super().__init__("Inspector", parentWindow, asset_manager.getUIFilePath("inspector.ui"))
         
+        self.dbManager = None
+
+    def setDatabaseManager(self, dbManager):
         self.dbManager = dbManager
         
     def showItem(self, uid):
