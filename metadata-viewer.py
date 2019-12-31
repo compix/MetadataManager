@@ -14,7 +14,6 @@ import pymongo
 from TableModel import TableModel
 from qt_extensions.Completer import Completer
 from MetadataManagerCore import Keys
-from VisualScripting.VisualScripting import VisualScripting
 from VisualScripting import NodeGraphQt
 from PySide2.QtCore import QFile, QTextStream, QThreadPool
 from LoaderWindow import LoaderWindow
@@ -26,13 +25,17 @@ from viewers.CollectionViewer import CollectionViewer
 from viewers.PreviewViewer import PreviewViewer
 from viewers.SettingsViewer import SettingsViewer
 from viewers.Inspector import Inspector
+from random import random
+
+from VisualScripting.VisualScripting import VisualScripting
+import VisualScriptingExtensions.mongodb_nodes
 
 COMPANY = None
 APP_NAME = None
 MONGODB_HOST = None
 DATABASE_NAME = None
 SETTINGS = None
-
+    
 class Style(Enum):
     Dark = 0
     Light = 1
@@ -40,6 +43,7 @@ class Style(Enum):
 def constructTestCollection(dbManager : MongoDBManager):
     try:
         dbManager.db.drop_collection("Test_Collection")
+        dbManager.db.drop_collection("Test_Collection" + Keys.OLD_VERSIONS_COLLECTION_SUFFIX)
 
         names = ["John", "Kevin", "Peter", "Klaus", "Leo"]
         for i in range(0,5):
@@ -96,7 +100,11 @@ class MainWindowManager(QtCore.QObject):
 
     def setup(self, dbManager):
         self.dbManager = dbManager
-        constructTestCollection(self.dbManager)
+
+        VisualScriptingExtensions.mongodb_nodes.DB_MANAGER = dbManager
+        self.visualScripting.updateNodeRegistration()
+
+        #constructTestCollection(self.dbManager)
         self.collectionViewer.setDataBaseManager(self.dbManager)
         self.inspector.setDatabaseManager(self.dbManager)
 
@@ -257,6 +265,8 @@ class MainWindowManager(QtCore.QObject):
 
     @timeit
     def viewItems(self):
+        #self.dbManager.insertOrModifyDocument("Test_Collection", "paul", {"name":"Paul", "address":f"Litauen{str(random())}", "some_other_entry":5})
+
         if len(self.tableModel.displayedKeys) == 0:
             return
 
