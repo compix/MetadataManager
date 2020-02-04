@@ -20,7 +20,7 @@ class LoaderWindow(QtCore.QObject):
         #self.window.setParent(mainWindow.window)
 
         self.window.setWindowFlags(QtCore.Qt.FramelessWindowHint)
-        self.window.setStyleSheet("background:transparent; border-image: url(C:/Users/Wladimir/Desktop/Metadata-Manager/assets/images/bg.png) 0 0 0 0 stretch stretch;")
+        self.window.setStyleSheet("background:transparent; border-image: url(./assets/images/bg.png) 0 0 0 0 stretch stretch;")
         self.window.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.window.setFixedSize(300,100)
         self.window.show()
@@ -34,6 +34,7 @@ class LoaderWindow(QtCore.QObject):
 
         while not connected:
             self.showMessage("Connecting to database...")
+
             try:
                 self.dbManager.connect()
                 self.showMessage("Connected.")
