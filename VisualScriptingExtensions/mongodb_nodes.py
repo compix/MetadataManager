@@ -4,8 +4,9 @@ DB_MANAGER = None
 MONGODB_IDENTIFIER = "MongoDB"
 
 @defNode("Insert Or Modify Document", isExecutable=True, identifier=MONGODB_IDENTIFIER)
-def insertOrModifyDocument(collectionName, sid, dataDict):
+def insertOrModifyDocument(collectionName, sid, dataDict, checkForModifications):
     if DB_MANAGER != None:
-        DB_MANAGER.insertOrModifyDocument(collectionName, sid, dataDict)
+        checkForModifications = checkForModifications == True or checkForModifications == "True"
+        DB_MANAGER.insertOrModifyDocument(collectionName, sid, dataDict, checkForModifications)
     else:
         print("DB Manager is None.")

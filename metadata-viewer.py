@@ -3,6 +3,10 @@ import sys
 from PySide2 import QtCore, QtWidgets, QtUiTools, QtGui
 from enum import Enum
 from MetadataManagerCore.mongodb_manager import MongoDBManager
+from MetadataManagerCore.actions.ActionManager import ActionManager
+from MetadataManagerCore.StateManager import StateManager
+from MetadataManagerCore.actions.DocumentAction import DocumentAction
+
 import operator
 from MetadataManagerCore.util import timeit
 from multiprocessing.dummy import Pool as ThreadPool 
@@ -20,11 +24,14 @@ from LoaderWindow import LoaderWindow
 
 from assets import asset_manager
 from qt_extensions.DockWidget import DockWidget
+import os
 
 from viewers.CollectionViewer import CollectionViewer
 from viewers.PreviewViewer import PreviewViewer
 from viewers.SettingsViewer import SettingsViewer
 from viewers.Inspector import Inspector
+from viewers.ActionsViewer import ActionsViewer
+from viewers.ActionManagerViewer import ActionManagerViewer
 from random import random
 
 from VisualScripting.VisualScripting import VisualScripting
@@ -67,7 +74,8 @@ class MainWindowManager(QtCore.QObject):
 
         self.window.installEventFilter(self)
 
-        self.visualScripting = VisualScripting("VisualScripting_SaveData", parentWindow=self.window)
+        visualScriptingSaveDataFolder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "VisualScripting_SaveData")
+        self.visualScripting = VisualScripting(visualScriptingSaveDataFolder, parentWindow=self.window)
 
         self.setStyle(Style.Light)
 
@@ -83,6 +91,9 @@ class MainWindowManager(QtCore.QObject):
         self.previewViewer = PreviewViewer(self.window)
 
         self.inspector = Inspector(self.window)
+
+        self.actionsViewer = ActionsViewer(self.window)
+        self.actionsManagerViewer = ActionManagerViewer(self.window)
 
         self.setupDockWidgets()
 
@@ -101,18 +112,24 @@ class MainWindowManager(QtCore.QObject):
     def setup(self, dbManager):
         self.dbManager = dbManager
 
+        self.stateManager = StateManager(self.dbManager)
+        self.stateManager.loadState()
+        self.actionManager = self.stateManager.actionManager
+
         VisualScriptingExtensions.mongodb_nodes.DB_MANAGER = dbManager
         self.visualScripting.updateNodeRegistration()
 
         #constructTestCollection(self.dbManager)
         self.collectionViewer.setDataBaseManager(self.dbManager)
         self.inspector.setDatabaseManager(self.dbManager)
+        self.actionsViewer.setDatabaseManager(self.dbManager)
+        self.actionsManagerViewer.setDataBaseManager(self.dbManager)
 
         self.collectionViewer.updateCollections()
 
         self.collectionViewer.restoreState(self.settings)
 
-        header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.getSelectedCollectionNames())
+        header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.yieldSelectedCollectionNames())
         self.tableModel = TableModel(self.window, [], header, displayedKeys)
         self.window.tableView.setModel(self.tableModel)
 
@@ -121,11 +138,31 @@ class MainWindowManager(QtCore.QObject):
 
         self.setupFilter()
 
-
         self.collectionViewer.connectCollectionSelectionUpdateHandler(self.updateTableModelHeader)
 
+        class PrintAction(DocumentAction):
+            def execute(self, document):
+                print(document)
+
+        class TestAction(DocumentAction):
+            def execute(self, document):
+                print(document)
+
+        class TestAction2(DocumentAction):
+            def execute(self, document):
+                print(document)
+
+        printAction = PrintAction()
+        self.actionManager.registerAction(printAction)
+        self.actionManager.registerAction(TestAction())
+        self.actionManager.registerAction(TestAction2())
+        #self.actionManager.linkActionToCollection(printAction.id, "Customer_Table")
+
+        self.actionsViewer.setup(self.actionManager, self, self.collectionViewer)
+        self.actionsManagerViewer.setActionManager(self.actionManager)
+
     def updateTableModelHeader(self):
-        header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.getSelectedCollectionNames())
+        header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.yieldSelectedCollectionNames())
         self.tableModel.updateHeader(header, displayedKeys)
 
     def applyAllDocumentModifications(self):
@@ -143,13 +180,13 @@ class MainWindowManager(QtCore.QObject):
     def setupDockWidgets(self):
         self.setupDockWidget(self.previewViewer)
         
-        self.setupDockWidget(self.window.actionsDockWidget)
         self.setupDockWidget(self.collectionViewer, initialDockArea=QtCore.Qt.LeftDockWidgetArea)
-        self.setupDockWidget(self.window.commentsDockWidget)
         self.setupDockWidget(self.settingsViewer, initialDockArea=QtCore.Qt.LeftDockWidgetArea)
         self.setupDockWidget(self.visualScripting.getAsDockWidget(self.window), initialDockArea=QtCore.Qt.BottomDockWidgetArea)
 
         self.setupDockWidget(self.inspector)
+        self.setupDockWidget(self.actionsViewer)
+        self.setupDockWidget(self.actionsManagerViewer)
 
     def setupDockWidget(self, dockWidget : DockWidget, initialDockArea=None):
         # Add visibility checkbox to view main menu:
@@ -175,17 +212,26 @@ class MainWindowManager(QtCore.QObject):
                 QtCore.Qt.WindowCloseButtonHint)
             dockWidget.show()
 
+    @property
+    def selectedDocumentIds(self):
+        for rowIdx in self.window.tableView.selectionModel().selectedRows():
+            yield self.tableModel.getUID(rowIdx.row())
+
     def onTableSelectionChanged(self, newSelection, oldSelection):
-        for sel in newSelection:
-            for idx in sel.indexes():
-                uid = self.tableModel.getUID(idx.row())
-                item = self.dbManager.findOne(uid)
-                if item != None:
-                    self.previewViewer.show(item.get("preview"))
-                    self.inspector.showItem(uid)
+        #selectedRows = set([idx.row() for sel in newSelection for idx in sel.indexes()])
+        selectedRows = self.window.tableView.selectionModel().selectedRows()
+        #newSelectedRows = set([idx.row() for idx in newSelection.indexes()])
+
+        if len(selectedRows) > 0:
+            lastSelectedRowIdx = selectedRows[-1].row()
+            uid = self.tableModel.getUID(lastSelectedRowIdx)
+            item = self.dbManager.findOne(uid)
+            if item != None:
+                self.previewViewer.show(item.get("preview"))
+                self.inspector.showItem(uid)
 
     def addPreviewToAllEntries(self):
-        for collectionName in self.collectionViewer.getSelectedCollectionNames():
+        for collectionName in self.collectionViewer.yieldSelectedCollectionNames():
             collection = self.dbManager.db[collectionName]
             for item in collection.find({}):
                 collection.update_one({"_id":item["_id"]}, {"$set": {"preview":"C:/Users/compix/Desktop/surprised_pikachu.png"}})
@@ -226,29 +272,16 @@ class MainWindowManager(QtCore.QObject):
         except:    
             return {"_id":"None"}
 
-    def filteredItems(self, collection):
-        filtered = collection.find(self.getItemsFilter()) # '_id': False
-        distinctKey = self.window.distinctEdit.text()
-        
-        if len(distinctKey) > 0:
-            distinctKeys = filtered.distinct(distinctKey)
-            distinctMap = dict(zip(distinctKeys, np.repeat(False, len(distinctKeys))))
-            for item in filtered:
-                val = item.get(distinctKey)
-                if val != None:
-                    if not distinctMap.get(val):
-                        distinctMap[val] = True
-                        yield item
-        else:
-            for item in filtered:
-                yield item
+    def getFilteredDocumentsOfCollection(self, collectionName):
+        for d in self.dbManager.getFilteredDocuments(collectionName, self.getItemsFilter(), distinctionText=self.window.distinctEdit.text()):
+            yield d
 
     def getMaxDisplayedTableItems(self):
         num = 0
         filter = self.getItemsFilter()
         distinctKey = self.window.distinctEdit.text()
 
-        for collectionName in self.collectionViewer.getSelectedCollectionNames():
+        for collectionName in self.collectionViewer.yieldSelectedCollectionNames():
             collection = self.dbManager.db[collectionName]
             if len(distinctKey) > 0:
                 num += len(collection.find(self.getItemsFilter()).distinct(distinctKey))
@@ -281,8 +314,8 @@ class MainWindowManager(QtCore.QObject):
 
         entries = []
         i = 0
-        for collectionName in self.collectionViewer.getSelectedCollectionNames():
-            for item in self.filteredItems(self.dbManager.db[collectionName]):
+        for collectionName in self.collectionViewer.yieldSelectedCollectionNames():
+            for item in self.getFilteredDocumentsOfCollection(collectionName):
                 if self.applicationQuitting:
                     return
 
@@ -292,6 +325,11 @@ class MainWindowManager(QtCore.QObject):
                 self.updateProgress(i)
         
         qt_util.runInMainThread(self.tableModel.addEntries, entries)
+
+    def getFilteredDocuments(self):
+        for collectionName in self.collectionViewer.yieldSelectedCollectionNames():
+            for d in self.getFilteredDocumentsOfCollection(collectionName):
+                yield d
 
     def extractSystemValues(self, item):
         vals = []
@@ -359,6 +397,8 @@ class MainWindowManager(QtCore.QObject):
         settings.setValue("style", self.currentStyle)
         self.visualScripting.saveWindowState(settings)
         self.collectionViewer.saveState(settings)
+
+        self.stateManager.saveState()
 
     def restoreState(self, settings = None):
         if settings == None:

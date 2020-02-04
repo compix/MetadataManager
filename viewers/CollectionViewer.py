@@ -74,7 +74,7 @@ class CollectionViewer(DockWidget):
         self.collectionCheckBoxMap[collectionName] = collectionCheckbox
         self.collectionsLayout.addWidget(collectionCheckbox)
 
-    def getSelectedCollectionNames(self):
+    def yieldSelectedCollectionNames(self):
         for collectionName in self.dbManager.getVisibleCollectionNames():
             collectionCheckbox = self.collectionCheckBoxMap.get(collectionName)
             if collectionCheckbox != None:
