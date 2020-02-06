@@ -89,7 +89,6 @@ class ActionManagerViewer(DockWidget):
         
         self.collectionActionsListModel = QStandardItemModel(self.widget)
         self.collectionActionsListView.setModel(self.collectionActionsListModel)
-        self.collectionActionsListModel.itemChanged.connect(self.onCollectionActionsListChanged)
 
         self.widget.collectionComboBox.currentIndexChanged.connect(self.onCollectionSelectionChanged)
 
@@ -109,39 +108,13 @@ class ActionManagerViewer(DockWidget):
             self.collectionActionsListModel.removeRow(listItem.row())
             self.actionManager.unlinkActionFromCollection(actionId, self.selectedCollectionName)
 
-    def onCollectionActionsListChanged(self, item):
-        return
-        itemName = item.text()
-
-        currentCollection = self.selectedCollectionName
-        collectionActionIds = self.actionManager.getCollectionActionIds(currentCollection)
-
-        if item.hasChildren():
-            self.collectionActionsListModel.removeRow(item.row())
-
-            # Add the children:
-            for childActionId in self.actionManager.getActionIdsOfCategory(itemName):
-                if self.actionManager.isValidActionId(childActionId) and not childActionId in collectionActionIds:
-                    self.addCollectionActionEntry(childActionId)
-                    self.actionManager.linkActionToCollection(childActionId, currentCollection)
-        else:
-            if self.actionManager.isValidActionId(itemName):
-                listItems = [self.collectionActionsListModel.item(i) for i in range(0, self.collectionActionsListModel.rowCount())]
-                itemsWithName = [i for i in listItems if i.text() == itemName]
-
-                if len(itemsWithName) > 1:
-                    print("Removing.")
-                    self.collectionActionsListModel.removeRow(item.row())
-                else:
-                    print("Linking.")
-                    self.actionManager.linkActionToCollection(itemName, currentCollection)
-                    #item.setDropEnabled(False)
-
     def setActionManager(self, actionManager: ActionManager):
         self.actionManager = actionManager
 
         self.refreshTreeView()
         self.refreshCollectionView()
+
+        self.actionManager.registerActionEvent.subscribe(lambda action: self.refreshTreeView())
 
     def setDataBaseManager(self, dbManager: MongoDBManager):
         self.dbManager = dbManager

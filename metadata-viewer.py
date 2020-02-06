@@ -36,6 +36,8 @@ from random import random
 
 from VisualScripting.VisualScripting import VisualScripting
 import VisualScriptingExtensions.mongodb_nodes
+import VisualScriptingExtensions.document_action_nodes
+from VisualScriptingExtensions.CodeGenerator import CodeGenerator
 
 COMPANY = None
 APP_NAME = None
@@ -75,7 +77,8 @@ class MainWindowManager(QtCore.QObject):
         self.window.installEventFilter(self)
 
         visualScriptingSaveDataFolder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "VisualScripting_SaveData")
-        self.visualScripting = VisualScripting(visualScriptingSaveDataFolder, parentWindow=self.window)
+        self.codeGenerator = CodeGenerator()
+        self.visualScripting = VisualScripting(visualScriptingSaveDataFolder, parentWindow=self.window, codeGenerator=self.codeGenerator)
 
         self.setStyle(Style.Light)
 
@@ -115,6 +118,8 @@ class MainWindowManager(QtCore.QObject):
         self.stateManager = StateManager(self.dbManager)
         self.stateManager.loadState()
         self.actionManager = self.stateManager.actionManager
+
+        self.codeGenerator.setActionManager(self.actionManager)
 
         VisualScriptingExtensions.mongodb_nodes.DB_MANAGER = dbManager
         self.visualScripting.updateNodeRegistration()
