@@ -65,7 +65,8 @@ class CodeGenerator(code_generator.CodeGenerator):
 
                 self.writeCodeLine(srcFile, "@property", code_generator.DEFAULT_INDENT)
                 self.writeCodeLine(srcFile, "def category(self):", code_generator.DEFAULT_INDENT)
-                self.writeCodeLine(srcFile, f"return {startNode.category}", code_generator.DEFAULT_INDENT + code_generator.DEFAULT_INDENT)
+                category = startNode.category if startNode.category != None and startNode.category != "" and not startNode.category.isspace() else "Default"
+                self.writeCodeLine(srcFile, f"return {category}", code_generator.DEFAULT_INDENT + code_generator.DEFAULT_INDENT)
 
             pathonFileDir = os.path.dirname(srcFilePath)
 
@@ -75,6 +76,10 @@ class CodeGenerator(code_generator.CodeGenerator):
             execModule = importlib.import_module(moduleName)
             importlib.reload(execModule)
             docAction = execModule.DocumentActionVS()
+
+            if self.actionManager.isActionIdRegistered(docAction.id):
+                self.actionManager.unregisterActionId(docAction.id)
+
             self.actionManager.registerAction(docAction)
 
         return srcFilePath

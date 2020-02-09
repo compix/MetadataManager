@@ -232,7 +232,7 @@ class MainWindowManager(QtCore.QObject):
             uid = self.tableModel.getUID(lastSelectedRowIdx)
             item = self.dbManager.findOne(uid)
             if item != None:
-                self.previewViewer.show(item.get("preview"))
+                self.previewViewer.showPreview(item.get("preview"))
                 self.inspector.showItem(uid)
 
     def addPreviewToAllEntries(self):

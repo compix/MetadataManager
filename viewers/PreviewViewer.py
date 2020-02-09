@@ -14,7 +14,7 @@ class PreviewViewer(DockWidget):
         self.preview.toggleDragMode()
         self.widget.previewFrame.layout().addWidget(self.preview)
 
-    def show(self, path):
+    def showPreview(self, path):
         if path == None:
             self.clearPreview()
             return
