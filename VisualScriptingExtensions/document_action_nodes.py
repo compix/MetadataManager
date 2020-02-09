@@ -26,7 +26,7 @@ class DocumentActionNode(ExecuteNode):
         nonEmptyTags = []
         for tag in tags:
             if tag != None and tag != '' and not tag.isspace():
-                nonEmptyTags.append(tag)
+                nonEmptyTags.append(f"\"{tag}\"")
 
         fixedTagsString = ','.join(nonEmptyTags)
         return f'[{fixedTagsString}]'
