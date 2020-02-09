@@ -37,6 +37,7 @@ from random import random
 from VisualScripting.VisualScripting import VisualScripting
 import VisualScriptingExtensions.mongodb_nodes
 import VisualScriptingExtensions.document_action_nodes
+import VisualScriptingExtensions.versioning_nodes
 from VisualScriptingExtensions.CodeGenerator import CodeGenerator
 
 COMPANY = None
