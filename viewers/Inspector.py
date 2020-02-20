@@ -19,7 +19,8 @@ class Inspector(DockWidget):
         item = self.dbManager.findOne(uid)
         if item != None:
             for key, val in item.items():
-                valueLabel = QtWidgets.QLabel(str(val))
-                valueLabel.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard | Qt.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
-
-                form.addRow(str(key), valueLabel)
+                valueEdit = QtWidgets.QLineEdit()
+                valueEdit.setReadOnly(True)
+                valueEdit.setText(str(val))
+                valueEdit.setStyleSheet("* { background-color: rgba(0, 0, 0, 0); }")
+                form.addRow(str(key), valueEdit)

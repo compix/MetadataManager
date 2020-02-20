@@ -7,6 +7,7 @@ from PySide2 import QtCore
 from MetadataManagerCore.actions.DocumentAction import DocumentAction
 from viewers.CollectionViewer import CollectionViewer
 from MetadataManagerCore.actions.ActionManager import ActionManager
+from PySide2.QtCore import QThreadPool
 
 class ActionsViewer(DockWidget):
     def __init__(self, parentWindow):
@@ -18,7 +19,8 @@ class ActionsViewer(DockWidget):
 
         self.widget.actionsLayout.setAlignment(QtCore.Qt.AlignTop)
 
-        self.targetMap = {"Selected Items": self.executeActionOnAllSelectedDocuments, "Filtered Items": self.executeActionOnAllFilteredDocuments}
+        self.targetMap = {"Selected Items": self.executeActionOnAllSelectedDocuments, 
+                          "Filtered Items": self.executeActionOnAllFilteredDocuments}
         for target in self.targetMap.keys():
             self.widget.targetComboBox.addItem(target)
 
@@ -66,7 +68,7 @@ class ActionsViewer(DockWidget):
             for actionId in availableActionIds:
                 a = self.actionManager.getActionById(actionId)
                 actionButton = QtWidgets.QPushButton(a.id, self.widget)
-                actionButton.clicked.connect(lambda: self.targetMap[target](a))
+                actionButton.clicked.connect(lambda: QThreadPool.globalInstance().start(qt_util.LambdaTask(self.targetMap[target],a)))
                 self.widget.actionsLayout.addWidget(actionButton)
 
     def executeActionOnAllSelectedDocuments(self, action: DocumentAction):
