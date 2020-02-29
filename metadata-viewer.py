@@ -410,6 +410,7 @@ class MainWindowManager(QtCore.QObject):
         self.collectionViewer.saveState(settings)
 
         self.stateManager.saveState()
+        self.deadlineServiceViewer.saveState(settings)
 
     def restoreState(self, settings = None):
         if settings == None:
@@ -420,6 +421,7 @@ class MainWindowManager(QtCore.QObject):
         self.window.restoreState(settings.value("windowState"))
         self.setStyle(settings.value("style"))
         self.visualScripting.restoreWindowState(settings)
+        self.deadlineServiceViewer.restoreState(settings)
 
     def eventFilter(self, obj, event):
         if obj is self.window and event.type() == QtCore.QEvent.Close:
