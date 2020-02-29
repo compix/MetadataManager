@@ -32,12 +32,14 @@ from viewers.SettingsViewer import SettingsViewer
 from viewers.Inspector import Inspector
 from viewers.ActionsViewer import ActionsViewer
 from viewers.ActionManagerViewer import ActionManagerViewer
+from viewers.DeadlineServiceViewer import DeadlineServiceViewer
 from random import random
 
 from VisualScripting.VisualScripting import VisualScripting
 import VisualScriptingExtensions.mongodb_nodes
 import VisualScriptingExtensions.document_action_nodes
 import VisualScriptingExtensions.versioning_nodes
+import VisualScriptingExtensions.third_party_extensions.deadline_nodes
 from VisualScriptingExtensions.CodeGenerator import CodeGenerator
 
 COMPANY = None
@@ -98,6 +100,8 @@ class MainWindowManager(QtCore.QObject):
 
         self.actionsViewer = ActionsViewer(self.window)
         self.actionsManagerViewer = ActionManagerViewer(self.window)
+        self.deadlineServiceViewer = DeadlineServiceViewer(self.window)
+        VisualScriptingExtensions.third_party_extensions.deadline_nodes.DEADLINE_SERVICE = self.deadlineServiceViewer.deadlineService
 
         self.setupDockWidgets()
 
@@ -193,6 +197,7 @@ class MainWindowManager(QtCore.QObject):
         self.setupDockWidget(self.inspector)
         self.setupDockWidget(self.actionsViewer)
         self.setupDockWidget(self.actionsManagerViewer)
+        self.setupDockWidget(self.deadlineServiceViewer)
 
     def setupDockWidget(self, dockWidget : DockWidget, initialDockArea=None):
         # Add visibility checkbox to view main menu:
