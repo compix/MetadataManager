@@ -78,6 +78,40 @@
        </property>
       </widget>
      </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Deadline Repository Path:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLineEdit" name="deadlineRepositoryLocationLineEdit">
+       <property name="text">
+        <string>C:\DeadlineRepository10</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QComboBox" name="installPluginComboBox"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="installPluginButton">
+       <property name="maximumSize">
+        <size>
+         <width>80</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Install Plugin</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>

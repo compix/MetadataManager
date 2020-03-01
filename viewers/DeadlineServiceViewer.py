@@ -5,10 +5,11 @@ from PySide2 import QtWidgets
 from PySide2.QtCore import Qt
 from PySide2 import QtCore
 from PySide2.QtCore import QThreadPool
-from MetadataManagerCore.third_party_integrations.deadline_service import DeadlineService, DeadlineServiceInfo
+from MetadataManagerCore.third_party_integrations.deadline.deadline_service import DeadlineService, DeadlineServiceInfo
 import os
 from qt_extensions import qt_util
 from PySide2.QtCore import QThreadPool
+from PySide2.QtWidgets import QMessageBox
 
 class DeadlineServiceViewer(DockWidget):
     def __init__(self, parentWindow):
@@ -18,8 +19,14 @@ class DeadlineServiceViewer(DockWidget):
         self.deadlineService : DeadlineService = DeadlineService(None)
 
         self.widget.refreshConnectionButton.clicked.connect(self.onRefreshConnectionButtonClick)
+        self.widget.installPluginButton.clicked.connect(self.onInstallPluginClick)
 
         self.deadlineService.messageUpdateEvent.subscribe(self.onDeadlineServiceMessageUpdate)
+
+        self.availablePluginsMap = {"3ds Max Pipeline Plugin":"3dsMaxPipelinePlugin"}
+
+        for key in self.availablePluginsMap.keys():
+            self.widget.installPluginComboBox.addItem(key)
 
     def saveState(self, settings):
         settings.setValue("deadline_service", self.deadlineService.info.__dict__)
@@ -34,6 +41,15 @@ class DeadlineServiceViewer(DockWidget):
     def refreshDeadlineServiceInfo(self, info):
         QThreadPool.globalInstance().start(qt_util.LambdaTask(self.updateInfo, info))
 
+    def onInstallPluginClick(self):
+        selectedPlugin = self.widget.installPluginComboBox.currentText()
+        installationSuccessful = self.deadlineService.installKnownDeadlinePlugin(self.availablePluginsMap.get(selectedPlugin))
+        infoText = f"Sucessfully installed {selectedPlugin}." if installationSuccessful else f"Failed to install {selectedPlugin}. Please check the log."
+        self.log(infoText)
+
+        if not installationSuccessful:
+            QMessageBox.warning(self.widget, "Installation Failed", infoText)
+
     def restoreState(self, settings):
         info = DeadlineServiceInfo()
         infoDict = settings.value("deadline_service")
@@ -46,6 +62,7 @@ class DeadlineServiceViewer(DockWidget):
                 self.widget.portLineEdit.setText(str(info.webservicePort))
                 self.widget.deadlineStandalonePathLineEdit.setText(str(info.deadlineStandalonePythonPackagePath))
                 self.widget.deadlineInstallPathLineEdit.setText(str(info.deadlineInstallPath))
+                self.widget.deadlineRepositoryLocationLineEdit.setText(str(info.deadlineRepositoryLocation))
 
                 self.refreshDeadlineServiceInfo(info)
             except Exception as e:

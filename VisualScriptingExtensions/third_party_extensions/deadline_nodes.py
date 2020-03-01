@@ -3,14 +3,91 @@ AWS Thinkbox Software Deadline nodes
 """ 
 
 from VisualScripting.node_exec.base_nodes import defNode, defInlineNode
-from MetadataManagerCore.third_party_integrations.deadline_service import DeadlineService, DeadlineServiceInfo
+from MetadataManagerCore.third_party_integrations.deadline.deadline_service import DeadlineService, DeadlineServiceInfo
+import os
+import tempfile
 
 DEADLINE_SERVICE : DeadlineService = None
 DEADLINE_IDENTIFIER = "Deadline"
 
-@defNode("Submit Job", isExecutable=True, returnNames=["Job Dict"], identifier=DEADLINE_IDENTIFIER)
-def submitJob(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=[]):
-    if DEADLINE_SERVICE != None:
-        return DEADLINE_SERVICE.submitJob(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=auxiliaryFilenames)
+def removeFiles(filenames):
+    for f in filenames:
+        try:
+            os.remove(f)
+        except Exception as e:
+            print(str(e))
 
-    return None
+@defNode("Submit Job Files", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
+def submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=[], quiet=True, returnJobIdOnly=False, removeAuxiliaryFilesAfterSubmission=False):
+    submissionResult = "" if returnJobIdOnly else None
+    if DEADLINE_SERVICE != None:
+        submissionResult = DEADLINE_SERVICE.submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=auxiliaryFilenames, quiet=quiet, returnJobIdOnly=returnJobIdOnly)
+
+    if removeAuxiliaryFilesAfterSubmission:
+        removeFiles(auxiliaryFilenames)
+
+    return submissionResult
+
+@defNode("Submit Job", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
+def submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=[], quiet=True, returnJobIdOnly=False, jobDependencies=[], removeAuxiliaryFilesAfterSubmission=False):
+    if jobDependencies != None and (isinstance(jobDependencies, str) or len(jobDependencies) > 0):
+        jobInfoDict = jobInfoDict.copy()
+        deps = jobInfoDict.get("JobDependencies")
+        if deps == None or deps == '':
+            deps = jobDependencies if isinstance(jobDependencies, str) else ",".join(jobDependencies)
+        else:
+            deps = deps + "," + (jobDependencies if isinstance(jobDependencies, str) else ",".join(jobDependencies))
+        
+        jobInfoDict["JobDependencies"] = deps
+
+    submissionResult = "" if returnJobIdOnly else None
+    if DEADLINE_SERVICE != None:
+        submissionResult = DEADLINE_SERVICE.submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=auxiliaryFilenames, quiet=quiet, returnJobIdOnly=returnJobIdOnly)
+
+    if removeAuxiliaryFilesAfterSubmission:
+        removeFiles(auxiliaryFilenames)
+
+    return submissionResult
+
+@defNode("Get Job Id", returnNames=["Job Id"], identifier=DEADLINE_IDENTIFIER)
+def getJobId(jobDictionary):
+    return jobDictionary.get("_id") if jobDictionary != None else ""
+
+@defNode("Create Job Info Dictionary", isExecutable=True, returnNames=["Job Info Dict"], identifier=DEADLINE_IDENTIFIER)
+def createJobInfoDictionary(pluginName, name="Test Job", batchName="", priority=50, department="", pool="", secondaryPool="", group="",jobDependencies=[]):
+    jobDict = {"Plugin":pluginName, "Name": name, "BatchName":batchName, "Priority":priority, "Department":department, "Pool":pool, "SecondaryPool":secondaryPool, "Group":group,
+        "JobDependencies":(",".join(jobDependencies) if isinstance(jobDependencies, list) else jobDependencies)}
+    return jobDict
+
+@defNode("Submit 3ds Max Pipeline Job", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
+def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInfoDict, pluginInfoDict, auxiliaryFilenames=[], quiet=True, 
+        returnJobIdOnly=False, jobDependencies=[], removeAuxiliaryFilesAfterSubmission=False):
+    pipelineMaxScriptFilename = pipelineMaxScriptFilename.replace("\\", "/")
+    
+    # Generate auxiliary pipeline info file:
+    tempPipelineInfoFilename = tempfile.mktemp(suffix=".info")
+    auxiliaryFilenames.append(tempPipelineInfoFilename)
+    with open(tempPipelineInfoFilename, "w+") as f:
+        for key,val in pipelineInfoDict.items():
+            f.write(f"{str(key)}={str(val)}\n")
+
+    # Generate auxiliary script file:
+    tempMaxScriptFilename = tempfile.mktemp(suffix=".ms")
+    auxiliaryFilenames = [tempMaxScriptFilename] + auxiliaryFilenames
+    
+    with open(tempMaxScriptFilename, "w+") as f:
+        f.write("global executePipelineRequest\n\n")
+        f.write("try (\n")
+        f.write(f"  fileIn \"{pipelineMaxScriptFilename}\"\n\n")
+        f.write(f"  infoFile = (getFilenamePath (getSourceFileName())) + \"{os.path.basename(tempPipelineInfoFilename)}\"\n")
+        f.write(f"  executePipelineRequest infoFile\n")
+        f.write(") catch (\n")
+        f.write(f"  (dotNetClass \"System.Console\").Error.WriteLine (\"ERROR: \" + (getCurrentException()))\n")
+        f.write(")\n")
+
+    job = submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames, quiet, returnJobIdOnly, jobDependencies, removeAuxiliaryFilesAfterSubmission)
+
+    if not removeAuxiliaryFilesAfterSubmission:
+        removeFiles([tempPipelineInfoFilename, tempMaxScriptFilename])
+
+    return job
