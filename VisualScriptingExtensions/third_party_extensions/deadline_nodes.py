@@ -19,9 +19,10 @@ def removeFiles(filenames):
 
 @defNode("Submit Job Files", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
 def submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=[], quiet=True, returnJobIdOnly=False, removeAuxiliaryFilesAfterSubmission=False):
-    submissionResult = "" if returnJobIdOnly else None
-    if DEADLINE_SERVICE != None:
-        submissionResult = DEADLINE_SERVICE.submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=auxiliaryFilenames, quiet=quiet, returnJobIdOnly=returnJobIdOnly)
+    if DEADLINE_SERVICE == None:
+        return None
+
+    submissionResult = DEADLINE_SERVICE.submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=auxiliaryFilenames, quiet=quiet, returnJobIdOnly=returnJobIdOnly)
 
     if removeAuxiliaryFilesAfterSubmission:
         removeFiles(auxiliaryFilenames)
@@ -30,6 +31,9 @@ def submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=[], q
 
 @defNode("Submit Job", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
 def submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=[], quiet=True, returnJobIdOnly=False, jobDependencies=[], removeAuxiliaryFilesAfterSubmission=False):
+    if DEADLINE_SERVICE == None:
+        return None
+
     if jobDependencies != None and (isinstance(jobDependencies, str) or len(jobDependencies) > 0):
         jobInfoDict = jobInfoDict.copy()
         deps = jobInfoDict.get("JobDependencies")
@@ -40,9 +44,7 @@ def submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=[], quiet=True, re
         
         jobInfoDict["JobDependencies"] = deps
 
-    submissionResult = "" if returnJobIdOnly else None
-    if DEADLINE_SERVICE != None:
-        submissionResult = DEADLINE_SERVICE.submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=auxiliaryFilenames, quiet=quiet, returnJobIdOnly=returnJobIdOnly)
+    submissionResult = DEADLINE_SERVICE.submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=auxiliaryFilenames, quiet=quiet, returnJobIdOnly=returnJobIdOnly)
 
     if removeAuxiliaryFilesAfterSubmission:
         removeFiles(auxiliaryFilenames)
@@ -91,3 +93,15 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
         removeFiles([tempPipelineInfoFilename, tempMaxScriptFilename])
 
     return job
+
+@defNode("Create Nuke Plugin Info Dictionary", isExecutable=True, returnNames=["Plugin Info Dict"], identifier=DEADLINE_IDENTIFIER)
+def createNukePluginInfoDictionary(sceneFilename, scriptFilename, writeNode="", version="12.0", batchMode=True, 
+        batchModeIsMove=False, continueOnError=False, enforceRenderOrder=False, nukeX=False, renderMode="Use Scene Settings", views="", useGPU=False, threads=0, gpuOverride=0):
+
+    scriptJob = scriptFilename != None and os.path.exists(scriptFilename)
+    pluginDict = {"BatchMode":batchMode, "BatchModeIsMovie":batchModeIsMove, "ContinueOnError":continueOnError, "EnforceRenderOrder":enforceRenderOrder,
+        "GpuOverride":gpuOverride, "NukeX":nukeX, "PerformanceProfiler":False, "PerformanceProfilerDir":"", "RamUse":0, "RenderMode":renderMode, 
+        "SceneFile":sceneFilename, "ScriptFilename":scriptFilename, "ScriptJob":scriptJob, "StackSize":0, "Threads":threads, "UseGpu":useGPU, "Version":version,
+        "Views":views, "WriteNode":writeNode}
+
+    return pluginDict
