@@ -3,7 +3,7 @@ import sys
 from PySide2 import QtCore, QtWidgets, QtUiTools, QtGui
 from enum import Enum
 from MetadataManagerCore.mongodb_manager import MongoDBManager
-from MetadataManagerCore.actions.ActionManager import ActionManager
+from MetadataManagerCore.actions.DocumentActionManager import DocumentActionManager
 from MetadataManagerCore.StateManager import StateManager
 from MetadataManagerCore.actions.DocumentAction import DocumentAction
 
@@ -31,7 +31,7 @@ from viewers.PreviewViewer import PreviewViewer
 from viewers.SettingsViewer import SettingsViewer
 from viewers.Inspector import Inspector
 from viewers.ActionsViewer import ActionsViewer
-from viewers.ActionManagerViewer import ActionManagerViewer
+from viewers.DocumentActionManagerViewer import DocumentActionManagerViewer
 from viewers.DeadlineServiceViewer import DeadlineServiceViewer
 from random import random
 
@@ -99,7 +99,7 @@ class MainWindowManager(QtCore.QObject):
         self.inspector = Inspector(self.window)
 
         self.actionsViewer = ActionsViewer(self.window)
-        self.actionsManagerViewer = ActionManagerViewer(self.window)
+        self.actionsManagerViewer = DocumentActionManagerViewer(self.window)
         self.deadlineServiceViewer = DeadlineServiceViewer(self.window)
         VisualScriptingExtensions.third_party_extensions.deadline_nodes.DEADLINE_SERVICE = self.deadlineServiceViewer.deadlineService
 
@@ -115,7 +115,7 @@ class MainWindowManager(QtCore.QObject):
         self.mainProgressBar.setMaximumHeight(15)
         self.window.statusBar().addPermanentWidget(self.mainProgressBar)
 
-        self.window.statusBar().showMessage("Test")
+        #self.window.statusBar().showMessage("Test")
 
     def setup(self, dbManager):
         self.dbManager = dbManager

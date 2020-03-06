@@ -6,7 +6,7 @@ from PySide2.QtCore import Qt
 from PySide2 import QtCore
 from MetadataManagerCore.actions.DocumentAction import DocumentAction
 from viewers.CollectionViewer import CollectionViewer
-from MetadataManagerCore.actions.ActionManager import ActionManager
+from MetadataManagerCore.actions.DocumentActionManager import DocumentActionManager
 from PySide2.QtCore import QThreadPool
 
 class ActionsViewer(DockWidget):
@@ -15,7 +15,7 @@ class ActionsViewer(DockWidget):
         
         self.dbManager = None
         self.collectionViewer : CollectionViewer = None
-        self.actionManager : ActionManager = None
+        self.actionManager : DocumentActionManager = None
 
         self.widget.actionsLayout.setAlignment(QtCore.Qt.AlignTop)
 
@@ -32,7 +32,7 @@ class ActionsViewer(DockWidget):
     def setDatabaseManager(self, dbManager):
         self.dbManager = dbManager
 
-    def setup(self, actionManager: ActionManager, mainWindowManager, collectionViewer: CollectionViewer):
+    def setup(self, actionManager: DocumentActionManager, mainWindowManager, collectionViewer: CollectionViewer):
         self.actionManager = actionManager
         self.collectionViewer = collectionViewer
         self.refreshActionView()

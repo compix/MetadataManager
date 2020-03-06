@@ -4,13 +4,13 @@ from MetadataManagerCore.actions.DocumentAction import DocumentAction
 import os
 import sys
 import importlib
-from MetadataManagerCore.actions.ActionManager import ActionManager
+from MetadataManagerCore.actions.DocumentActionManager import DocumentActionManager
 
 class CodeGenerator(code_generator.CodeGenerator):
     def __init__(self, actionManager=None):
         super().__init__()
         
-        self.actionManager : ActionManager = actionManager
+        self.actionManager : DocumentActionManager = actionManager
 
     def setActionManager(self, actionManager):
         self.actionManager = actionManager
@@ -25,8 +25,11 @@ class CodeGenerator(code_generator.CodeGenerator):
             if not pathonFileDir in sys.path:
                 sys.path.append(pathonFileDir)
 
-            execModule = importlib.import_module(moduleName)
-            importlib.reload(execModule)
+            try:
+                execModule = importlib.import_module(moduleName)
+                importlib.reload(execModule)
+            except Exception as e:
+                print(str(e))
             
             try:
                 docAction = execModule.DocumentActionVS()
