@@ -90,7 +90,7 @@ class MainWindowManager(QtCore.QObject):
 
         self.settingsViewer = SettingsViewer(self.window)
 
-        self.initStatusInfo()
+        #self.initStatusInfo()
 
         self.collectionViewer = CollectionViewer(self.window)
 
@@ -177,15 +177,15 @@ class MainWindowManager(QtCore.QObject):
 
     def applyAllDocumentModifications(self):
         if len(self.documentMoficiations) > 0:
-            self.initProgress(len(self.documentMoficiations))
+            self.initDocumentProgress(len(self.documentMoficiations))
             progressCounter = 0
-            self.updateProgress(progressCounter)
+            self.updateDocumentProgress(progressCounter)
 
             for i in reversed(range(len(self.documentMoficiations))):
                 progressCounter += 1
                 self.documentMoficiations[i].applyModification()
                 self.documentMoficiations.pop()
-                self.updateProgress(progressCounter)
+                self.updateDocumentProgress(progressCounter)
 
     def setupDockWidgets(self):
         self.setupDockWidget(self.previewViewer)
@@ -301,11 +301,11 @@ class MainWindowManager(QtCore.QObject):
 
         return num
 
-    def initProgress(self, maxVal):
-        qt_util.runInMainThread(self.mainProgressBar.setMaximum, maxVal)
+    def initDocumentProgress(self, maxVal):
+        qt_util.runInMainThread(self.window.documentProgressBar.setMaximum, maxVal)
 
-    def updateProgress(self, val):
-        qt_util.runInMainThread(self.mainProgressBar.setValue, val)
+    def updateDocumentProgress(self, val):
+        qt_util.runInMainThread(self.window.documentProgressBar.setValue, val)
 
     @timeit
     def viewItems(self):
@@ -314,14 +314,17 @@ class MainWindowManager(QtCore.QObject):
         if len(self.tableModel.displayedKeys) == 0:
             return
 
+        qt_util.runInMainThread(self.window.findPushButton.setEnabled, False)
+
         qt_util.runInMainThread(self.tableModel.clear)
         maxDisplayedItems = self.getMaxDisplayedTableItems()
         qt_util.runInMainThread(lambda:self.window.itemCountLabel.setText("Item Count: " + str(maxDisplayedItems)))
 
         if maxDisplayedItems == 0:
+            qt_util.runInMainThread(self.window.findPushButton.setEnabled, True)
             return
-
-        self.initProgress(maxDisplayedItems)
+        
+        self.initDocumentProgress(maxDisplayedItems)
 
         entries = []
         i = 0
@@ -333,9 +336,12 @@ class MainWindowManager(QtCore.QObject):
                 i += 1
                 tableEntry = self.extractTableEntry(self.tableModel.displayedKeys, item)
                 entries.append(tableEntry)
-                self.updateProgress(i)
+                self.updateDocumentProgress(i)
         
         qt_util.runInMainThread(self.tableModel.addEntries, entries)
+        qt_util.runInMainThread(self.updateDocumentProgress, 0.0)
+
+        qt_util.runInMainThread(self.window.findPushButton.setEnabled, True)
 
     def getFilteredDocuments(self):
         for collectionName in self.collectionViewer.yieldSelectedCollectionNames():
@@ -379,6 +385,7 @@ class MainWindowManager(QtCore.QObject):
             palette.setColor(QtGui.QPalette.Link, QtGui.QColor(42, 130, 218))
             palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(42, 130, 218))
             palette.setColor(QtGui.QPalette.HighlightedText, QtCore.Qt.black)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Button, QtGui.QColor(25, 25, 25))
             self.app.setPalette(palette)
         elif (style == Style.Light or style == None) and self.currentStyle != style:
             self.app.setStyleSheet(None)
