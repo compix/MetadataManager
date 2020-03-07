@@ -59,9 +59,6 @@ class EnvironmentManagerViewer(DockWidget):
                 self.environmentsComboBox.removeItem(self.environmentsComboBox.currentIndex())
                 self.environmentsComboBox.setCurrentText("")
                 self.settingsTable.clear()
-    
-    def getIdFromEnvironmentName(self, environmentName):
-        return environmentName.replace(" ","").replace("\n","").replace("\t","").replace("\r","")
         
     def setupKeyLineEdit(self):
         # Only allow alphabetic chars, digits, _, spaces:
@@ -75,22 +72,17 @@ class EnvironmentManagerViewer(DockWidget):
         validator = QRegExpValidator(rx, self.widget)
         self.environmentsComboBox.setValidator(validator)
 
-        self.environmentsComboBox.editTextChanged.connect(self.onEnvironmentsComboBoxTextChanged)
         self.environmentsComboBox.currentTextChanged.connect(self.onEnvironmentsComboBoxSelectedTextChanged)
 
     def onEnvironmentsComboBoxSelectedTextChanged(self, txt):
-        selectedEnvName = self.environmentsComboBox.currentText()
-        envId = self.getIdFromEnvironmentName(selectedEnvName)
-        self.setCurrentEnvironment(self.environmentManager.getEnvironmentFromId(envId))
-
-    def onEnvironmentsComboBoxTextChanged(self, txt):
         potentialEnvironmentName = txt
-        envId = self.getIdFromEnvironmentName(potentialEnvironmentName)
+        envId = self.environmentManager.getIdFromEnvironmentName(potentialEnvironmentName)
         env = self.environmentManager.getEnvironmentFromId(envId)
         if env != None:
             self.setCurrentEnvironment(env)
         else:
             env = Environment(envId)
+            env.setDisplayName(potentialEnvironmentName)
             self.setCurrentEnvironment(env)
 
     def setup(self, environmentManager: EnvironmentManager, dbManager : MongoDBManager):
@@ -107,7 +99,6 @@ class EnvironmentManagerViewer(DockWidget):
             else:
                 QMessageBox.warning("Invalid Environment Name", "Please enter a valid environment name.")
 
-        print(self.currentEnvironment.getEvaluatedSettings())
         self.environmentManager.save(self.dbManager)
 
     def setCurrentEnvironment(self, env : Environment):

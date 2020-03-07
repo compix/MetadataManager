@@ -41,6 +41,7 @@ import VisualScriptingExtensions.mongodb_nodes
 import VisualScriptingExtensions.document_action_nodes
 import VisualScriptingExtensions.versioning_nodes
 import VisualScriptingExtensions.third_party_extensions.deadline_nodes
+import VisualScriptingExtensions.environment_nodes
 from VisualScriptingExtensions.CodeGenerator import CodeGenerator
 
 COMPANY = None
@@ -154,26 +155,10 @@ class MainWindowManager(QtCore.QObject):
 
         self.environmentManagerViewer.setup(self.stateManager.environmentManager, self.dbManager)
 
-        class PrintAction(DocumentAction):
-            def execute(self, document):
-                print(document)
-
-        class TestAction(DocumentAction):
-            def execute(self, document):
-                print(document)
-
-        class TestAction2(DocumentAction):
-            def execute(self, document):
-                print(document)
-
-        printAction = PrintAction()
-        self.actionManager.registerAction(printAction)
-        self.actionManager.registerAction(TestAction())
-        self.actionManager.registerAction(TestAction2())
-        #self.actionManager.linkActionToCollection(printAction.id, "Customer_Table")
-
         self.actionsViewer.setup(self.actionManager, self, self.collectionViewer)
         self.actionsManagerViewer.setActionManager(self.actionManager)
+
+        VisualScriptingExtensions.environment_nodes.ENVIRONMENT_MANAGER = self.stateManager.environmentManager
 
     def updateTableModelHeader(self):
         header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.yieldSelectedCollectionNames())
