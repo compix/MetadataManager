@@ -33,6 +33,7 @@ from viewers.Inspector import Inspector
 from viewers.ActionsViewer import ActionsViewer
 from viewers.DocumentActionManagerViewer import DocumentActionManagerViewer
 from viewers.DeadlineServiceViewer import DeadlineServiceViewer
+from viewers.EnvironmentManagerViewer import EnvironmentManagerViewer
 from random import random
 
 from VisualScripting.VisualScripting import VisualScripting
@@ -95,6 +96,7 @@ class MainWindowManager(QtCore.QObject):
         self.collectionViewer = CollectionViewer(self.window)
 
         self.previewViewer = PreviewViewer(self.window)
+        self.environmentManagerViewer = EnvironmentManagerViewer(self.window)
 
         self.inspector = Inspector(self.window)
 
@@ -150,6 +152,8 @@ class MainWindowManager(QtCore.QObject):
 
         self.collectionViewer.connectCollectionSelectionUpdateHandler(self.updateTableModelHeader)
 
+        self.environmentManagerViewer.setup(self.stateManager.environmentManager, self.dbManager)
+
         class PrintAction(DocumentAction):
             def execute(self, document):
                 print(document)
@@ -198,6 +202,7 @@ class MainWindowManager(QtCore.QObject):
         self.setupDockWidget(self.actionsViewer)
         self.setupDockWidget(self.actionsManagerViewer)
         self.setupDockWidget(self.deadlineServiceViewer)
+        self.setupDockWidget(self.environmentManagerViewer)
 
     def setupDockWidget(self, dockWidget : DockWidget, initialDockArea=None):
         # Add visibility checkbox to view main menu:
