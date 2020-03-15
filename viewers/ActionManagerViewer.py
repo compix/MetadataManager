@@ -1,5 +1,5 @@
 from qt_extensions.DockWidget import DockWidget
-from MetadataManagerCore.actions.DocumentActionManager import DocumentActionManager
+from MetadataManagerCore.actions.ActionManager import ActionManager
 from PySide2.QtGui import QStandardItemModel, QStandardItem
 from PySide2.QtWidgets import QListView, QAbstractItemView, QSizePolicy
 from assets import asset_manager
@@ -14,6 +14,7 @@ class CollectionActionListView(QListView):
 
         self.actionManagerViewer = actionManagerViewer
         self.setDropIndicatorShown(False)
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
     def getItemFromEvent(self, e):
         if e.mimeData().hasFormat('application/x-qabstractitemmodeldatalist'):
@@ -67,7 +68,7 @@ class CollectionActionListView(QListView):
                 self.actionManagerViewer.actionManager.linkActionToCollection(itemName, currentCollection)
                 super().dropEvent(e)
 
-class DocumentActionManagerViewer(DockWidget):
+class ActionManagerViewer(DockWidget):
     def __init__(self, parentWindow):
         super().__init__("Actions Manager", parentWindow, asset_manager.getUIFilePath("actionManager.ui"))
 
@@ -108,7 +109,7 @@ class DocumentActionManagerViewer(DockWidget):
             self.collectionActionsListModel.removeRow(listItem.row())
             self.actionManager.unlinkActionFromCollection(actionId, self.selectedCollectionName)
 
-    def setActionManager(self, actionManager: DocumentActionManager):
+    def setActionManager(self, actionManager: ActionManager):
         self.actionManager = actionManager
 
         self.refreshTreeView()
@@ -133,7 +134,7 @@ class DocumentActionManagerViewer(DockWidget):
 
                 self.actionsTreeModel.appendRow(treeItem)
 
-            for a in self.actionManager.actions:
+            for a in self.actionManager.getDocumentActions():
                 categoryTreeItem = categoryMap[a.category]
 
                 treeItem = QStandardItem(a.id)

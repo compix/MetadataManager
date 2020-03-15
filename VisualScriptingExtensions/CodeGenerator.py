@@ -1,16 +1,18 @@
 from VisualScripting.node_exec import code_generator
 from VisualScriptingExtensions.document_action_nodes import DocumentActionNode
+from VisualScriptingExtensions.action_nodes import ActionNode
 from MetadataManagerCore.actions.DocumentAction import DocumentAction
+from MetadataManagerCore.actions.Action import Action
 import os
 import sys
 import importlib
-from MetadataManagerCore.actions.DocumentActionManager import DocumentActionManager
+from MetadataManagerCore.actions.ActionManager import ActionManager
 
 class CodeGenerator(code_generator.CodeGenerator):
     def __init__(self, actionManager=None):
         super().__init__()
         
-        self.actionManager : DocumentActionManager = actionManager
+        self.actionManager : ActionManager = actionManager
 
     def setActionManager(self, actionManager):
         self.actionManager = actionManager
@@ -32,11 +34,10 @@ class CodeGenerator(code_generator.CodeGenerator):
                 print(str(e))
             
             try:
-                docAction = execModule.DocumentActionVS()
+                docAction = execModule.ActionVS()
                 self.actionManager.registerAction(docAction)
             except:
                 pass
-
 
     def writeCodeLine(self, srcFile, codeLine, indent, suffix="\n"):
         srcFile.write(code_generator.makeCodeLine(codeLine, indent) + suffix)
@@ -44,19 +45,24 @@ class CodeGenerator(code_generator.CodeGenerator):
     def generatePythonCode(self, graph, startNode, moduleName, targetFolder):
         srcFilePath = super().generatePythonCode(graph, startNode, moduleName, targetFolder)
 
-        if isinstance(startNode, DocumentActionNode):
+        if isinstance(startNode, DocumentActionNode) or isinstance(startNode, ActionNode):
             with open(srcFilePath,"a+") as srcFile:
                 srcFile.write("\n")
 
                 srcFile.write(f"import {DocumentAction.__module__}\n\n")
 
+                if isinstance(startNode, DocumentActionNode):
+                    actionClassName = f"{DocumentAction.__module__}.{DocumentAction.__name__}"
+                elif isinstance(startNode, ActionNode):
+                    actionClassName = f"{Action.__module__}.{Action.__name__}"
+
+                vsActionClassName = "ActionVS"
                 
-                documentActionClassName = f"{DocumentAction.__module__}.{DocumentAction.__name__}"
-                vsDocumentActionClassName = "DocumentActionVS"
-                
-                self.writeCodeLine(srcFile, f"class {vsDocumentActionClassName}({documentActionClassName}):", "")
-                self.writeCodeLine(srcFile, "def execute(self, document):", code_generator.DEFAULT_INDENT)
-                self.writeCodeLine(srcFile, "execute(document)", code_generator.DEFAULT_INDENT + code_generator.DEFAULT_INDENT,suffix="\n\n")
+                self.writeCodeLine(srcFile, f"class {vsActionClassName}({actionClassName}):", "")
+
+                execArgs = ["document"] if isinstance(startNode, DocumentActionNode) else []
+                self.writeCodeLine(srcFile, f"def execute({','.join(['self'] + execArgs)}):", code_generator.DEFAULT_INDENT)
+                self.writeCodeLine(srcFile, f"execute({','.join(execArgs)})", code_generator.DEFAULT_INDENT + code_generator.DEFAULT_INDENT,suffix="\n\n")
 
                 self.writeCodeLine(srcFile, "@property", code_generator.DEFAULT_INDENT)
                 self.writeCodeLine(srcFile, "def id(self):", code_generator.DEFAULT_INDENT)
@@ -78,7 +84,7 @@ class CodeGenerator(code_generator.CodeGenerator):
 
             execModule = importlib.import_module(moduleName)
             importlib.reload(execModule)
-            docAction = execModule.DocumentActionVS()
+            docAction = execModule.ActionVS()
 
             if self.actionManager.isActionIdRegistered(docAction.id):
                 self.actionManager.unregisterActionId(docAction.id)

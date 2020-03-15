@@ -5,9 +5,24 @@ from PySide2 import QtWidgets
 from PySide2.QtCore import Qt
 from PySide2 import QtCore
 from MetadataManagerCore.actions.DocumentAction import DocumentAction
+from MetadataManagerCore.actions.Action import Action
 from viewers.CollectionViewer import CollectionViewer
-from MetadataManagerCore.actions.DocumentActionManager import DocumentActionManager
+from MetadataManagerCore.actions.ActionManager import ActionManager
 from PySide2.QtCore import QThreadPool
+
+class ActionButtonTask(object):
+    def __init__(self, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self):
+        QThreadPool.globalInstance().start(qt_util.LambdaTask(self.func,*self.args))
+        
+def clearContainer(container):
+    for i in reversed(range(container.count())): 
+        container.itemAt(i).widget().setParent(None)
+
 
 class ActionsViewer(DockWidget):
     def __init__(self, parentWindow):
@@ -15,9 +30,10 @@ class ActionsViewer(DockWidget):
         
         self.dbManager = None
         self.collectionViewer : CollectionViewer = None
-        self.actionManager : DocumentActionManager = None
+        self.actionManager : ActionManager = None
 
-        self.widget.actionsLayout.setAlignment(QtCore.Qt.AlignTop)
+        self.widget.documentActionsLayout.setAlignment(QtCore.Qt.AlignTop)
+        self.widget.generalActionsLayout.setAlignment(QtCore.Qt.AlignTop)
 
         self.targetMap = {"Selected Items": self.executeActionOnAllSelectedDocuments, 
                           "Filtered Items": self.executeActionOnAllFilteredDocuments}
@@ -26,13 +42,15 @@ class ActionsViewer(DockWidget):
 
         self.widget.targetComboBox.currentIndexChanged.connect(self.onTargetChanged)
 
+        self.actionTasks = []
+
     def onTargetChanged(self):
         self.refreshActionView()
 
     def setDatabaseManager(self, dbManager):
         self.dbManager = dbManager
 
-    def setup(self, actionManager: DocumentActionManager, mainWindowManager, collectionViewer: CollectionViewer):
+    def setup(self, actionManager: ActionManager, mainWindowManager, collectionViewer: CollectionViewer):
         self.actionManager = actionManager
         self.collectionViewer = collectionViewer
         self.refreshActionView()
@@ -46,16 +64,14 @@ class ActionsViewer(DockWidget):
     def onCollectionSelectionChanged(self):
         self.refreshActionView()
 
-    def executeActionOnAllFilteredDocuments(self, action: DocumentAction):
-        for document in self.mainWindowManager.getFilteredDocuments():
-            action.execute(document)
-
     def refreshActionView(self):
         target = self.widget.targetComboBox.currentText()
 
         if self.actionManager != None:
-            qt_util.clearContainer(self.widget.actionsLayout)
-            
+            qt_util.clearContainer(self.widget.documentActionsLayout)
+            qt_util.clearContainer(self.widget.generalActionsLayout)
+            self.actionTasks = []
+
             # Only show actions that can be used for all selected collections:
             availableActionIds = set([a.id for a in self.actionManager.actions])
             selectedCollectionNames = [collectionName for collectionName in self.collectionViewer.yieldSelectedCollectionNames()]
@@ -68,8 +84,28 @@ class ActionsViewer(DockWidget):
             for actionId in availableActionIds:
                 a = self.actionManager.getActionById(actionId)
                 actionButton = QtWidgets.QPushButton(a.id, self.widget)
-                actionButton.clicked.connect(lambda: QThreadPool.globalInstance().start(qt_util.LambdaTask(self.targetMap[target],a)))
-                self.widget.actionsLayout.addWidget(actionButton)
+                task = ActionButtonTask(self.executeDocumentAction, target, a)
+                self.actionTasks.append(task)
+                actionButton.clicked.connect(task)
+                self.widget.documentActionsLayout.addWidget(actionButton)
+
+            # Show general actions:
+            for a in self.actionManager.getGeneralActions():
+                actionButton = QtWidgets.QPushButton(a.id, self.widget)
+                task = ActionButtonTask(self.executeAction, a)
+                self.actionTasks.append(task)
+                actionButton.clicked.connect(task)
+                self.widget.generalActionsLayout.addWidget(actionButton)
+
+    def executeAction(self, action : Action):
+        action.execute()
+
+    def executeDocumentAction(self, target, action : DocumentAction):
+        self.targetMap[target](action)
+
+    def executeActionOnAllFilteredDocuments(self, action: DocumentAction):
+        for document in self.mainWindowManager.getFilteredDocuments():
+            action.execute(document)
 
     def executeActionOnAllSelectedDocuments(self, action: DocumentAction):
         for uid in self.mainWindowManager.selectedDocumentIds:

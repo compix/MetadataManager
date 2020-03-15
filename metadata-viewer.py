@@ -3,9 +3,7 @@ import sys
 from PySide2 import QtCore, QtWidgets, QtUiTools, QtGui
 from enum import Enum
 from MetadataManagerCore.mongodb_manager import MongoDBManager
-from MetadataManagerCore.actions.DocumentActionManager import DocumentActionManager
 from MetadataManagerCore.StateManager import StateManager
-from MetadataManagerCore.actions.DocumentAction import DocumentAction
 
 import operator
 from MetadataManagerCore.util import timeit
@@ -31,7 +29,7 @@ from viewers.PreviewViewer import PreviewViewer
 from viewers.SettingsViewer import SettingsViewer
 from viewers.Inspector import Inspector
 from viewers.ActionsViewer import ActionsViewer
-from viewers.DocumentActionManagerViewer import DocumentActionManagerViewer
+from viewers.ActionManagerViewer import ActionManagerViewer
 from viewers.DeadlineServiceViewer import DeadlineServiceViewer
 from viewers.EnvironmentManagerViewer import EnvironmentManagerViewer
 from random import random
@@ -39,6 +37,7 @@ from random import random
 from VisualScripting.VisualScripting import VisualScripting
 import VisualScriptingExtensions.mongodb_nodes
 import VisualScriptingExtensions.document_action_nodes
+import VisualScriptingExtensions.action_nodes
 import VisualScriptingExtensions.versioning_nodes
 import VisualScriptingExtensions.third_party_extensions.deadline_nodes
 import VisualScriptingExtensions.environment_nodes
@@ -102,7 +101,7 @@ class MainWindowManager(QtCore.QObject):
         self.inspector = Inspector(self.window)
 
         self.actionsViewer = ActionsViewer(self.window)
-        self.actionsManagerViewer = DocumentActionManagerViewer(self.window)
+        self.actionsManagerViewer = ActionManagerViewer(self.window)
         self.deadlineServiceViewer = DeadlineServiceViewer(self.window)
         VisualScriptingExtensions.third_party_extensions.deadline_nodes.DEADLINE_SERVICE = self.deadlineServiceViewer.deadlineService
 
