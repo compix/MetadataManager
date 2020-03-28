@@ -1,6 +1,6 @@
 from os import path
 
-BASE_PATH = path.dirname(path.realpath(__file__))
+BASE_PATH = "assets"
 BASE_UI_FILES_PATH = path.join(BASE_PATH, "ui_files")
 BASE_DEFAULT_LAYOUT_FILES_PATH = path.join(BASE_PATH, "default_layouts")
 

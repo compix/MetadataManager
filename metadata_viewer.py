@@ -20,7 +20,7 @@ from VisualScripting import NodeGraphQt
 from PySide2.QtCore import QFile, QTextStream, QThreadPool
 from LoaderWindow import LoaderWindow
 
-from assets import asset_manager
+import asset_manager
 from qt_extensions.DockWidget import DockWidget
 import os
 
@@ -415,7 +415,7 @@ class MainWindowManager(QtCore.QObject):
         self.settings = settings
         self.window.restoreGeometry(settings.value("geometry"))
         self.window.restoreState(settings.value("windowState"))
-        self.setStyle(settings.value("style"))
+        self.setStyle(settings.value("style", Style.Dark))
         self.visualScripting.restoreWindowState(settings)
         self.deadlineServiceViewer.restoreState(settings)
 
@@ -433,12 +433,14 @@ class MainWindowManager(QtCore.QObject):
         self.window.removeEventFilter(self)
         self.applicationQuitting = True
         QtCore.QThreadPool.globalInstance().waitForDone()
-        app.quit()
+        self.app.quit()
 
     def show(self):
         self.window.showMaximized()
 
-if __name__ == "__main__":
+def show():
+    global SETTINGS, COMPANY, APP_NAME, MONGODB_HOST, DATABASE_NAME
+
     app = QtWidgets.QApplication([])
 
     SETTINGS = QtCore.QSettings(asset_manager.getMainSettingsPath(), QtCore.QSettings.IniFormat)
@@ -450,6 +452,9 @@ if __name__ == "__main__":
 
     mainWindow = MainWindowManager(app)
 
-    loaderWindow = LoaderWindow(app, mainWindow, MONGODB_HOST, DATABASE_NAME)
+    LoaderWindow(app, mainWindow, MONGODB_HOST, DATABASE_NAME)
 
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    show()

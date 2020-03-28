@@ -1,6 +1,6 @@
 from PySide2 import QtCore, QtUiTools
 from PySide2.QtCore import QFile, QTextStream, QThreadPool
-from assets import asset_manager
+import asset_manager
 from MetadataManagerCore.mongodb_manager import MongoDBManager
 from qt_extensions import qt_util
 from time import sleep

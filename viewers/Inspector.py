@@ -1,5 +1,5 @@
 from qt_extensions.DockWidget import DockWidget
-from assets import asset_manager
+import asset_manager
 from qt_extensions import qt_util
 from PySide2 import QtWidgets
 from PySide2.QtCore import Qt

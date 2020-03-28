@@ -3,7 +3,7 @@ from PySide2 import QtWidgets, QtCore, QtUiTools, QtGui
 from MetadataManagerCore import Keys
 from qt_extensions.DockWidget import DockWidget
 import os
-from assets import asset_manager
+import asset_manager
 from qt_extensions.PhotoViewer import PhotoViewer
 
 class PreviewViewer(DockWidget):

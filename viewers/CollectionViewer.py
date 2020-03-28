@@ -4,7 +4,7 @@ from MetadataManagerCore import Keys
 from qt_extensions import qt_util
 import os
 from qt_extensions.DockWidget import DockWidget
-from assets import asset_manager
+import asset_manager
 
 class CollectionViewer(DockWidget):
     def __init__(self, parentWindow):

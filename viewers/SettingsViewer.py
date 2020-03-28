@@ -1,5 +1,5 @@
 from qt_extensions.DockWidget import DockWidget
-from assets import asset_manager
+import asset_manager
 
 class SettingsViewer(DockWidget):
     def __init__(self, parentWindow):

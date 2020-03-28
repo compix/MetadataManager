@@ -2,7 +2,7 @@ from qt_extensions.DockWidget import DockWidget
 from MetadataManagerCore.actions.ActionManager import ActionManager
 from PySide2.QtGui import QStandardItemModel, QStandardItem
 from PySide2.QtWidgets import QListView, QAbstractItemView, QSizePolicy
-from assets import asset_manager
+import asset_manager
 from qt_extensions import qt_util
 from MetadataManagerCore.mongodb_manager import MongoDBManager
 from PySide2.QtCore import Qt
