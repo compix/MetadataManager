@@ -17,11 +17,11 @@ class CodeGenerator(code_generator.CodeGenerator):
     def setActionManager(self, actionManager):
         self.actionManager = actionManager
 
-        graphNames = self.graphManager.availableGraphNames
+        allGraphSettings = self.graphManager.retrieveAvailableGraphSettings()
 
-        for graphName in graphNames:
-            moduleName = self.graphManager.getModuleNameFromGraphName(graphName)
-            pythonFile = self.graphManager.getPythonCodePath(graphName)
+        for graphSettings in allGraphSettings:
+            moduleName = self.graphManager.getModuleNameFromGraphName(graphSettings.name)
+            pythonFile = self.graphManager.getPythonCodePath(graphSettings)
             pathonFileDir = os.path.dirname(pythonFile)
 
             if not pathonFileDir in sys.path:
