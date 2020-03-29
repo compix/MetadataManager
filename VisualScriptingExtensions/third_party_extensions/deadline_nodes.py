@@ -105,3 +105,23 @@ def createNukePluginInfoDictionary(sceneFilename, scriptFilename, writeNode="", 
         "Views":views, "WriteNode":writeNode}
 
     return pluginDict
+
+@defNode("Create Python Plugin Info Dictionary", isExecutable=True, returnNames=["Plugin Info Dict"], identifier=DEADLINE_IDENTIFIER)
+def createPythonPluginInfoDictionary(arguments="", version="3.7"):
+    return {"Arguments":arguments, "Version":version, "SingleFramesOnly":False}
+
+@defInlineNode("Python Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+def getPythonPluginName():
+    return "\"Python\""
+
+@defInlineNode("Nuke Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+def getNukePluginName():
+    return "\"Nuke\""
+
+@defInlineNode("3ds Max Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+def get3dsMaxPluginName():
+    return "\"3dsmax\""
+
+@defInlineNode("Maya Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+def getMayaPluginName():
+    return "\"Maya\""
