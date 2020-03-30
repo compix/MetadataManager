@@ -35,6 +35,8 @@ class EnvironmentManagerViewer(DockWidget):
         self.widget.chooseDirButton.clicked.connect(self.onChooseDir)
 
         self.settingsTableView.doubleClicked.connect(self.onTableViewDoubleClicked)
+
+        self.widget.importFromSettingsFileButton.clicked.connect(self.onImportFromSettingsFile)
         
     def onTableViewDoubleClicked(self, idx):
         entry = self.settingsTable.entries[idx.row()]
@@ -108,19 +110,19 @@ class EnvironmentManagerViewer(DockWidget):
         for key, val in env.settings.items():
             self.settingsTable.addEntry([key, val])
 
-    def onAddKeyValue(self):
-        if self.currentEnvironment != None:
-            if not self.environmentManager.isValidEnvironmentId(self.currentEnvironment.uniqueEnvironmentId):
-                QMessageBox.warning(self, "Invalid Environment Name", "Please enter a valid environment name.")
-                return
+    def validateCurrentEnvironment(self):
+        if self.currentEnvironment == None or not self.environmentManager.isValidEnvironmentId(self.currentEnvironment.uniqueEnvironmentId):
+            QMessageBox.warning(self, "Invalid Environment Name", "Please enter a valid environment name.")
+            return False
 
-            key = self.widget.keyLineEdit.text()
+        return True
 
+    def addEntry(self, key, value):
+        if self.validateCurrentEnvironment():
             if key.strip() == "":
                 QMessageBox.warning(self, "Invalid Key", "Please enter a valid key.")
-                return
+                return False
 
-            value = self.widget.valueLineEdit.text()
             if not key in self.currentEnvironment.settings.keys():
                 self.settingsTable.addEntry([key, value])
             else:
@@ -131,8 +133,14 @@ class EnvironmentManagerViewer(DockWidget):
                         break
 
             self.currentEnvironment.settings[key] = value
+            return True
         else:
-            QMessageBox.warning(self, "Invalid Environment Name", "Please enter a valid environment name.")
+            return False
+
+    def onAddKeyValue(self):
+        key = self.widget.keyLineEdit.text()
+        value = self.widget.valueLineEdit.text()
+        self.addEntry(key, value)
 
     def refreshEnvironmentsComboBox(self):
         self.environmentsComboBox.clear()
@@ -151,3 +159,20 @@ class EnvironmentManagerViewer(DockWidget):
                 valueEdit.setText(str(val))
                 valueEdit.setStyleSheet("* { background-color: rgba(0, 0, 0, 0); }")
                 form.addRow(str(key), valueEdit)
+    
+    def onImportFromSettingsFile(self):
+        if not self.validateCurrentEnvironment():
+            return
+
+        filePath,_ = QFileDialog.getOpenFileName(self, "Open Settings File", "", "Any File (*.*)")
+
+        if filePath != None and filePath != "":
+            with open(filePath, 'r') as f:
+                for line in f:
+                    tokens = line.split("=")
+                    
+                    if len(tokens) == 2:
+                        key = tokens[0].strip()
+                        value = tokens[1].strip()
+
+                        self.addEntry(key, value)

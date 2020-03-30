@@ -6,6 +6,7 @@ from VisualScripting.node_exec.base_nodes import defNode, defInlineNode
 from MetadataManagerCore.third_party_integrations.deadline.deadline_service import DeadlineService, DeadlineServiceInfo
 import os
 import tempfile
+import json
 
 DEADLINE_SERVICE : DeadlineService = None
 DEADLINE_IDENTIFIER = "Deadline"
@@ -67,11 +68,10 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
     pipelineMaxScriptFilename = pipelineMaxScriptFilename.replace("\\", "/")
     
     # Generate auxiliary pipeline info file:
-    tempPipelineInfoFilename = tempfile.mktemp(suffix=".info")
+    tempPipelineInfoFilename = tempfile.mktemp(suffix=".json")
     auxiliaryFilenames.append(tempPipelineInfoFilename)
     with open(tempPipelineInfoFilename, "w+") as f:
-        for key,val in pipelineInfoDict.items():
-            f.write(f"{str(key)}={str(val)}\n")
+        json.dump(pipelineInfoDict, f)
 
     # Generate auxiliary script file:
     tempMaxScriptFilename = tempfile.mktemp(suffix=".ms")
