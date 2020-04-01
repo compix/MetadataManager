@@ -90,4 +90,5 @@ class DeadlineServiceViewer(DockWidget):
         info.deadlineStandalonePythonPackagePath = self.widget.deadlineStandalonePathLineEdit.text()
         info.webserviceHost = host
         info.webservicePort = port
+        info.deadlineRepositoryLocation = self.widget.deadlineRepositoryLocationLineEdit.text()
         self.refreshDeadlineServiceInfo(info)
