@@ -19,7 +19,7 @@ def removeFiles(filenames):
             print(str(e))
 
 @defNode("Submit Job Files", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
-def submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=[], quiet=True, returnJobIdOnly=False, removeAuxiliaryFilesAfterSubmission=False):
+def submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=[], quiet=True, returnJobIdOnly=True, removeAuxiliaryFilesAfterSubmission=False):
     if DEADLINE_SERVICE == None:
         return None
 
@@ -31,7 +31,7 @@ def submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=[], q
     return submissionResult
 
 @defNode("Submit Job", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
-def submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=[], quiet=True, returnJobIdOnly=False, jobDependencies=[], removeAuxiliaryFilesAfterSubmission=False):
+def submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=[], quiet=True, returnJobIdOnly=True, jobDependencies=[], removeAuxiliaryFilesAfterSubmission=False):
     if DEADLINE_SERVICE == None:
         return None
 
@@ -64,7 +64,7 @@ def createJobInfoDictionary(pluginName, name="Test Job", batchName="", priority=
 
 @defNode("Submit 3ds Max Pipeline Job", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
 def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInfoDict, pluginInfoDict, auxiliaryFilenames=[], quiet=True, 
-        returnJobIdOnly=False, jobDependencies=[], removeAuxiliaryFilesAfterSubmission=False):
+        returnJobIdOnly=True, jobDependencies=[], removeAuxiliaryFilesAfterSubmission=False):
     pipelineMaxScriptFilename = pipelineMaxScriptFilename.replace("\\", "/")
     
     # Generate auxiliary pipeline info file:
@@ -86,6 +86,7 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
         f.write(") catch (\n")
         f.write(f"  (dotNetClass \"System.Console\").Error.WriteLine (\"ERROR: \" + (getCurrentException()))\n")
         f.write(")\n")
+        f.write("\nquitMAX #noPrompt\n")
 
     job = submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames, quiet, returnJobIdOnly, jobDependencies, removeAuxiliaryFilesAfterSubmission)
 
@@ -106,6 +107,21 @@ def createNukePluginInfoDictionary(sceneFilename, scriptFilename, writeNode="", 
 
     return pluginDict
 
+@defNode("Create 3ds Max Plugin Info Dictionary", isExecutable=True, returnNames=["Plugin Info Dict"], identifier=DEADLINE_IDENTIFIER)
+def create3dsMaxPluginInfoDictionary(SceneFile, Version="2017", DisableMultipass=False,
+        IgnoreMissingDLLs=False, IgnoreMissingExternalFiles=True, IgnoreMissingUVWs=True, IgnoreMissingXREFs=True, IsMaxDesign=False,
+        GPUsPerTask=0, GammaCorrection=False, GammaInput=1.0, GammaOutput=1.0, Language="Default",
+        LocalRendering=True, OneCpuPerTask=False, RemovePadding=False, RestartRendererMode=False, ShowFrameBuffer=True, UseSilentMode=False,UseSlaveMode=1):
+    pluginDict = {"SceneFile":SceneFile, "Version":Version, "DisableMultipass":DisableMultipass, "IgnoreMissingDLLs": IgnoreMissingDLLs, 
+                  "IgnoreMissingExternalFiles": IgnoreMissingExternalFiles, "IgnoreMissingUVWs":IgnoreMissingUVWs, "IgnoreMissingXREFs":IgnoreMissingXREFs,
+                  "IsMaxDesign":IsMaxDesign, "GPUsPerTask":GPUsPerTask, "GammaCorrection": GammaCorrection,
+                  "GammaInput":GammaInput, "GammaOutput":GammaOutput, "Language":Language, "LocalRendering":LocalRendering, "OneCpuPerTask":OneCpuPerTask,
+                  "RemovePadding":RemovePadding, "RestartRendererMode":RestartRendererMode, "ShowFrameBuffer":ShowFrameBuffer, "UseSilentMode":UseSilentMode, 
+                  "UseSlaveMode":UseSlaveMode}
+
+    return pluginDict
+
+
 @defNode("Create Python Plugin Info Dictionary", isExecutable=True, returnNames=["Plugin Info Dict"], identifier=DEADLINE_IDENTIFIER)
 def createPythonPluginInfoDictionary(arguments="", version="3.7"):
     return {"Arguments":arguments, "Version":version, "SingleFramesOnly":False}
@@ -125,3 +141,7 @@ def get3dsMaxPluginName():
 @defInlineNode("Maya Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
 def getMayaPluginName():
     return "\"Maya\""
+
+@defInlineNode("3dsMaxPipelinePlugin Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+def get3dsMaxPipelinePluginName():
+    return "\"3dsMaxPipelinePlugin\""
