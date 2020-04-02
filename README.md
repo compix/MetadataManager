@@ -1,4 +1,4 @@
-# Metadata-Manager
+# Metadata-Manager (WIP)
 
 ## Dependencies
 * Python 3.7+
