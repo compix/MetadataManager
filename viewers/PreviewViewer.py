@@ -8,7 +8,7 @@ from qt_extensions.PhotoViewer import PhotoViewer
 
 class PreviewViewer(DockWidget):
     def __init__(self, parentWindow):
-        super().__init__("Preview Viewer", parentWindow, asset_manager.getUIFilePath("previewViewer.ui"))
+        super().__init__("Preview", parentWindow, asset_manager.getUIFilePath("previewViewer.ui"))
 
         self.preview = PhotoViewer(self.widget)
         self.preview.toggleDragMode()

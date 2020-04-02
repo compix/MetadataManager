@@ -45,6 +45,7 @@ def submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=[], quiet=True, re
         
         jobInfoDict["JobDependencies"] = deps
 
+    auxiliaryFilenames = auxiliaryFilenames if isinstance(auxiliaryFilenames, list) else [auxiliaryFilenames]
     submissionResult = DEADLINE_SERVICE.submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=auxiliaryFilenames, quiet=quiet, returnJobIdOnly=returnJobIdOnly)
 
     if removeAuxiliaryFilesAfterSubmission:
@@ -63,7 +64,7 @@ def createJobInfoDictionary(pluginName, name="Test Job", batchName="", priority=
     return jobDict
 
 @defNode("Submit 3ds Max Pipeline Job", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
-def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInfoDict, pluginInfoDict, auxiliaryFilenames=[], quiet=True, 
+def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInfoDict, versionOf3dsMax, auxiliaryFilenames=[], quiet=True, 
         returnJobIdOnly=True, jobDependencies=[], removeAuxiliaryFilesAfterSubmission=False):
     pipelineMaxScriptFilename = pipelineMaxScriptFilename.replace("\\", "/")
     
@@ -88,6 +89,7 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
         f.write(")\n")
         f.write("\nquitMAX #noPrompt\n")
 
+    pluginInfoDict = {"3dsMaxVersion": versionOf3dsMax}
     job = submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames, quiet, returnJobIdOnly, jobDependencies, removeAuxiliaryFilesAfterSubmission)
 
     if not removeAuxiliaryFilesAfterSubmission:
@@ -142,6 +144,6 @@ def get3dsMaxPluginName():
 def getMayaPluginName():
     return "\"Maya\""
 
-@defInlineNode("3dsMaxPipelinePlugin Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+@defInlineNode("3ds Max Pipeline Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
 def get3dsMaxPipelinePluginName():
     return "\"3dsMaxPipelinePlugin\""
