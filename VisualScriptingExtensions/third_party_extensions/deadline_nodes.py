@@ -69,13 +69,13 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
     pipelineMaxScriptFilename = pipelineMaxScriptFilename.replace("\\", "/")
     
     # Generate auxiliary pipeline info file:
-    tempPipelineInfoFilename = tempfile.mktemp(suffix=".json")
+    tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")
     auxiliaryFilenames.append(tempPipelineInfoFilename)
     with open(tempPipelineInfoFilename, "w+") as f:
         json.dump(pipelineInfoDict, f)
 
     # Generate auxiliary script file:
-    tempMaxScriptFilename = tempfile.mktemp(suffix=".ms")
+    tempMaxScriptFilename = tempfile.mkstemp(suffix=".ms")
     auxiliaryFilenames = [tempMaxScriptFilename] + auxiliaryFilenames
     
     with open(tempMaxScriptFilename, "w+") as f:
@@ -98,7 +98,7 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
     return job
 
 @defNode("Create Nuke Plugin Info Dictionary", isExecutable=True, returnNames=["Plugin Info Dict"], identifier=DEADLINE_IDENTIFIER)
-def createNukePluginInfoDictionary(sceneFilename, scriptFilename, writeNode="", version="12.0", batchMode=True, 
+def createNukePluginInfoDictionary(sceneFilename, scriptFilename=None, writeNode="", version="12.0", batchMode=True, 
         batchModeIsMove=False, continueOnError=False, enforceRenderOrder=False, nukeX=False, renderMode="Use Scene Settings", views="", useGPU=False, threads=0, gpuOverride=0):
 
     scriptJob = scriptFilename != None and os.path.exists(scriptFilename)
@@ -122,7 +122,6 @@ def create3dsMaxPluginInfoDictionary(SceneFile, Version="2017", DisableMultipass
                   "UseSlaveMode":UseSlaveMode}
 
     return pluginDict
-
 
 @defNode("Create Python Plugin Info Dictionary", isExecutable=True, returnNames=["Plugin Info Dict"], identifier=DEADLINE_IDENTIFIER)
 def createPythonPluginInfoDictionary(arguments="", version="3.7"):
