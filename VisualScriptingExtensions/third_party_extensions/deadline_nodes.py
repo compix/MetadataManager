@@ -67,7 +67,7 @@ def getJobId(jobDictionary):
 def createJobInfoDictionary(pluginName, name="Test Job", batchName="", priority=50, department="", pool="", secondaryPool="", group="",jobDependencies=None):
     if jobDependencies == None:
         jobDependencies = []
-        
+
     jobDict = {"Plugin":pluginName, "Name": name, "BatchName":batchName, "Priority":priority, "Department":department, "Pool":pool, "SecondaryPool":secondaryPool, "Group":group,
         "JobDependencies":(",".join(jobDependencies) if isinstance(jobDependencies, list) else jobDependencies)}
     return jobDict
@@ -83,14 +83,6 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
         jobDependencies = []
         
     pipelineMaxScriptFilename = pipelineMaxScriptFilename.replace("\\", "/")
-    
-    # Generate auxiliary pipeline info file:
-    pipelineInfoFileHandle, tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")
-    auxiliaryFilenames.append(tempPipelineInfoFilename)
-    with open(tempPipelineInfoFilename, "w+") as f:
-        json.dump(pipelineInfoDict, f)
-
-    os.close(pipelineInfoFileHandle)
 
     # Generate auxiliary script file:
     maxScriptFileHandle, tempMaxScriptFilename = tempfile.mkstemp(suffix=".ms")
@@ -108,6 +100,14 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
         f.write("\nquitMAX #noPrompt\n")
 
     os.close(maxScriptFileHandle)
+
+    # Generate auxiliary pipeline info file:
+    pipelineInfoFileHandle, tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")
+    auxiliaryFilenames.append(tempPipelineInfoFilename)
+    with open(tempPipelineInfoFilename, "w+") as f:
+        json.dump(pipelineInfoDict, f)
+
+    os.close(pipelineInfoFileHandle)
 
     pluginInfoDict = {"3dsMaxVersion": versionOf3dsMax}
     job = submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames, quiet, returnJobIdOnly, jobDependencies, removeAuxiliaryFilesAfterSubmission)
