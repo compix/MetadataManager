@@ -69,14 +69,16 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
     pipelineMaxScriptFilename = pipelineMaxScriptFilename.replace("\\", "/")
     
     # Generate auxiliary pipeline info file:
-    tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")[1]
+    pipelineInfoFileHandle, tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")
     auxiliaryFilenames.append(tempPipelineInfoFilename)
     with open(tempPipelineInfoFilename, "w+") as f:
         json.dump(pipelineInfoDict, f)
 
+    os.close(pipelineInfoFileHandle)
+
     # Generate auxiliary script file:
-    tempMaxScriptFilename = tempfile.mkstemp(suffix=".ms")[1]
-    auxiliaryFilenames = [tempMaxScriptFilename] + auxiliaryFilenames
+    maxScriptFileHandle, tempMaxScriptFilename = tempfile.mkstemp(suffix=".ms")
+    auxiliaryFilenames.append(tempMaxScriptFilename)
     
     with open(tempMaxScriptFilename, "w+") as f:
         f.write("global executePipelineRequest\n\n")
@@ -88,6 +90,8 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
         f.write(f"  (dotNetClass \"System.Console\").Error.WriteLine (\"ERROR: \" + (getCurrentException()))\n")
         f.write(")\n")
         f.write("\nquitMAX #noPrompt\n")
+
+    os.close(maxScriptFileHandle)
 
     pluginInfoDict = {"3dsMaxVersion": versionOf3dsMax}
     job = submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames, quiet, returnJobIdOnly, jobDependencies, removeAuxiliaryFilesAfterSubmission)
