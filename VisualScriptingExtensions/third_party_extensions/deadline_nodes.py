@@ -69,13 +69,13 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
     pipelineMaxScriptFilename = pipelineMaxScriptFilename.replace("\\", "/")
     
     # Generate auxiliary pipeline info file:
-    tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")
+    tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")[1]
     auxiliaryFilenames.append(tempPipelineInfoFilename)
     with open(tempPipelineInfoFilename, "w+") as f:
         json.dump(pipelineInfoDict, f)
 
     # Generate auxiliary script file:
-    tempMaxScriptFilename = tempfile.mkstemp(suffix=".ms")
+    tempMaxScriptFilename = tempfile.mkstemp(suffix=".ms")[1]
     auxiliaryFilenames = [tempMaxScriptFilename] + auxiliaryFilenames
     
     with open(tempMaxScriptFilename, "w+") as f:
