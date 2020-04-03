@@ -19,9 +19,12 @@ def removeFiles(filenames):
             print(str(e))
 
 @defNode("Submit Job Files", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
-def submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=[], quiet=True, returnJobIdOnly=True, removeAuxiliaryFilesAfterSubmission=False):
+def submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=None, quiet=True, returnJobIdOnly=True, removeAuxiliaryFilesAfterSubmission=False):
     if DEADLINE_SERVICE == None:
         return None
+
+    if auxiliaryFilenames == None:
+        auxiliaryFilenames = []
 
     submissionResult = DEADLINE_SERVICE.submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=auxiliaryFilenames, quiet=quiet, returnJobIdOnly=returnJobIdOnly)
 
@@ -31,9 +34,12 @@ def submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=[], q
     return submissionResult
 
 @defNode("Submit Job", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
-def submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=[], quiet=True, returnJobIdOnly=True, jobDependencies=[], removeAuxiliaryFilesAfterSubmission=False):
+def submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=None, quiet=True, returnJobIdOnly=True, jobDependencies=None, removeAuxiliaryFilesAfterSubmission=False):
     if DEADLINE_SERVICE == None:
         return None
+
+    if auxiliaryFilenames == None:
+        auxiliaryFilenames = []
 
     if jobDependencies != None and (isinstance(jobDependencies, str) or len(jobDependencies) > 0):
         jobInfoDict = jobInfoDict.copy()
@@ -58,14 +64,24 @@ def getJobId(jobDictionary):
     return jobDictionary.get("_id") if jobDictionary != None else ""
 
 @defNode("Create Job Info Dictionary", isExecutable=True, returnNames=["Job Info Dict"], identifier=DEADLINE_IDENTIFIER)
-def createJobInfoDictionary(pluginName, name="Test Job", batchName="", priority=50, department="", pool="", secondaryPool="", group="",jobDependencies=[]):
+def createJobInfoDictionary(pluginName, name="Test Job", batchName="", priority=50, department="", pool="", secondaryPool="", group="",jobDependencies=None):
+    if jobDependencies == None:
+        jobDependencies = []
+        
     jobDict = {"Plugin":pluginName, "Name": name, "BatchName":batchName, "Priority":priority, "Department":department, "Pool":pool, "SecondaryPool":secondaryPool, "Group":group,
         "JobDependencies":(",".join(jobDependencies) if isinstance(jobDependencies, list) else jobDependencies)}
     return jobDict
 
 @defNode("Submit 3ds Max Pipeline Job", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
-def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInfoDict, versionOf3dsMax, auxiliaryFilenames=[], quiet=True, 
-        returnJobIdOnly=True, jobDependencies=[], removeAuxiliaryFilesAfterSubmission=False):
+def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInfoDict, versionOf3dsMax, auxiliaryFilenames=None, quiet=True, 
+        returnJobIdOnly=True, jobDependencies=None, removeAuxiliaryFilesAfterSubmission=False):
+    
+    if auxiliaryFilenames == None:
+        auxiliaryFilenames = []
+
+    if jobDependencies == None:
+        jobDependencies = []
+        
     pipelineMaxScriptFilename = pipelineMaxScriptFilename.replace("\\", "/")
     
     # Generate auxiliary pipeline info file:
