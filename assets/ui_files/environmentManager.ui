@@ -177,11 +177,22 @@
       </layout>
      </item>
      <item>
-      <widget class="QPushButton" name="importFromSettingsFileButton">
-       <property name="text">
-        <string>Import from Settings File</string>
-       </property>
-      </widget>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="QPushButton" name="importFromSettingsFileButton">
+         <property name="text">
+          <string>Import from Settings File</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="exportAsJsonButton">
+         <property name="text">
+          <string>Export As Json</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
      <item>
       <widget class="QTableView" name="settingsTableView">

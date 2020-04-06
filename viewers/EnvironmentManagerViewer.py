@@ -9,6 +9,7 @@ from PySide2.QtWidgets import QMessageBox, QFileDialog
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
 from MetadataManagerCore.environment.Environment import Environment
 from qt_extensions.SimpleTableModel import SimpleTableModel
+import json
 
 class EnvironmentManagerViewer(DockWidget):
     def __init__(self, parentWindow):
@@ -37,6 +38,7 @@ class EnvironmentManagerViewer(DockWidget):
         self.settingsTableView.doubleClicked.connect(self.onTableViewDoubleClicked)
 
         self.widget.importFromSettingsFileButton.clicked.connect(self.onImportFromSettingsFile)
+        self.widget.exportAsJsonButton.clicked.connect(self.onExportAsJson)
         
     def onTableViewDoubleClicked(self, idx):
         entry = self.settingsTable.entries[idx.row()]
@@ -176,3 +178,13 @@ class EnvironmentManagerViewer(DockWidget):
                         value = tokens[1].strip()
 
                         self.addEntry(key, value)
+
+    def onExportAsJson(self):
+        if not self.validateCurrentEnvironment():
+            return
+
+        filePath,_ = QFileDialog.getSaveFileName(self, "Save Settings As Json", "", "Any File (*.*)")
+
+        if filePath != None and filePath != "":
+            with open(filePath, 'w+') as f:
+                json.dump(self.currentEnvironment.settings, f, indent=4, sort_keys=True)
