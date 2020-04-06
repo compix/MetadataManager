@@ -2,24 +2,25 @@ from qt_extensions.DockWidget import DockWidget
 from MetadataManagerCore.mongodb_manager import MongoDBManager
 import asset_manager
 from qt_extensions import qt_util
-from PySide2 import QtWidgets
+from PySide2 import QtWidgets, QtCore
 from PySide2.QtCore import Qt, QRegExp
 from PySide2.QtGui import QValidator, QRegExpValidator
 from PySide2.QtWidgets import QMessageBox, QFileDialog
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
 from MetadataManagerCore.environment.Environment import Environment
 from qt_extensions.SimpleTableModel import SimpleTableModel
-import json
+import json, os
+import subprocess
 
 class EnvironmentManagerViewer(DockWidget):
     def __init__(self, parentWindow):
         super().__init__("Environment Manager", parentWindow, asset_manager.getUIFilePath("environmentManager.ui"))
         
+        self.autoExportPath : str = None
         self.environmentManager : EnvironmentManager = None
         self.dbManager : MongoDBManager = None
 
         self.widget.addButton.clicked.connect(self.onAddKeyValue)
-        self.widget.saveButton.clicked.connect(self.onSave)
 
         self.environmentsComboBox : QtWidgets.QComboBox = self.widget.environmentsComboBox
         self.setupEnvironmentComboBox()
@@ -39,11 +40,39 @@ class EnvironmentManagerViewer(DockWidget):
 
         self.widget.importFromSettingsFileButton.clicked.connect(self.onImportFromSettingsFile)
         self.widget.exportAsJsonButton.clicked.connect(self.onExportAsJson)
+        self.widget.selectValueFileInExplorerButton.clicked.connect(self.onSelectValueFileInExplorerButton)
+
+        self.addMenuBar()
         
+    def onSelectValueFileInExplorerButton(self):
+        if os.name == 'nt':
+            try:
+                value = self.currentEnvironment.evaluateSettingsValue(self.widget.valueLineEdit.text())
+                if os.path.exists(value):
+                    subprocess.Popen(f'explorer /select,"{os.path.normpath(value)}"')
+            except Exception as e:
+                print(e)
+
+    def addMenuBar(self):
+        menuBar = QtWidgets.QMenuBar()
+        settingsMenu = QtWidgets.QMenu("Settings")
+
+        menuBar.addMenu(settingsMenu)
+        menuBar.setMaximumHeight(20)
+
+        self.selectAutoExportPathAction = QtWidgets.QAction("Set Auto Export Path")
+        self.selectAutoExportPathAction.triggered.connect(self.onSelectAutoExportPath)
+        settingsMenu.addAction(self.selectAutoExportPathAction)
+
+        self.widget.layout().insertWidget(0, menuBar)
+
     def onTableViewDoubleClicked(self, idx):
         entry = self.settingsTable.entries[idx.row()]
         self.widget.keyLineEdit.setText(entry[0])
         self.widget.valueLineEdit.setText(entry[1])
+
+        value = self.currentEnvironment.evaluateSettingsValue(self.widget.valueLineEdit.text())
+        self.widget.selectValueFileInExplorerButton.setEnabled(os.path.exists(value))
 
     def onChooseFile(self):
         fileName,_ = QFileDialog.getOpenFileName(self, "Open", "", "Any File (*.*)")
@@ -95,7 +124,7 @@ class EnvironmentManagerViewer(DockWidget):
 
         self.refreshEnvironmentsComboBox()
 
-    def onSave(self):
+    def saveEnvironment(self):
         if self.currentEnvironment != None and not self.environmentManager.hasEnvironmentId(self.currentEnvironment.uniqueEnvironmentId): 
             if self.environmentManager.isValidEnvironmentId(self.currentEnvironment.uniqueEnvironmentId):
                 self.environmentManager.addEnvironment(self.currentEnvironment)
@@ -119,7 +148,10 @@ class EnvironmentManagerViewer(DockWidget):
 
         return True
 
-    def addEntry(self, key, value):
+    def addEntry(self, key, value, save=True):
+        """
+        Adds a new entry or replaces an existing value if the key is already present in the settings dictionary.
+        """
         if self.validateCurrentEnvironment():
             if key.strip() == "":
                 QMessageBox.warning(self, "Invalid Key", "Please enter a valid key.")
@@ -135,6 +167,9 @@ class EnvironmentManagerViewer(DockWidget):
                         break
 
             self.currentEnvironment.settings[key] = value
+            if save:
+                self.saveEnvironment()
+                self.exportSettingsAsJson(self.autoExportPath)
             return True
         else:
             return False
@@ -177,14 +212,32 @@ class EnvironmentManagerViewer(DockWidget):
                         key = tokens[0].strip()
                         value = tokens[1].strip()
 
-                        self.addEntry(key, value)
+                        self.addEntry(key, value, save=False)
+
+            self.saveEnvironment()
+
+    def exportSettingsAsJson(self, filePath):
+        if filePath != None and filePath != "" and os.path.exists(filePath):
+            with open(filePath, 'w+') as f:
+                json.dump(self.currentEnvironment.getEvaluatedSettings(), f, indent=4, sort_keys=True)
 
     def onExportAsJson(self):
         if not self.validateCurrentEnvironment():
             return
 
         filePath,_ = QFileDialog.getSaveFileName(self, "Save Settings As Json", "", "Any File (*.*)")
+        self.exportSettingsAsJson(filePath)
+
+    def onSelectAutoExportPath(self):
+        filePath,_ = QFileDialog.getSaveFileName(self, "Save Settings As Json", "", "Any File (*.*)")
 
         if filePath != None and filePath != "":
-            with open(filePath, 'w+') as f:
-                json.dump(self.currentEnvironment.getEvaluatedSettings(), f, indent=4, sort_keys=True)
+            self.autoExportPath = filePath
+            self.exportSettingsAsJson(filePath)
+            self.saveEnvironment()
+
+    def saveState(self, settings: QtCore.QSettings):
+        settings.setValue("EnvironmentManagerViewer_AutoExportPath", self.autoExportPath)
+
+    def restoreState(self, settings: QtCore.QSettings):
+        self.autoExportPath = settings.value("EnvironmentManagerViewer_AutoExportPath")

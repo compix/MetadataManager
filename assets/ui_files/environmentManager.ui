@@ -14,6 +14,18 @@
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <property name="leftMargin">
@@ -136,6 +148,19 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="selectValueFileInExplorerButton">
+         <property name="maximumSize">
+          <size>
+           <width>45</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Select</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="chooseFileButton">
          <property name="maximumSize">
           <size>
@@ -204,13 +229,6 @@
        </property>
        <property name="cornerButtonEnabled">
         <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="saveButton">
-       <property name="text">
-        <string>Save</string>
        </property>
       </widget>
      </item>
