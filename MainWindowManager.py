@@ -41,6 +41,7 @@ import VisualScriptingExtensions.versioning_nodes
 import VisualScriptingExtensions.third_party_extensions.deadline_nodes
 import VisualScriptingExtensions.environment_nodes
 from VisualScriptingExtensions.CodeGenerator import CodeGenerator
+from typing import List
 
 class Style(Enum):
     Dark = 0
@@ -89,11 +90,10 @@ class MainWindowManager(QtCore.QObject):
         self.deadlineServiceViewer = DeadlineServiceViewer(self.window)
         VisualScriptingExtensions.third_party_extensions.deadline_nodes.DEADLINE_SERVICE = self.deadlineServiceViewer.deadlineService
 
+        self.dockWidgets : List[DockWidget] = []
         self.setupDockWidgets()
 
         self.window.findPushButton.clicked.connect(self.viewItems)
-
-        self.restoreState()
 
     def initStatusInfo(self):
         self.mainProgressBar = QtWidgets.QProgressBar(self.window)
@@ -122,8 +122,6 @@ class MainWindowManager(QtCore.QObject):
 
         self.collectionViewer.updateCollections()
 
-        self.collectionViewer.restoreState(self.settings)
-
         header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.yieldSelectedCollectionNames())
         self.tableModel = TableModel(self.window, [], header, displayedKeys)
         self.window.tableView.setModel(self.tableModel)
@@ -141,6 +139,8 @@ class MainWindowManager(QtCore.QObject):
         self.actionsManagerViewer.setActionManager(self.actionManager)
 
         VisualScriptingExtensions.environment_nodes.ENVIRONMENT_MANAGER = self.stateManager.environmentManager
+
+        self.restoreState()
 
     def updateTableModelHeader(self):
         header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.yieldSelectedCollectionNames())
@@ -172,6 +172,8 @@ class MainWindowManager(QtCore.QObject):
         self.setupDockWidget(self.environmentManagerViewer)
 
     def setupDockWidget(self, dockWidget : DockWidget, initialDockArea=None):
+        self.dockWidgets.append(dockWidget)
+
         # Add visibility checkbox to view main menu:
         self.window.menuView.addAction(dockWidget.toggleViewAction())
         # Allow window functionality (e.g. maximize)
@@ -385,11 +387,12 @@ class MainWindowManager(QtCore.QObject):
         settings.setValue("geometry", self.window.saveGeometry())
         settings.setValue("windowState", self.window.saveState())
         settings.setValue("style", self.currentStyle)
-        self.visualScripting.saveWindowState(settings)
-        self.collectionViewer.saveState(settings)
+
+        for dockWidget in self.dockWidgets:
+            if isinstance(dockWidget, DockWidget):
+                dockWidget.saveState(settings)
 
         self.stateManager.saveState()
-        self.deadlineServiceViewer.saveState(settings)
 
     def restoreState(self, settings = None):
         if settings == None:
@@ -402,8 +405,10 @@ class MainWindowManager(QtCore.QObject):
             self.setStyle(settings.value("style", Style.Dark))
         except:
             self.setStyle(Style.Dark)
-        self.visualScripting.restoreWindowState(settings)
-        self.deadlineServiceViewer.restoreState(settings)
+
+        for dockWidget in self.dockWidgets:
+            if isinstance(dockWidget, DockWidget):
+                dockWidget.restoreState(settings)
 
     def eventFilter(self, obj, event):
         if obj is self.window and event.type() == QtCore.QEvent.Close:
