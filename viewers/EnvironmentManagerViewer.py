@@ -187,4 +187,4 @@ class EnvironmentManagerViewer(DockWidget):
 
         if filePath != None and filePath != "":
             with open(filePath, 'w+') as f:
-                json.dump(self.currentEnvironment.settings, f, indent=4, sort_keys=True)
+                json.dump(self.currentEnvironment.getEvaluatedSettings(), f, indent=4, sort_keys=True)
