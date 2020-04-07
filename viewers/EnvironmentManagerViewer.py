@@ -41,9 +41,28 @@ class EnvironmentManagerViewer(DockWidget):
         self.widget.importFromSettingsFileButton.clicked.connect(self.onImportFromSettingsFile)
         self.widget.exportAsJsonButton.clicked.connect(self.onExportAsJson)
         self.widget.selectValueFileInExplorerButton.clicked.connect(self.onSelectValueFileInExplorerButton)
+        self.widget.deleteEntryButton.clicked.connect(self.onDeleteEntry)
 
         self.addMenuBar()
         
+    def onDeleteEntry(self):
+        if self.currentEnvironment != None:
+            key = self.widget.keyLineEdit.text()
+
+            if key in self.currentEnvironment.settings:
+                ret = QMessageBox.question(self, "Delete Entry", "Are you sure you want to delete the settings entry?")
+                if ret == QMessageBox.Yes:
+                    del self.currentEnvironment.settings[key]
+
+                    for i in range(0, len(self.settingsTable.entries)):
+                        existingTableKey = self.settingsTable.entries[i][0]
+                        if existingTableKey == key:
+                            self.settingsTable.removeRowAtIndex(i)
+                            break
+
+                    self.widget.deleteEntryButton.setEnabled(False)
+                    self.saveEnvironment()
+
     def onSelectValueFileInExplorerButton(self):
         if os.name == 'nt':
             try:
@@ -73,6 +92,8 @@ class EnvironmentManagerViewer(DockWidget):
 
         value = self.currentEnvironment.evaluateSettingsValue(self.widget.valueLineEdit.text())
         self.widget.selectValueFileInExplorerButton.setEnabled(os.path.exists(value))
+
+        self.widget.deleteEntryButton.setEnabled(True)
 
     def onChooseFile(self):
         fileName,_ = QFileDialog.getOpenFileName(self, "Open", "", "Any File (*.*)")
@@ -133,6 +154,7 @@ class EnvironmentManagerViewer(DockWidget):
                 QMessageBox.warning("Invalid Environment Name", "Please enter a valid environment name.")
 
         self.environmentManager.save(self.dbManager)
+        self.exportSettingsAsJson(self.autoExportPath)
 
     def setCurrentEnvironment(self, env : Environment):
         self.currentEnvironment = env
@@ -165,11 +187,11 @@ class EnvironmentManagerViewer(DockWidget):
                     if existingTableKey == key:
                         self.settingsTable.replaceEntryAtRow(i, [key, value])
                         break
-
+            
+            self.widget.deleteEntryButton.setEnabled(True)
             self.currentEnvironment.settings[key] = value
             if save:
                 self.saveEnvironment()
-                self.exportSettingsAsJson(self.autoExportPath)
             return True
         else:
             return False

@@ -44,6 +44,11 @@ class SimpleTableModel(QtCore.QAbstractTableModel):
         self.entries.extend(entries)
         self.emit(QtCore.SIGNAL("layoutChanged()"))
 
+    def removeRowAtIndex(self, idx):
+        self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
+        self.entries.pop(idx)
+        self.emit(QtCore.SIGNAL("layoutChanged()"))
+
     def replaceEntryAtRow(self, rowIdx, newEntry : List[str]):
         if rowIdx < len(self.entries):
             self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
