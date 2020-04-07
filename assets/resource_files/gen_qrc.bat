@@ -1,0 +1,1 @@
+"C:\Users\compix\AppData\Local\Programs\Python\Python37\Lib\site-packages\PySide2\pyside2-rcc.exe" resources.qrc -o "C:\Users\compix\Desktop\MetadataManager\viewers\resources_qrc.py"
