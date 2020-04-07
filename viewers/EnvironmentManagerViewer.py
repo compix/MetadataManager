@@ -38,8 +38,6 @@ class EnvironmentManagerViewer(DockWidget):
 
         self.settingsTableView.doubleClicked.connect(self.onTableViewDoubleClicked)
 
-        self.widget.importFromSettingsFileButton.clicked.connect(self.onImportFromSettingsFile)
-        self.widget.exportAsJsonButton.clicked.connect(self.onExportAsJson)
         self.widget.selectValueFileInExplorerButton.clicked.connect(self.onSelectValueFileInExplorerButton)
         self.widget.deleteEntryButton.clicked.connect(self.onDeleteEntry)
 
@@ -74,14 +72,24 @@ class EnvironmentManagerViewer(DockWidget):
 
     def addMenuBar(self):
         menuBar = QtWidgets.QMenuBar()
+        fileMenu = QtWidgets.QMenu("File")
         settingsMenu = QtWidgets.QMenu("Settings")
 
+        menuBar.addMenu(fileMenu)
         menuBar.addMenu(settingsMenu)
         menuBar.setMaximumHeight(20)
 
         self.selectAutoExportPathAction = QtWidgets.QAction("Set Auto Export Path")
         self.selectAutoExportPathAction.triggered.connect(self.onSelectAutoExportPath)
         settingsMenu.addAction(self.selectAutoExportPathAction)
+
+        self.importFromSettingsFileAction = QtWidgets.QAction("Import from Settings File")
+        self.importFromSettingsFileAction.triggered.connect(self.onImportFromSettingsFile)
+        fileMenu.addAction(self.importFromSettingsFileAction)
+
+        self.exportAsJsonAction = QtWidgets.QAction("Export As Json")
+        self.exportAsJsonAction.triggered.connect(self.onExportAsJson)
+        fileMenu.addAction(self.exportAsJsonAction)
 
         self.widget.layout().insertWidget(0, menuBar)
 
