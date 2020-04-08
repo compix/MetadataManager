@@ -32,7 +32,6 @@ class PreviewViewer(DockWidget):
         self.animationTimer = QtCore.QTimer()
         self.animationTimer.setInterval(self.widget.animationSpeedSlider.maximum() - self.widget.animationSpeedSlider.value() + 1)
         self.animationTimer.timeout.connect(self.onUpdateAnimation)
-        self.animationTimer.start()
 
     def onAnimationSpeedSliderChanged(self, value):
         self.animationTimer.setInterval(self.widget.animationSpeedSlider.maximum() - value + 1)
@@ -55,7 +54,7 @@ class PreviewViewer(DockWidget):
         if len(s) > maxDigits:
             raise f"Invalid input: The index {idx} exceeds the max digit count {maxDigits}"
 
-        for i in range(len(s), maxDigits):
+        for _ in range(len(s), maxDigits):
             s = "0" + s
         
         return s
@@ -94,6 +93,8 @@ class PreviewViewer(DockWidget):
             
             if self.curFrameIdx < len(self.frames):
                 self.displayPreview(self.frames[self.curFrameIdx])
+
+            self.animationTimer.start()
         else:
             self.displayPreview(path)
 
@@ -111,4 +112,6 @@ class PreviewViewer(DockWidget):
             self.displayPreview(self.frames[self.curFrameIdx])
 
     def clearPreview(self):
+        self.animationTimer.stop()
+        self.frames = []
         self.preview.setPhoto(None)
