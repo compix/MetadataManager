@@ -9,15 +9,20 @@ from MetadataManagerCore.actions.Action import Action
 from viewers.CollectionViewer import CollectionViewer
 from MetadataManagerCore.actions.ActionManager import ActionManager
 from PySide2.QtCore import QThreadPool
+from VisualScripting import VisualScripting
 
 class ActionButtonTask(object):
     def __init__(self, func, *args, **kwargs):
         self.func = func
         self.args = args
         self.kwargs = kwargs
+        self.runsOnMainThread = False
 
     def __call__(self):
-        QThreadPool.globalInstance().start(qt_util.LambdaTask(self.func,*self.args))
+        if self.runsOnMainThread:
+            self.func(*self.args, **self.kwargs)
+        else:
+            QThreadPool.globalInstance().start(qt_util.LambdaTask(self.func, *self.args, **self.kwargs))
         
 def clearContainer(container):
     for i in reversed(range(container.count())): 
@@ -31,6 +36,7 @@ class ActionsViewer(DockWidget):
         self.dbManager = None
         self.collectionViewer : CollectionViewer = None
         self.actionManager : ActionManager = None
+        self.visualScripting : VisualScripting = None
 
         self.widget.documentActionsLayout.setAlignment(QtCore.Qt.AlignTop)
         self.widget.generalActionsLayout.setAlignment(QtCore.Qt.AlignTop)
@@ -50,16 +56,21 @@ class ActionsViewer(DockWidget):
     def setDatabaseManager(self, dbManager):
         self.dbManager = dbManager
 
-    def setup(self, actionManager: ActionManager, mainWindowManager, collectionViewer: CollectionViewer):
+    def setup(self, actionManager: ActionManager, mainWindowManager, collectionViewer: CollectionViewer, visualScripting: VisualScripting):
         self.actionManager = actionManager
         self.collectionViewer = collectionViewer
         self.refreshActionView()
         self.mainWindowManager = mainWindowManager
+        self.visualScripting = visualScripting
 
         self.collectionViewer.connectCollectionSelectionUpdateHandler(self.onCollectionSelectionChanged)
 
         self.actionManager.linkActionToCollectionEvent.subscribe(lambda actionId, collectionName: self.refreshActionView())
         self.actionManager.unlinkActionFromCollectionEvent.subscribe(lambda actionId, collectionName: self.refreshActionView())
+        self.visualScripting.onSaveEvent.subscribe(self.onVisualScriptingSave)
+
+    def onVisualScriptingSave(self):
+        self.refreshActionView()
 
     def onCollectionSelectionChanged(self):
         self.refreshActionView()
@@ -85,6 +96,7 @@ class ActionsViewer(DockWidget):
                 a = self.actionManager.getActionById(actionId)
                 actionButton = QtWidgets.QPushButton(a.id, self.widget)
                 task = ActionButtonTask(self.executeDocumentAction, target, a)
+                task.runsOnMainThread = a.runsOnMainThread
                 self.actionTasks.append(task)
                 actionButton.clicked.connect(task)
                 self.widget.documentActionsLayout.addWidget(actionButton)
@@ -93,6 +105,7 @@ class ActionsViewer(DockWidget):
             for a in self.actionManager.getGeneralActions():
                 actionButton = QtWidgets.QPushButton(a.id, self.widget)
                 task = ActionButtonTask(self.executeAction, a)
+                task.runsOnMainThread = a.runsOnMainThread
                 self.actionTasks.append(task)
                 actionButton.clicked.connect(task)
                 self.widget.generalActionsLayout.addWidget(actionButton)

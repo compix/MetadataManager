@@ -62,20 +62,25 @@ class CodeGenerator(code_generator.CodeGenerator):
 
                 execArgs = ["document"] if isinstance(startNode, DocumentActionNode) else []
                 self.writeCodeLine(srcFile, f"def execute({','.join(['self'] + execArgs)}):", code_generator.DEFAULT_INDENT)
-                self.writeCodeLine(srcFile, f"execute({','.join(execArgs)})", code_generator.DEFAULT_INDENT + code_generator.DEFAULT_INDENT,suffix="\n\n")
+                self.writeCodeLine(srcFile, f"execute({','.join(execArgs)})", code_generator.DEFAULT_INDENT*2,suffix="\n\n")
 
                 self.writeCodeLine(srcFile, "@property", code_generator.DEFAULT_INDENT)
                 self.writeCodeLine(srcFile, "def id(self):", code_generator.DEFAULT_INDENT)
-                self.writeCodeLine(srcFile, "return {!r}".format(moduleName), code_generator.DEFAULT_INDENT + code_generator.DEFAULT_INDENT)
+                self.writeCodeLine(srcFile, "return {!r}".format(moduleName), code_generator.DEFAULT_INDENT*2)
 
                 self.writeCodeLine(srcFile, "@property", code_generator.DEFAULT_INDENT)
                 self.writeCodeLine(srcFile, "def filterTags(self):", code_generator.DEFAULT_INDENT)
-                self.writeCodeLine(srcFile, f"return {startNode.filterTags}", code_generator.DEFAULT_INDENT + code_generator.DEFAULT_INDENT)
+                self.writeCodeLine(srcFile, f"return {startNode.filterTags}", code_generator.DEFAULT_INDENT*2)
 
                 self.writeCodeLine(srcFile, "@property", code_generator.DEFAULT_INDENT)
                 self.writeCodeLine(srcFile, "def category(self):", code_generator.DEFAULT_INDENT)
                 category = startNode.category if startNode.category != None and startNode.category != "" and not startNode.category.isspace() else "Default"
-                self.writeCodeLine(srcFile, f"return {category}", code_generator.DEFAULT_INDENT + code_generator.DEFAULT_INDENT)
+                self.writeCodeLine(srcFile, f"return {category}", code_generator.DEFAULT_INDENT*2)
+
+                self.writeCodeLine(srcFile, "@property", code_generator.DEFAULT_INDENT)
+                self.writeCodeLine(srcFile, "def runsOnMainThread(self):", code_generator.DEFAULT_INDENT)
+                runsOnMainThread = startNode.runsOnMainThread == True
+                self.writeCodeLine(srcFile, f"return {'True' if runsOnMainThread else 'False'}", code_generator.DEFAULT_INDENT*2)
 
             pathonFileDir = os.path.dirname(srcFilePath)
 

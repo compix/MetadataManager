@@ -1,35 +1,17 @@
 from VisualScripting.node_exec.base_nodes import ExecuteNode
+from VisualScriptingExtensions.action_nodes import ActionNode
 
 ACTIONS_IDENTIFIER = "Document Actions"
 
-class DocumentActionNode(ExecuteNode):
+class DocumentActionNode(ActionNode):
     __identifier__ = ACTIONS_IDENTIFIER
     NODE_NAME = 'Document Action'
 
     def __init__(self):
-        super(DocumentActionNode, self).__init__()
-
-        self.add_text_input('category', 'Category', tab='widgets')
-        self.add_text_input('tags', 'Tags', tab='widgets')
+        super().__init__()
 
         self.add_input('document')
         self.add_output('document')
-
-    @property
-    def category(self):
-        return '{!r}'.format(self.get_property('category'))
-
-    @property
-    def filterTags(self):
-        tagsString = self.get_property('tags')
-        tags = tagsString.split(',')
-        nonEmptyTags = []
-        for tag in tags:
-            if tag != None and tag != '' and not tag.isspace():
-                nonEmptyTags.append(f"\"{tag}\"")
-
-        fixedTagsString = ','.join(nonEmptyTags)
-        return f'[{fixedTagsString}]'
 
     @staticmethod
     def execute(document):

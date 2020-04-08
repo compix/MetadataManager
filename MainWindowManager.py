@@ -138,7 +138,7 @@ class MainWindowManager(QtCore.QObject):
 
         self.environmentManagerViewer.setup(self.stateManager.environmentManager, self.dbManager)
 
-        self.actionsViewer.setup(self.actionManager, self, self.collectionViewer)
+        self.actionsViewer.setup(self.actionManager, self, self.collectionViewer, self.visualScripting)
         self.actionsManagerViewer.setActionManager(self.actionManager)
 
         VisualScriptingExtensions.environment_nodes.ENVIRONMENT_MANAGER = self.stateManager.environmentManager
