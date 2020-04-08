@@ -43,6 +43,9 @@ import VisualScriptingExtensions.environment_nodes
 from VisualScriptingExtensions.CodeGenerator import CodeGenerator
 from typing import List
 
+import MDApi
+from custom import *
+
 class Style(Enum):
     Dark = 0
     Light = 1
@@ -140,6 +143,9 @@ class MainWindowManager(QtCore.QObject):
 
         VisualScriptingExtensions.environment_nodes.ENVIRONMENT_MANAGER = self.stateManager.environmentManager
 
+        MDApi.ENVIRONMNET_MANAGER = self.stateManager.environmentManager
+        MDApi.DB_MANAGER = dbManager
+        
         self.restoreState()
 
     def updateTableModelHeader(self):
