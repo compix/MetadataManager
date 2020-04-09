@@ -42,8 +42,8 @@ class CodeGenerator(code_generator.CodeGenerator):
     def writeCodeLine(self, srcFile, codeLine, indent, suffix="\n"):
         srcFile.write(code_generator.makeCodeLine(codeLine, indent) + suffix)
 
-    def generatePythonCode(self, graph, startNode, moduleName, targetFolder):
-        srcFilePath = super().generatePythonCode(graph, startNode, moduleName, targetFolder)
+    def generatePythonCode(self, graph, graphName, startNode, moduleName, targetFolder):
+        srcFilePath = super().generatePythonCode(graph, graphName, startNode, moduleName, targetFolder)
 
         if isinstance(startNode, DocumentActionNode) or isinstance(startNode, ActionNode):
             with open(srcFilePath,"a+") as srcFile:
@@ -67,6 +67,10 @@ class CodeGenerator(code_generator.CodeGenerator):
                 self.writeCodeLine(srcFile, "@property", code_generator.DEFAULT_INDENT)
                 self.writeCodeLine(srcFile, "def id(self):", code_generator.DEFAULT_INDENT)
                 self.writeCodeLine(srcFile, "return {!r}".format(moduleName), code_generator.DEFAULT_INDENT*2)
+
+                self.writeCodeLine(srcFile, "@property", code_generator.DEFAULT_INDENT)
+                self.writeCodeLine(srcFile, "def displayName(self):", code_generator.DEFAULT_INDENT)
+                self.writeCodeLine(srcFile, "return {!r}".format(graphName), code_generator.DEFAULT_INDENT*2)
 
                 self.writeCodeLine(srcFile, "@property", code_generator.DEFAULT_INDENT)
                 self.writeCodeLine(srcFile, "def filterTags(self):", code_generator.DEFAULT_INDENT)
