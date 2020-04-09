@@ -59,12 +59,12 @@ class PreviewViewer(DockWidget):
         
         return s
 
-    def displayPreview(self, path):
+    def displayPreview(self, path, resetZoom=True):
         scene = QtWidgets.QGraphicsScene()
         pixmap = QtGui.QPixmap(path)
         scene.addPixmap(pixmap)
         #self.preview.setScene(scene)
-        self.preview.setPhoto(pixmap)
+        self.preview.setPhoto(pixmap, resetZoom=resetZoom)
         #self.preview.fitInView(scene.sceneRect(), Qt.KeepAspectRatio)
 
     def showPreview(self, path):
@@ -104,12 +104,12 @@ class PreviewViewer(DockWidget):
     def showNextFrame(self):
         if self.curFrameIdx < len(self.frames):
             self.curFrameIdx = (self.curFrameIdx + 1) % len(self.frames)
-            self.displayPreview(self.frames[self.curFrameIdx])
+            self.displayPreview(self.frames[self.curFrameIdx], resetZoom=False)
 
     def showPreviousFrame(self):
         if self.curFrameIdx < len(self.frames):
             self.curFrameIdx = (self.curFrameIdx - 1 + len(self.frames)) % len(self.frames)
-            self.displayPreview(self.frames[self.curFrameIdx])
+            self.displayPreview(self.frames[self.curFrameIdx], resetZoom=False)
 
     def clearPreview(self):
         self.animationTimer.stop()
