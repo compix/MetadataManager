@@ -94,7 +94,7 @@ class ActionsViewer(DockWidget):
 
             for actionId in availableActionIds:
                 a = self.actionManager.getActionById(actionId)
-                actionButton = QtWidgets.QPushButton(a.id, self.widget)
+                actionButton = QtWidgets.QPushButton(a.displayName, self.widget)
                 task = ActionButtonTask(self.executeDocumentAction, target, a)
                 task.runsOnMainThread = a.runsOnMainThread
                 self.actionTasks.append(task)
@@ -103,7 +103,7 @@ class ActionsViewer(DockWidget):
 
             # Show general actions:
             for a in self.actionManager.getGeneralActions():
-                actionButton = QtWidgets.QPushButton(a.id, self.widget)
+                actionButton = QtWidgets.QPushButton(a.displayName, self.widget)
                 task = ActionButtonTask(self.executeAction, a)
                 task.runsOnMainThread = a.runsOnMainThread
                 self.actionTasks.append(task)
