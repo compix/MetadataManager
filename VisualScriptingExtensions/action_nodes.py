@@ -12,7 +12,6 @@ class ActionNode(ExecuteNode):
         self.add_text_input('category', 'Category', tab='widgets')
         self.add_text_input('tags', 'Tags', tab='widgets')
         checkbox = self.add_checkbox(name='runsOnMainThread', label='', text='Run On Main Thread', state=False, tab='widgets')
-        checkbox._cbox.setMinimumWidth(150)
 
     @property
     def category(self):
