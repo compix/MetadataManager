@@ -8,3 +8,4 @@
 # Optional
 * pip install xmltodict
 * pip install xlrd
+* pip install pyzipper (for encrypted zip archive support)
