@@ -7,37 +7,13 @@ import os
 import sys
 import importlib
 from MetadataManagerCore.actions.ActionManager import ActionManager
+from VisualScripting.node_exec.GraphManager import GraphManager
 
 class CodeGenerator(code_generator.CodeGenerator):
-    def __init__(self, actionManager=None):
+    def __init__(self, actionManager):
         super().__init__()
         
         self.actionManager : ActionManager = actionManager
-
-    def setActionManager(self, actionManager):
-        self.actionManager = actionManager
-
-        allGraphSettings = self.graphManager.retrieveAvailableGraphSettings()
-
-        for graphSettings in allGraphSettings:
-            moduleName = self.graphManager.getModuleNameFromGraphName(graphSettings.name)
-            pythonFile = self.graphManager.getPythonCodePath(graphSettings)
-            pathonFileDir = os.path.dirname(pythonFile)
-
-            if not pathonFileDir in sys.path:
-                sys.path.append(pathonFileDir)
-
-            try:
-                execModule = importlib.import_module(moduleName)
-                importlib.reload(execModule)
-            except Exception as e:
-                print(str(e))
-            
-            try:
-                docAction = execModule.ActionVS()
-                self.actionManager.registerAction(docAction)
-            except:
-                pass
 
     def writeCodeLine(self, srcFile, codeLine, indent, suffix="\n"):
         srcFile.write(code_generator.makeCodeLine(codeLine, indent) + suffix)

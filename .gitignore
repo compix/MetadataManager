@@ -1,3 +1,9 @@
+# Logging:
+log_output/
+
+# Linting
+.pylint.d/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

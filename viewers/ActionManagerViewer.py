@@ -69,11 +69,11 @@ class CollectionActionListView(QListView):
                 super().dropEvent(e)
 
 class ActionManagerViewer(DockWidget):
-    def __init__(self, parentWindow):
+    def __init__(self, parentWindow, actionManager : ActionManager, dbManager : MongoDBManager):
         super().__init__("Actions Manager", parentWindow, asset_manager.getUIFilePath("actionManager.ui"))
 
-        self.actionManager = None
-        self.dbManager : MongoDBManager = None
+        self.actionManager : ActionManager = actionManager
+        self.dbManager : MongoDBManager = dbManager
 
         # Setup the tree view:
         self.actionsTreeView = self.widget.actionsTreeView
@@ -95,6 +95,11 @@ class ActionManagerViewer(DockWidget):
 
         self.widget.deleteCollectionActionButton.clicked.connect(self.onDeleteCollectionActionButtonClick)
 
+        self.refreshTreeView()
+        self.refreshCollectionView()
+
+        self.actionManager.registerActionEvent.subscribe(lambda action: self.refreshTreeView())
+
     @property
     def selectedCollectionName(self):
         return self.widget.collectionComboBox.currentText()
@@ -108,17 +113,6 @@ class ActionManagerViewer(DockWidget):
 
             self.collectionActionsListModel.removeRow(listItem.row())
             self.actionManager.unlinkActionFromCollection(actionId, self.selectedCollectionName)
-
-    def setActionManager(self, actionManager: ActionManager):
-        self.actionManager = actionManager
-
-        self.refreshTreeView()
-        self.refreshCollectionView()
-
-        self.actionManager.registerActionEvent.subscribe(lambda action: self.refreshTreeView())
-
-    def setDataBaseManager(self, dbManager: MongoDBManager):
-        self.dbManager = dbManager
 
     def refreshTreeView(self):
         self.actionsTreeModel.clear()

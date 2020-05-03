@@ -3,16 +3,14 @@ import asset_manager
 from qt_extensions import qt_util
 from PySide2 import QtWidgets
 from PySide2.QtCore import Qt
+from MetadataManagerCore.mongodb_manager import MongoDBManager
 
 class Inspector(DockWidget):
-    def __init__(self, parentWindow):
+    def __init__(self, parentWindow, dbManager : MongoDBManager):
         super().__init__("Inspector", parentWindow, asset_manager.getUIFilePath("inspector.ui"))
         
-        self.dbManager = None
-
-    def setDatabaseManager(self, dbManager):
         self.dbManager = dbManager
-        
+
     def showItem(self, uid):
         form = self.widget.formLayout
         qt_util.clearContainer(form)

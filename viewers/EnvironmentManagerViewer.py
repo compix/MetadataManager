@@ -13,12 +13,12 @@ import json, os
 import subprocess
 
 class EnvironmentManagerViewer(DockWidget):
-    def __init__(self, parentWindow):
+    def __init__(self, parentWindow, environmentManager: EnvironmentManager, dbManager : MongoDBManager):
         super().__init__("Environment Manager", parentWindow, asset_manager.getUIFilePath("environmentManager.ui"))
         
         self.autoExportPath : str = None
-        self.environmentManager : EnvironmentManager = None
-        self.dbManager : MongoDBManager = None
+        self.environmentManager : EnvironmentManager = environmentManager
+        self.dbManager : MongoDBManager = dbManager
 
         self.widget.addButton.clicked.connect(self.onAddKeyValue)
 
@@ -42,6 +42,7 @@ class EnvironmentManagerViewer(DockWidget):
         self.widget.deleteEntryButton.clicked.connect(self.onDeleteEntry)
 
         self.addMenuBar()
+        self.refreshEnvironmentsComboBox()
         
     def onDeleteEntry(self):
         if self.currentEnvironment != None:
@@ -146,12 +147,6 @@ class EnvironmentManagerViewer(DockWidget):
             env = Environment(envId)
             env.setDisplayName(potentialEnvironmentName)
             self.setCurrentEnvironment(env)
-
-    def setup(self, environmentManager: EnvironmentManager, dbManager : MongoDBManager):
-        self.environmentManager = environmentManager
-        self.dbManager = dbManager
-
-        self.refreshEnvironmentsComboBox()
 
     def saveEnvironment(self):
         if self.currentEnvironment != None and not self.environmentManager.hasEnvironmentId(self.currentEnvironment.uniqueEnvironmentId): 

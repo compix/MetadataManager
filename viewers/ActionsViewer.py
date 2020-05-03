@@ -9,7 +9,8 @@ from MetadataManagerCore.actions.Action import Action
 from viewers.CollectionViewer import CollectionViewer
 from MetadataManagerCore.actions.ActionManager import ActionManager
 from PySide2.QtCore import QThreadPool
-from VisualScripting import VisualScripting
+from VisualScripting.VisualScriptingViewer import VisualScriptingViewer
+from MetadataManagerCore.mongodb_manager import MongoDBManager
 
 class ActionButtonTask(object):
     def __init__(self, func, *args, **kwargs):
@@ -30,13 +31,15 @@ def clearContainer(container):
 
 
 class ActionsViewer(DockWidget):
-    def __init__(self, parentWindow):
+    def __init__(self, parentWindow, dbManager : MongoDBManager, actionManager: ActionManager, 
+                 mainWindowManager, collectionViewer: CollectionViewer, visualScriptingViewer: VisualScriptingViewer):
         super().__init__("Actions", parentWindow, asset_manager.getUIFilePath("actions.ui"))
         
-        self.dbManager = None
-        self.collectionViewer : CollectionViewer = None
-        self.actionManager : ActionManager = None
-        self.visualScripting : VisualScripting = None
+        self.dbManager = dbManager
+        self.collectionViewer : CollectionViewer = collectionViewer
+        self.actionManager : ActionManager = actionManager
+        self.visualScriptingViewer : VisualScriptingViewer = visualScriptingViewer
+        self.mainWindowManager = mainWindowManager
 
         self.widget.documentActionsLayout.setAlignment(QtCore.Qt.AlignTop)
         self.widget.generalActionsLayout.setAlignment(QtCore.Qt.AlignTop)
@@ -50,24 +53,16 @@ class ActionsViewer(DockWidget):
 
         self.actionTasks = []
 
-    def onTargetChanged(self):
         self.refreshActionView()
-
-    def setDatabaseManager(self, dbManager):
-        self.dbManager = dbManager
-
-    def setup(self, actionManager: ActionManager, mainWindowManager, collectionViewer: CollectionViewer, visualScripting: VisualScripting):
-        self.actionManager = actionManager
-        self.collectionViewer = collectionViewer
-        self.refreshActionView()
-        self.mainWindowManager = mainWindowManager
-        self.visualScripting = visualScripting
 
         self.collectionViewer.connectCollectionSelectionUpdateHandler(self.onCollectionSelectionChanged)
 
         self.actionManager.linkActionToCollectionEvent.subscribe(lambda actionId, collectionName: self.refreshActionView())
         self.actionManager.unlinkActionFromCollectionEvent.subscribe(lambda actionId, collectionName: self.refreshActionView())
-        self.visualScripting.onSaveEvent.subscribe(self.onVisualScriptingSave)
+        self.visualScriptingViewer.onSaveEvent.subscribe(self.onVisualScriptingSave)
+
+    def onTargetChanged(self):
+        self.refreshActionView()
 
     def onVisualScriptingSave(self):
         self.refreshActionView()

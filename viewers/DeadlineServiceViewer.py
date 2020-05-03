@@ -10,18 +10,23 @@ import os
 from qt_extensions import qt_util
 from PySide2.QtCore import QThreadPool
 from PySide2.QtWidgets import QMessageBox
+from logging_extensions.QtTextAppendLoggingHandler import QtTextAppendLoggingHandler
+import logging
 
 class DeadlineServiceViewer(DockWidget):
-    def __init__(self, parentWindow):
+    def __init__(self, parentWindow, deadlineService : DeadlineService):
         super().__init__("Deadline Service", parentWindow, asset_manager.getUIFilePath("deadlineService.ui"))
         
         self.dbManager = None
-        self.deadlineService : DeadlineService = DeadlineService(None)
+        self.deadlineService : DeadlineService = deadlineService
+        self.logger = logging.getLogger(__name__)
 
         self.widget.refreshConnectionButton.clicked.connect(self.onRefreshConnectionButtonClick)
         self.widget.installPluginButton.clicked.connect(self.onInstallPluginClick)
 
-        self.deadlineService.messageUpdateEvent.subscribe(self.onDeadlineServiceMessageUpdate)
+        textAppendLoggingHandler = QtTextAppendLoggingHandler(self.widget.logEdit)
+        self.logger.addHandler(textAppendLoggingHandler)
+        self.deadlineService.logger.addHandler(textAppendLoggingHandler)
 
         self.availablePluginsMap = {"3ds Max Pipeline Plugin":"3dsMaxPipelinePlugin"}
 
@@ -29,12 +34,13 @@ class DeadlineServiceViewer(DockWidget):
             self.widget.installPluginComboBox.addItem(key)
 
     def saveState(self, settings):
-        settings.setValue("deadline_service", self.deadlineService.info.__dict__)
+        pass
 
     def updateInfo(self, info):
         qt_util.runInMainThread(self.widget.refreshConnectionButton.setText, "Connecting...")
         qt_util.runInMainThread(self.widget.refreshConnectionButton.setEnabled, False)
         self.deadlineService.updateInfo(info)
+        self.deadlineService.connect()
         qt_util.runInMainThread(self.widget.refreshConnectionButton.setText, "Refresh Connection")
         qt_util.runInMainThread(self.widget.refreshConnectionButton.setEnabled, True)
 
@@ -45,36 +51,27 @@ class DeadlineServiceViewer(DockWidget):
         selectedPlugin = self.widget.installPluginComboBox.currentText()
         installationSuccessful = self.deadlineService.installKnownDeadlinePlugin(self.availablePluginsMap.get(selectedPlugin))
         infoText = f"Sucessfully installed {selectedPlugin}." if installationSuccessful else f"Failed to install {selectedPlugin}. Please check the log."
-        self.log(infoText)
+        self.logger.info(infoText)
 
         if not installationSuccessful:
             QMessageBox.warning(self.widget, "Installation Failed", infoText)
 
     def restoreState(self, settings):
-        info = DeadlineServiceInfo()
-        infoDict = settings.value("deadline_service")
-
-        if infoDict != None:
+        if self.deadlineService.info != None:
             try:
-                info.__dict__ = infoDict
+                info = self.deadlineService.info
 
                 self.widget.hostLineEdit.setText(str(info.webserviceHost))
                 self.widget.portLineEdit.setText(str(info.webservicePort))
                 self.widget.deadlineStandalonePathLineEdit.setText(str(info.deadlineStandalonePythonPackagePath))
                 self.widget.deadlineInstallPathLineEdit.setText(str(info.deadlineInstallPath))
                 self.widget.deadlineRepositoryLocationLineEdit.setText(str(info.deadlineRepositoryLocation))
-
+                
                 self.refreshDeadlineServiceInfo(info)
             except Exception as e:
                 print(str(e))
         else:
             self.onRefreshConnectionButtonClick()
-
-    def onDeadlineServiceMessageUpdate(self, msg):
-        self.log(msg)
-
-    def log(self, msg):
-        qt_util.runInMainThread(self.widget.logEdit.append, msg)
 
     def onRefreshConnectionButtonClick(self):
         host = self.widget.hostLineEdit.text()

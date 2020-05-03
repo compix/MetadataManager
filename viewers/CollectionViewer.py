@@ -7,9 +7,9 @@ from qt_extensions.DockWidget import DockWidget
 import asset_manager
 
 class CollectionViewer(DockWidget):
-    def __init__(self, parentWindow):
+    def __init__(self, parentWindow, dbManager : MongoDBManager):
         super().__init__("Collection Viewer", parentWindow, asset_manager.getUIFilePath("collectionManager.ui"))
-        self.dbManager = None
+        self.dbManager = dbManager
         self.collectionCheckBoxMap = dict()
 
         self.collectionsLayout.setAlignment(QtCore.Qt.AlignTop)
@@ -19,8 +19,7 @@ class CollectionViewer(DockWidget):
 
         self.collectionKeyCheckBoxMap = dict()
 
-    def setDataBaseManager(self, dbManager : MongoDBManager):
-        self.dbManager = dbManager
+        self.updateCollections()
 
     def connectCollectionSelectionUpdateHandler(self, command):
         for collectionCheckBox in self.collectionCheckBoxMap.values():

@@ -3,8 +3,6 @@ import sys
 from PySide2 import QtCore, QtWidgets, QtUiTools, QtGui
 from enum import Enum
 from MetadataManagerCore.mongodb_manager import MongoDBManager
-from MetadataManagerCore.StateManager import StateManager
-
 import operator
 from MetadataManagerCore.util import timeit
 from multiprocessing.dummy import Pool as ThreadPool 
@@ -16,7 +14,7 @@ import pymongo
 from TableModel import TableModel
 from qt_extensions.Completer import Completer
 from MetadataManagerCore import Keys
-from VisualScripting import NodeGraphQt
+from VisualScripting.VisualScriptingViewer import VisualScriptingViewer
 from PySide2.QtCore import QFile, QTextStream, QThreadPool
 
 import asset_manager
@@ -33,70 +31,81 @@ from viewers.DeadlineServiceViewer import DeadlineServiceViewer
 from viewers.EnvironmentManagerViewer import EnvironmentManagerViewer
 from random import random
 
-from VisualScripting.VisualScripting import VisualScripting
-import VisualScriptingExtensions.mongodb_nodes
-import VisualScriptingExtensions.document_action_nodes
-import VisualScriptingExtensions.action_nodes
-import VisualScriptingExtensions.versioning_nodes
-import VisualScriptingExtensions.third_party_extensions.deadline_nodes
-import VisualScriptingExtensions.environment_nodes
-from VisualScriptingExtensions.CodeGenerator import CodeGenerator
 from typing import List
+from AppInfo import AppInfo
 
-import MDApi
 from custom import *
+
+import logging
+from ServiceRegistry import ServiceRegistry
+
+logger = logging.getLogger(__name__)
 
 class Style(Enum):
     Dark = 0
     Light = 1
 
 class MainWindowManager(QtCore.QObject):
-    def __init__(self, app, appName, company):
+    def __init__(self, app, appInfo : AppInfo, serviceRegistry : ServiceRegistry):
         super(MainWindowManager, self).__init__()
         self.app = app
-        self.appName = appName
-        self.company = company
+        self.appInfo = appInfo
         self.currentStyle = None
-        self.applicationQuitting = False
         self.documentMoficiations = []
-        self.dbManager = None
+        self.dockWidgets : List[DockWidget] = []
+        self.serviceRegistry = serviceRegistry
+        self.dbManager = self.serviceRegistry.dbManager
 
+        # Load the main window ui
         file = QtCore.QFile(asset_manager.getUIFilePath("main.ui"))
         file.open(QtCore.QFile.ReadOnly)
         loader = QtUiTools.QUiLoader()
         self.window = loader.load(file)
 
-        self.window.installEventFilter(self)
-
-        visualScriptingSaveDataFolder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "VisualScripting_SaveData")
-        self.codeGenerator = CodeGenerator()
-        self.visualScripting = VisualScripting(visualScriptingSaveDataFolder, parentWindow=self.window, codeGenerator=self.codeGenerator)
-
         self.setStyle(Style.Light)
 
-        self.window.actionDark.triggered.connect(lambda : self.setStyle(Style.Dark))
-        self.window.actionLight.triggered.connect(lambda : self.setStyle(Style.Light))
+        self.initTable()
+
+        self.initViewers()
+
+        self.setupFilter()
+
+        self.setupDockWidgets()
+        self.setupEventAndActionHandlers()
+
+        self.restoreState()
+
+    def initTable(self):
+        self.tableModel = TableModel(self.window, [], [], [])
+        self.window.tableView.setModel(self.tableModel)
+
+        selModel = self.window.tableView.selectionModel()
+        selModel.selectionChanged.connect(self.onTableSelectionChanged)
+
+    def initViewers(self):
+        self.visualScriptingViewer = VisualScriptingViewer(self.serviceRegistry.visualScripting)
+        self.visualScriptingViewer.updateNodeRegistration()
 
         self.settingsViewer = SettingsViewer(self.window)
-
-        #self.initStatusInfo()
-
-        self.collectionViewer = CollectionViewer(self.window)
+        self.collectionViewer = CollectionViewer(self.window, self.serviceRegistry.dbManager)
+        self.collectionViewer.connectCollectionSelectionUpdateHandler(self.updateTableModelHeader)
 
         self.previewViewer = PreviewViewer(self.window)
-        self.environmentManagerViewer = EnvironmentManagerViewer(self.window)
+        self.environmentManagerViewer = EnvironmentManagerViewer(self.window, self.serviceRegistry.environmentManager, 
+                                                                 self.serviceRegistry.dbManager)
+        self.inspector = Inspector(self.window, self.serviceRegistry.dbManager)
+        self.actionsViewer = ActionsViewer(self.window, self.serviceRegistry.dbManager, self.serviceRegistry.actionManager, 
+                                           self, self.collectionViewer, self.visualScriptingViewer)
+        self.actionsManagerViewer = ActionManagerViewer(self.window, self.serviceRegistry.actionManager, self.serviceRegistry.dbManager)
+        self.deadlineServiceViewer = DeadlineServiceViewer(self.window, self.serviceRegistry.deadlineService)
 
-        self.inspector = Inspector(self.window)
-
-        self.actionsViewer = ActionsViewer(self.window)
-        self.actionsManagerViewer = ActionManagerViewer(self.window)
-        self.deadlineServiceViewer = DeadlineServiceViewer(self.window)
-        VisualScriptingExtensions.third_party_extensions.deadline_nodes.DEADLINE_SERVICE = self.deadlineServiceViewer.deadlineService
-
-        self.dockWidgets : List[DockWidget] = []
-        self.setupDockWidgets()
+    def setupEventAndActionHandlers(self):
+        self.window.installEventFilter(self)
 
         self.window.findPushButton.clicked.connect(self.viewItems)
+        
+        self.window.actionDark.triggered.connect(lambda : self.setStyle(Style.Dark))
+        self.window.actionLight.triggered.connect(lambda : self.setStyle(Style.Light))
 
     def initStatusInfo(self):
         self.mainProgressBar = QtWidgets.QProgressBar(self.window)
@@ -105,48 +114,6 @@ class MainWindowManager(QtCore.QObject):
         self.window.statusBar().addPermanentWidget(self.mainProgressBar)
 
         #self.window.statusBar().showMessage("Test")
-
-    def setup(self, dbManager):
-        self.dbManager = dbManager
-
-        self.stateManager = StateManager(self.dbManager)
-        self.stateManager.loadState()
-        self.actionManager = self.stateManager.actionManager
-
-        self.codeGenerator.setActionManager(self.actionManager)
-
-        VisualScriptingExtensions.mongodb_nodes.DB_MANAGER = dbManager
-        self.visualScripting.updateNodeRegistration()
-
-        self.collectionViewer.setDataBaseManager(self.dbManager)
-        self.inspector.setDatabaseManager(self.dbManager)
-        self.actionsViewer.setDatabaseManager(self.dbManager)
-        self.actionsManagerViewer.setDataBaseManager(self.dbManager)
-
-        self.collectionViewer.updateCollections()
-
-        header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.yieldSelectedCollectionNames())
-        self.tableModel = TableModel(self.window, [], header, displayedKeys)
-        self.window.tableView.setModel(self.tableModel)
-
-        selModel = self.window.tableView.selectionModel()
-        selModel.selectionChanged.connect(self.onTableSelectionChanged)
-
-        self.setupFilter()
-
-        self.collectionViewer.connectCollectionSelectionUpdateHandler(self.updateTableModelHeader)
-
-        self.environmentManagerViewer.setup(self.stateManager.environmentManager, self.dbManager)
-
-        self.actionsViewer.setup(self.actionManager, self, self.collectionViewer, self.visualScripting)
-        self.actionsManagerViewer.setActionManager(self.actionManager)
-
-        VisualScriptingExtensions.environment_nodes.ENVIRONMENT_MANAGER = self.stateManager.environmentManager
-
-        MDApi.ENVIRONMNET_MANAGER = self.stateManager.environmentManager
-        MDApi.DB_MANAGER = dbManager
-        
-        self.restoreState()
 
     def updateTableModelHeader(self):
         header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.yieldSelectedCollectionNames())
@@ -169,7 +136,7 @@ class MainWindowManager(QtCore.QObject):
         
         self.setupDockWidget(self.collectionViewer, initialDockArea=QtCore.Qt.LeftDockWidgetArea)
         self.setupDockWidget(self.settingsViewer, initialDockArea=QtCore.Qt.LeftDockWidgetArea)
-        self.setupDockWidget(self.visualScripting.getAsDockWidget(self.window), initialDockArea=QtCore.Qt.BottomDockWidgetArea)
+        self.setupDockWidget(self.visualScriptingViewer.getAsDockWidget(self.window), initialDockArea=QtCore.Qt.BottomDockWidgetArea)
 
         self.setupDockWidget(self.inspector)
         self.setupDockWidget(self.actionsViewer)
@@ -310,7 +277,7 @@ class MainWindowManager(QtCore.QObject):
         i = 0
         for collectionName in self.collectionViewer.yieldSelectedCollectionNames():
             for item in self.getFilteredDocumentsOfCollection(collectionName):
-                if self.applicationQuitting:
+                if self.appInfo.applicationQuitting:
                     return
 
                 i += 1
@@ -388,7 +355,7 @@ class MainWindowManager(QtCore.QObject):
 
     def saveState(self, settings = None):
         if settings == None:
-            settings = QtCore.QSettings(self.company, self.appName)
+            settings = QtCore.QSettings(self.appInfo.company, self.appInfo.appName)
 
         settings.setValue("geometry", self.window.saveGeometry())
         settings.setValue("windowState", self.window.saveState())
@@ -398,11 +365,9 @@ class MainWindowManager(QtCore.QObject):
             if isinstance(dockWidget, DockWidget):
                 dockWidget.saveState(settings)
 
-        self.stateManager.saveState()
-
     def restoreState(self, settings = None):
         if settings == None:
-            settings = QtCore.QSettings(self.company, self.appName)
+            settings = QtCore.QSettings(self.appInfo.company, self.appInfo.appName)
 
         self.settings = settings
         self.window.restoreGeometry(settings.value("geometry"))
@@ -428,7 +393,9 @@ class MainWindowManager(QtCore.QObject):
         if bSaveState:
             self.saveState()
         self.window.removeEventFilter(self)
-        self.applicationQuitting = True
+        self.appInfo.applicationQuitting = True
+        logger.info("Quitting application...")
+        
         QtCore.QThreadPool.globalInstance().waitForDone()
         self.app.quit()
 
