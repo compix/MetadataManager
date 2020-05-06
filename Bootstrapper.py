@@ -67,8 +67,7 @@ class Bootstrapper(object):
         elif self.mode == ApplicationMode.Console:
             self.consoleApp = ConsoleApp(self.appInfo, self.serviceRegistry, taskFilePath=self.taskFilePath)
         
-        #QThreadPool.globalInstance().start(qt_util.LambdaTask(self.initDataBaseManager))
-        self.initDataBaseManager()
+        QThreadPool.globalInstance().start(qt_util.LambdaTask(self.initDataBaseManager))
 
     def run(self):
         if self.mode == ApplicationMode.GUI:
@@ -104,7 +103,9 @@ class Bootstrapper(object):
         connected = False
         self.dbManager = MongoDBManager(self.mongodbHost, self.dbName)
 
-        while not connected:
+        tStart = time.time()
+        timeout = None
+        while not connected and (timeout == None or time.time() - tStart < timeout) and not self.appInfo.applicationQuitting:
             self.logger.info("Connecting to database...")
 
             try:
@@ -120,8 +121,17 @@ class Bootstrapper(object):
                 self.logger.info("Failed to connect. Retrying...")
                 sleep(1)
                 continue
+
+        if not connected:
+            qt_util.runInMainThread(self.onDBManagerConnectionTimeout)
+            return
         
         self.onDBManagerConnected()
+
+    def onDBManagerConnectionTimeout(self):
+        if self.app:
+            QtCore.QThreadPool.globalInstance().waitForDone()
+            self.app.quit()
 
     def initServices(self):
         self.serviceRegistry.deadlineService = DeadlineService(None)

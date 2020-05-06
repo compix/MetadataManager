@@ -165,4 +165,38 @@ def getMayaPluginName():
 
 @defInlineNode("3ds Max Pipeline Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
 def get3dsMaxPipelinePluginName():
-    return "\"3dsMaxPipelinePlugin\""
+    return "\"3dsMaxPipeline\""
+
+@defInlineNode("Metadata Manager Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+def getMetadataManagerPluginName():
+    return '"MetadataManager"'
+
+@defNode("Submit Metadata Manager Job", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
+def submitMetadataManagerJob(taskInfoDict, jobInfoDict, asPythonJob=False, quiet=True, returnJobIdOnly=True, jobDependencies=None):
+    pluginInfoDict = {}
+    auxiliaryFilenames = []
+
+    taskFileHandle, taskFilename = tempfile.mkstemp(suffix=".json")
+    auxiliaryFilenames.append(taskFilename)
+    with open(taskFilename, "w+") as f:
+        json.dump(taskInfoDict, f)
+
+    os.close(taskFileHandle)
+
+    pluginInfoDict["as_python"] = str(asPythonJob)
+    job = submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=auxiliaryFilenames, 
+                    quiet=quiet, returnJobIdOnly=returnJobIdOnly, jobDependencies=jobDependencies, 
+                    removeAuxiliaryFilesAfterSubmission=True)
+
+    return job
+
+@defNode("Create Metadata Manager Action Task Dictionary", isExecutable=True, returnNames=["Task Dictionary"], identifier=DEADLINE_IDENTIFIER)
+def createMetadataManagerActionTaskDict(taskType="DocumentAction", actionId="", collections=None, documentFilter="{}", distinctionFilter=""):
+    if collections == None:
+        collections = []
+
+    if not isinstance(collections, list):
+        collections = [collections]
+
+    return {"taskType":taskType, "actionId":actionId, "collections":collections, 
+            "documentFilter":documentFilter, "distinctionFilter":distinctionFilter}

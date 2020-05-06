@@ -28,7 +28,8 @@ class DeadlineServiceViewer(DockWidget):
         self.logger.addHandler(textAppendLoggingHandler)
         self.deadlineService.logger.addHandler(textAppendLoggingHandler)
 
-        self.availablePluginsMap = {"3ds Max Pipeline Plugin":"3dsMaxPipelinePlugin"}
+        self.availablePluginsMap = {"3ds Max Pipeline Plugin":"3dsMaxPipeline", 
+                                    "Metadata Manager Plugin":"MetadataManager"}
 
         for key in self.availablePluginsMap.keys():
             self.widget.installPluginComboBox.addItem(key)

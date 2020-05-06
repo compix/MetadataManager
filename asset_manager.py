@@ -1,7 +1,7 @@
 from os import path
 from datetime import datetime
 
-BASE_PATH = "assets"
+BASE_PATH = path.join(path.dirname(path.realpath(__file__)), "assets")
 BASE_UI_FILES_PATH = path.join(BASE_PATH, "ui_files")
 BASE_DEFAULT_LAYOUT_FILES_PATH = path.join(BASE_PATH, "default_layouts")
 
