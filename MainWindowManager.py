@@ -137,6 +137,7 @@ class MainWindowManager(QtCore.QObject):
         self.setupDockWidget(self.collectionViewer, initialDockArea=QtCore.Qt.LeftDockWidgetArea)
         self.setupDockWidget(self.settingsViewer, initialDockArea=QtCore.Qt.LeftDockWidgetArea)
         self.setupDockWidget(self.visualScriptingViewer.getAsDockWidget(self.window), initialDockArea=QtCore.Qt.BottomDockWidgetArea)
+        self.setupDockWidget(self.visualScriptingViewer.getSettingsAsDockWidget(), initialDockArea=QtCore.Qt.BottomDockWidgetArea)
 
         self.setupDockWidget(self.inspector)
         self.setupDockWidget(self.actionsViewer)

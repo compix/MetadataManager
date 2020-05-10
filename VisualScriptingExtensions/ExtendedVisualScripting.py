@@ -6,8 +6,8 @@ from MetadataManagerCore.actions.ActionManager import ActionManager
 import logging
 
 class ExtendedVisualScripting(VisualScripting):
-    def __init__(self, graphSerializationFolder, actionManager : ActionManager, codeGenerator=None):
-        super().__init__(graphSerializationFolder, codeGenerator)
+    def __init__(self, graphSerializationFolders, actionManager : ActionManager, codeGenerator=None):
+        super().__init__(graphSerializationFolders, codeGenerator)
         self.logger = logging.getLogger(__name__)
 
         self.actionManager = actionManager

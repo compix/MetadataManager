@@ -150,7 +150,7 @@ class Bootstrapper(object):
         self.serviceRegistry.services.append(self.dbManager)
 
         visualScriptingSaveDataFolder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "VisualScripting_SaveData")
-        self.serviceRegistry.visualScripting = ExtendedVisualScripting(visualScriptingSaveDataFolder, self.serviceRegistry.actionManager, 
+        self.serviceRegistry.visualScripting = ExtendedVisualScripting([visualScriptingSaveDataFolder], self.serviceRegistry.actionManager, 
                                                                        self.serviceRegistry.codeGenerator)
         self.serviceRegistry.services.append(self.serviceRegistry.visualScripting)
 
@@ -185,9 +185,13 @@ class Bootstrapper(object):
         
         for service in self.serviceRegistry.services:
             try:
-                service.load(settings, self.dbManager)
+                service.load
+                hasLoadFunc = True
             except:
-                pass
+                hasLoadFunc = False
+
+            if hasLoadFunc:
+                service.load(settings, self.dbManager)
 
     def save(self, settings = None):
         self.logger.info("Saving...")
@@ -196,8 +200,12 @@ class Bootstrapper(object):
 
         for service in self.serviceRegistry.services:
             try:
-                service.save(settings, self.dbManager)
+                service.save
+                hasSaveFunc = True
             except:
-                pass
+                hasSaveFunc = False
+
+            if hasSaveFunc:                
+                service.save(settings, self.dbManager)
 
         self.logger.info("Saving completed.")
