@@ -143,6 +143,17 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="selectBackgroundColorButton">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../resource_files/resources.qrc">
+             <normaloff>:/icons/fill.png</normaloff>:/icons/fill.png</iconset>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>

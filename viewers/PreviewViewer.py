@@ -23,6 +23,7 @@ class PreviewViewer(DockWidget):
         self.widget.pauseButton.clicked.connect(self.onPause)
         self.widget.nextFrameButton.clicked.connect(self.onNextFrame)
         self.widget.previousFrameButton.clicked.connect(self.onPreviousFrame)
+        self.widget.selectBackgroundColorButton.clicked.connect(self.selectBackgroundColor)
 
         self.curFrameIdx = 0
         self.frames = []
@@ -115,3 +116,7 @@ class PreviewViewer(DockWidget):
         self.animationTimer.stop()
         self.frames = []
         self.preview.setPhoto(None)
+
+    def selectBackgroundColor(self):
+        self.backgroundColor = QtWidgets.QColorDialog.getColor()
+        self.preview.setBackgroundBrush(self.backgroundColor)
