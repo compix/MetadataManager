@@ -147,29 +147,29 @@ def create3dsMaxPluginInfoDictionary(SceneFile, Version="2017", DisableMultipass
 def createPythonPluginInfoDictionary(arguments="", version="3.7"):
     return {"Arguments":arguments, "Version":version, "SingleFramesOnly":False}
 
-@defInlineNode("Python Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+@defNode("Python Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
 def getPythonPluginName():
-    return "\"Python\""
+    return "Python"
 
-@defInlineNode("Nuke Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+@defNode("Nuke Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
 def getNukePluginName():
-    return "\"Nuke\""
+    return "Nuke"
 
-@defInlineNode("3ds Max Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+@defNode("3ds Max Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
 def get3dsMaxPluginName():
-    return "\"3dsmax\""
+    return "3dsmax"
 
-@defInlineNode("Maya Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+@defNode("Maya Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
 def getMayaPluginName():
-    return "\"Maya\""
+    return "Maya"
 
-@defInlineNode("3ds Max Pipeline Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+@defNode("3ds Max Pipeline Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
 def get3dsMaxPipelinePluginName():
-    return "\"3dsMaxPipeline\""
+    return "3dsMaxPipeline"
 
-@defInlineNode("Metadata Manager Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+@defNode("Metadata Manager Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
 def getMetadataManagerPluginName():
-    return '"MetadataManager"'
+    return "MetadataManager"
 
 @defNode("Submit Metadata Manager Job", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
 def submitMetadataManagerJob(taskInfoDict, jobInfoDict, asPythonJob=False, quiet=True, returnJobIdOnly=True, jobDependencies=None):
