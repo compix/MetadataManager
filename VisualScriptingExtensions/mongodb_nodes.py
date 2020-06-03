@@ -10,3 +10,11 @@ def insertOrModifyDocument(collectionName, sid, dataDict, checkForModifications)
         DB_MANAGER.insertOrModifyDocument(collectionName, sid, dataDict, checkForModifications)
     else:
         print("DB Manager is None.")
+
+@defNode("Find Documents", isExecutable=True, identifier=MONGODB_IDENTIFIER)
+def findDocuments(collectionName, documentsFilter : dict, distinctionText=''):
+    if DB_MANAGER != None:
+        return DB_MANAGER.getFilteredDocuments(collectionName, documentsFilter, distinctionText)
+    else:
+        print("DB Manager is None.")
+        return []
