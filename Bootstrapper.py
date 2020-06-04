@@ -61,13 +61,15 @@ class Bootstrapper(object):
         self.dbManager = None
         self.serviceRegistry = ServiceRegistry()
 
+        dbInitTimeout = None
         if self.mode == ApplicationMode.GUI:
             self.app = QApplication([])
             self.loaderWindow = LoaderWindow(self.app, self.appInfo, self.logger)
         elif self.mode == ApplicationMode.Console:
-            self.consoleApp = ConsoleApp(self.appInfo, self.serviceRegistry, taskFilePath=self.taskFilePath)
+            dbInitTimeout = 60.0
+            self.consoleApp = ConsoleApp(self.appInfo, self.serviceRegistry, taskFilePath=self.taskFilePath, initTimeout = 120.0)
         
-        QThreadPool.globalInstance().start(qt_util.LambdaTask(self.initDataBaseManager))
+        QThreadPool.globalInstance().start(qt_util.LambdaTask(self.initDataBaseManager, dbInitTimeout))
 
     def run(self):
         if self.mode == ApplicationMode.GUI:
@@ -99,12 +101,11 @@ class Bootstrapper(object):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
 
-    def initDataBaseManager(self):
+    def initDataBaseManager(self, timeout=None):
         connected = False
         self.dbManager = MongoDBManager(self.mongodbHost, self.dbName)
 
         tStart = time.time()
-        timeout = None
         while not connected and (timeout == None or time.time() - tStart < timeout) and not self.appInfo.applicationQuitting:
             self.logger.info("Connecting to database...")
 
