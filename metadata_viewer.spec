@@ -9,7 +9,7 @@ spec_root = os.path.abspath(SPECPATH)
 a = Analysis(['metadata_viewer.py'],
              pathex=[spec_root, os.path.join(spec_root, 'VisualScripting')],
              binaries=[],
-             datas=[('VisualScripting/assets', 'VisualScripting/assets'), ('assets', 'assets'), 
+             datas=[('VisualScripting/assets', 'VisualScripting/assets'), ('assets', 'assets'), ('custom','custom'),
                     ('VisualScripting_SaveData', 'VisualScripting_SaveData'), 
                     ('MetadataManagerCore/third_party_integrations/deadline/plugins', 'MetadataManagerCore/third_party_integrations/deadline/plugins')],
              hiddenimports=['PySide2.QtXml', 'VisualScripting.NodeGraphQt'],
