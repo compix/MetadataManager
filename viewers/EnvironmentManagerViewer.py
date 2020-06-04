@@ -13,12 +13,13 @@ import json, os
 import subprocess
 
 class EnvironmentManagerViewer(DockWidget):
-    def __init__(self, parentWindow, environmentManager: EnvironmentManager, dbManager : MongoDBManager):
+    def __init__(self, parentWindow, environmentManager: EnvironmentManager, dbManager : MongoDBManager, settings):
         super().__init__("Environment Manager", parentWindow, asset_manager.getUIFilePath("environmentManager.ui"))
         
         self.autoExportPath : str = None
         self.environmentManager : EnvironmentManager = environmentManager
         self.dbManager : MongoDBManager = dbManager
+        self.settings = settings
 
         self.widget.addButton.clicked.connect(self.onAddKeyValue)
 
@@ -156,7 +157,7 @@ class EnvironmentManagerViewer(DockWidget):
             else:
                 QMessageBox.warning("Invalid Environment Name", "Please enter a valid environment name.")
 
-        self.environmentManager.save(self.dbManager)
+        self.environmentManager.save(self.settings, self.dbManager)
         self.exportSettingsAsJson(self.autoExportPath)
 
     def setCurrentEnvironment(self, env : Environment):

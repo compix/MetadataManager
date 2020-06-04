@@ -28,7 +28,7 @@ class ExtendedVisualScripting(VisualScripting):
                 execModule = importlib.import_module(moduleName)
                 importlib.reload(execModule)
             except Exception as e:
-                print(str(e))
+                self.logger.error(f'Failed to import {moduleName}. Reason: {str(e)}')
             
             try:
                 docAction = execModule.ActionVS()
