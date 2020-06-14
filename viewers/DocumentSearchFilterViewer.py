@@ -165,6 +165,7 @@ class DocumentSearchFilterViewer(QtCore.QObject):
             return
         
         self.initDocumentProgress(maxDisplayedItems)
+        self.updateDocumentProgress(1)
 
         entries = []
         i = 0
@@ -180,13 +181,12 @@ class DocumentSearchFilterViewer(QtCore.QObject):
                     i += 1
                     tableEntry = self.extractTableEntry(self.documentTableModel.displayedKeys, item)
                     entries.append(tableEntry)
-                    self.updateDocumentProgress(i)
         except Exception as e:
             self.logger.error(f'Failed to retrieve filtered items. Reason: {str(e)}')
         
         qt_util.runInMainThread(self.documentTableModel.addEntries, entries)
         self.initDocumentProgress(i if i > 0 else 1)
         qt_util.runInMainThread(lambda:self.mainWindow.itemCountLabel.setText("Item Count: " + str(i)))
-        qt_util.runInMainThread(self.updateDocumentProgress, 0.0)
+        self.updateDocumentProgress(0.0)
 
         qt_util.runInMainThread(self.widget.findPushButton.setEnabled, True)
