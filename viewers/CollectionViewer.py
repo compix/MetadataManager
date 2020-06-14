@@ -1,10 +1,12 @@
-from MetadataManagerCore.mongodb_manager import MongoDBManager
+from MetadataManagerCore.mongodb_manager import MongoDBManager, CollectionHeaderKeyInfo
 from PySide2 import QtWidgets, QtCore, QtUiTools
+from PySide2.QtWidgets import QTableWidget, QTableWidgetItem, QLineEdit
 from MetadataManagerCore import Keys
 from qt_extensions import qt_util
 import os
 from qt_extensions.DockWidget import DockWidget
 import asset_manager
+from MetadataManagerCore.Event import Event
 
 class CollectionViewer(DockWidget):
     def __init__(self, parentWindow, dbManager : MongoDBManager):
@@ -17,9 +19,12 @@ class CollectionViewer(DockWidget):
 
         self.collectionsComboBox.currentIndexChanged.connect(self.onCollectionsComboBoxIndexChanged)
 
-        self.collectionKeyCheckBoxMap = dict()
+        self.collectionHeaderKeyInfos = []
 
+        self.collectionTableWidget : QTableWidget = self.widget.collectionPropertiesTableWidget
         self.updateCollections()
+
+        self.headerUpdatedEvent = Event()
 
     def connectCollectionSelectionUpdateHandler(self, command):
         for collectionCheckBox in self.collectionCheckBoxMap.values():
@@ -28,28 +33,53 @@ class CollectionViewer(DockWidget):
     def onCollectionsComboBoxIndexChanged(self):
         currentCollection = self.collectionsComboBox.currentText()
         keys = self.dbManager.findAllKeysInCollection(currentCollection)
-        qt_util.clearContainer(self.widget.collectionPropertiesVBox)
-        self.collectionKeyCheckBoxMap.clear()
+        self.collectionTableWidget.clear()
+        self.collectionHeaderKeyInfos.clear()
 
-        _, curKeys = self.dbManager.extractTableHeaderAndDisplayedKeys([currentCollection])
+        self.collectionTableWidget.setColumnCount(3)
+        self.collectionTableWidget.setHorizontalHeaderItem(0, QTableWidgetItem("Key"))
+        self.collectionTableWidget.setHorizontalHeaderItem(1, QTableWidgetItem("Shown"))
+        self.collectionTableWidget.setHorizontalHeaderItem(2, QTableWidgetItem("Display Name"))
+        self.collectionTableWidget.setRowCount(len(keys))
 
+        headerInfos = self.dbManager.extractCollectionHeaderInfo([currentCollection])
+        headerKeyToInfo = {i.key:i for i in headerInfos}
+        self.dbManager.collectionsMD.up
+
+        rowIdx = 0
         for key in keys:
             checkbox = QtWidgets.QCheckBox(self.widget)
-            checkbox.setText(key)
-            self.collectionKeyCheckBoxMap[key] = checkbox
+            checkbox.setText("")
 
-            checkbox.setChecked(key in curKeys)
+            headerInfo = headerKeyToInfo.get(key)
+            if not headerInfo:
+                headerInfo = CollectionHeaderKeyInfo(key, key, True)
+
+            checkbox.setChecked(headerInfo.displayed)
 
             checkbox.stateChanged.connect(lambda: self.updateHeader(currentCollection))
-            self.widget.collectionPropertiesVBox.addWidget(checkbox)
+
+            self.collectionTableWidget.setItem(rowIdx, 0, QTableWidgetItem(key))
+            self.collectionTableWidget.setCellWidget(rowIdx, 1, checkbox)
+            edit = QLineEdit()
+            edit.setText(headerInfo.displayName)
+            edit.textChanged.connect(lambda txt: self.updateHeader(currentCollection))
+            self.collectionTableWidget.setCellWidget(rowIdx, 2, edit)
+
+            headerInfo.displayCheckbox = checkbox
+            headerInfo.displayNameEdit = edit
+            self.collectionHeaderKeyInfos.append(headerInfo)
+
+            rowIdx += 1
 
     def updateHeader(self, collectionName):
-        header = []
-        for key, value in self.collectionKeyCheckBoxMap.items():
-            if value.isChecked():
-                header.append([key, key])
+        for headerKeyInfo in self.collectionHeaderKeyInfos:
+            headerKeyInfo.displayed = headerKeyInfo.displayCheckbox.isChecked()
+            headerKeyInfo.displayName = headerKeyInfo.displayNameEdit.text()
 
-        self.dbManager.setTableHeader(collectionName, header)
+        self.dbManager.setCollectionHeaderInfo(collectionName, self.collectionHeaderKeyInfos)
+
+        self.headerUpdatedEvent()
         
     @property
     def collectionsLayout(self):

@@ -74,6 +74,9 @@
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_7">
              <item>
+              <widget class="QTableWidget" name="collectionPropertiesTableWidget"/>
+             </item>
+             <item>
               <layout class="QVBoxLayout" name="collectionPropertiesVBox"/>
              </item>
             </layout>

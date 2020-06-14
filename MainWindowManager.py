@@ -89,7 +89,8 @@ class MainWindowManager(QtCore.QObject):
         self.settingsViewer = SettingsViewer(self.window)
         self.collectionViewer = CollectionViewer(self.window, self.serviceRegistry.dbManager)
         self.collectionViewer.connectCollectionSelectionUpdateHandler(self.updateTableModelHeader)
-
+        self.collectionViewer.headerUpdatedEvent.subscribe(self.updateTableModelHeader)
+        
         self.previewViewer = PreviewViewer(self.window)
         settings = QtCore.QSettings(self.appInfo.company, self.appInfo.appName)
         self.environmentManagerViewer = EnvironmentManagerViewer(self.window, self.serviceRegistry.environmentManager, 
@@ -117,8 +118,9 @@ class MainWindowManager(QtCore.QObject):
         #self.window.statusBar().showMessage("Test")
 
     def updateTableModelHeader(self):
-        header, displayedKeys = self.dbManager.extractTableHeaderAndDisplayedKeys(self.collectionViewer.yieldSelectedCollectionNames())
-        self.tableModel.updateHeader(header, displayedKeys)
+        headerInfos = self.dbManager.extractCollectionHeaderInfo(self.collectionViewer.yieldSelectedCollectionNames())
+        displayedHeaderInfos = [i for i in headerInfos if i.displayed]
+        self.tableModel.updateHeader([i.displayName for i in displayedHeaderInfos], [i.key for i in displayedHeaderInfos])
 
     def applyAllDocumentModifications(self):
         if len(self.documentMoficiations) > 0:
