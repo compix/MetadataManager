@@ -12,7 +12,6 @@ import json
 import numpy as np
 import pymongo
 from TableModel import TableModel
-from qt_extensions.Completer import Completer
 from MetadataManagerCore import Keys
 from VisualScripting.VisualScriptingViewer import VisualScriptingViewer
 from PySide2.QtCore import QFile, QTextStream, QThreadPool
@@ -29,6 +28,7 @@ from viewers.ActionsViewer import ActionsViewer
 from viewers.ActionManagerViewer import ActionManagerViewer
 from viewers.DeadlineServiceViewer import DeadlineServiceViewer
 from viewers.EnvironmentManagerViewer import EnvironmentManagerViewer
+from viewers.DocumentSearchFilterViewer import DocumentSearchFilterViewer
 from random import random
 
 from typing import List
@@ -68,8 +68,6 @@ class MainWindowManager(QtCore.QObject):
 
         self.initViewers()
 
-        self.setupFilter()
-
         self.setupDockWidgets()
         self.setupEventAndActionHandlers()
 
@@ -90,7 +88,7 @@ class MainWindowManager(QtCore.QObject):
         self.collectionViewer = CollectionViewer(self.window, self.serviceRegistry.dbManager)
         self.collectionViewer.connectCollectionSelectionUpdateHandler(self.updateTableModelHeader)
         self.collectionViewer.headerUpdatedEvent.subscribe(self.updateTableModelHeader)
-        
+
         self.previewViewer = PreviewViewer(self.window)
         settings = QtCore.QSettings(self.appInfo.company, self.appInfo.appName)
         self.environmentManagerViewer = EnvironmentManagerViewer(self.window, self.serviceRegistry.environmentManager, 
@@ -101,10 +99,11 @@ class MainWindowManager(QtCore.QObject):
         self.actionsManagerViewer = ActionManagerViewer(self.window, self.serviceRegistry.actionManager, self.serviceRegistry.dbManager)
         self.deadlineServiceViewer = DeadlineServiceViewer(self.window, self.serviceRegistry.deadlineService)
 
+        self.documentSearchFilterViewer = DocumentSearchFilterViewer(self.appInfo, self.window, self.dbManager, self.tableModel, self.collectionViewer)
+        self.window.documentSearchFilterFrame.layout().addWidget(self.documentSearchFilterViewer.widget)
+
     def setupEventAndActionHandlers(self):
         self.window.installEventFilter(self)
-
-        self.window.findPushButton.clicked.connect(lambda: QThreadPool.globalInstance().start(qt_util.LambdaTask(self.viewItems)))
         
         self.window.actionDark.triggered.connect(lambda : self.setStyle(Style.Dark))
         self.window.actionLight.triggered.connect(lambda : self.setStyle(Style.Light))
@@ -179,6 +178,9 @@ class MainWindowManager(QtCore.QObject):
         for rowIdx in self.window.tableView.selectionModel().selectedRows():
             yield self.tableModel.getUID(rowIdx.row())
 
+    def getFilteredDocuments(self):
+        return self.documentSearchFilterViewer.getFilteredDocuments()
+
     def onTableSelectionChanged(self, newSelection, oldSelection):
         #selectedRows = set([idx.row() for sel in newSelection for idx in sel.indexes()])
         selectedRows = self.window.tableView.selectionModel().selectedRows()
@@ -198,22 +200,7 @@ class MainWindowManager(QtCore.QObject):
             for item in collection.find({}):
                 collection.update_one({"_id":item["_id"]}, {"$set": {"preview":"C:/Users/compix/Desktop/surprised_pikachu.png"}})
 
-    def setupFilter(self):
-        wordList = [("\"" + f + "\"") for f in self.tableModel.displayedKeys]
-        filterCompleter = Completer(wordList, self)
-        filterCompleter.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        filterCompleter.setFilterMode(QtCore.Qt.MatchContains)
-        filterCompleter.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
-        #filterCompleter.activated.connect(self.insertCompletion)
-        self.window.filterEdit.setCompleter(filterCompleter)
 
-        wordList = [f for f in self.tableModel.displayedKeys]
-        distinctCompleter = Completer(wordList, self)
-        distinctCompleter.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        distinctCompleter.setFilterMode(QtCore.Qt.MatchContains)
-        distinctCompleter.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
-        #filterCompleter.activated.connect(self.insertCompletion)
-        self.window.distinctEdit.setCompleter(distinctCompleter)
 
     def showItemInInspector(self, uid):
         form = self.window.inspectorFormLayout
@@ -223,91 +210,6 @@ class MainWindowManager(QtCore.QObject):
             for key, val in item.items():
                 form.addRow(self.window.tr(str(key)), QtWidgets.QLabel(str(val)))
 
-    def getItemsFilter(self):
-        try:
-            filterText = self.window.filterEdit.text()
-            if len(self.window.filterEdit.text()) == 0:
-                return {}
-            
-            filter = json.loads(filterText)
-            return filter
-        except:    
-            return {"_id":"None"}
-
-    def getFilteredDocumentsOfCollection(self, collectionName):
-        for d in self.dbManager.getFilteredDocuments(collectionName, self.getItemsFilter(), distinctionText=self.window.distinctEdit.text()):
-            yield d
-
-    def getMaxDisplayedTableItems(self):
-        num = 0
-        filter = self.getItemsFilter()
-        distinctKey = self.window.distinctEdit.text()
-
-        for collectionName in self.collectionViewer.yieldSelectedCollectionNames():
-            collection = self.dbManager.db[collectionName]
-            if len(distinctKey) > 0:
-                num += len(collection.find(self.getItemsFilter()).distinct(distinctKey))
-            else:
-                num += collection.count_documents(filter)
-
-        return num
-
-    def initDocumentProgress(self, maxVal):
-        if not isinstance(maxVal, int):
-            maxVal = 0
-            
-        qt_util.runInMainThread(self.window.documentProgressBar.setMaximum, maxVal)
-
-    def updateDocumentProgress(self, val):
-        qt_util.runInMainThread(self.window.documentProgressBar.setValue, val)
-
-    @timeit
-    def viewItems(self):
-        if len(self.tableModel.displayedKeys) == 0:
-            return
-
-        qt_util.runInMainThread(self.window.findPushButton.setEnabled, False)
-
-        qt_util.runInMainThread(self.tableModel.clear)
-        try:
-            maxDisplayedItems = self.getMaxDisplayedTableItems()
-        except:
-            maxDisplayedItems = "unknown"
-        qt_util.runInMainThread(lambda:self.window.itemCountLabel.setText("Item Count: " + str(maxDisplayedItems)))
-
-        if maxDisplayedItems == 0:
-            qt_util.runInMainThread(self.window.findPushButton.setEnabled, True)
-            return
-        
-        self.initDocumentProgress(maxDisplayedItems)
-
-        entries = []
-        i = 0
-        try:
-            for collectionName in self.collectionViewer.yieldSelectedCollectionNames():
-                for item in self.getFilteredDocumentsOfCollection(collectionName):
-                    if self.appInfo.applicationQuitting:
-                        return
-
-                    i += 1
-                    tableEntry = self.extractTableEntry(self.tableModel.displayedKeys, item)
-                    entries.append(tableEntry)
-                    self.updateDocumentProgress(i)
-        except Exception as e:
-            logger.error(f'Failed to retrieve filtered items. Reason: {str(e)}')
-        
-        qt_util.runInMainThread(self.tableModel.addEntries, entries)
-        self.initDocumentProgress(i)
-        qt_util.runInMainThread(lambda:self.window.itemCountLabel.setText("Item Count: " + str(i)))
-        qt_util.runInMainThread(self.updateDocumentProgress, 0.0)
-
-        qt_util.runInMainThread(self.window.findPushButton.setEnabled, True)
-
-    def getFilteredDocuments(self):
-        for collectionName in self.collectionViewer.yieldSelectedCollectionNames():
-            for d in self.getFilteredDocumentsOfCollection(collectionName):
-                yield d
-
     def extractSystemValues(self, item):
         vals = []
         for sysKey in Keys.systemKeys:
@@ -315,16 +217,6 @@ class MainWindowManager(QtCore.QObject):
             vals.append(val if val != None else Keys.notDefinedValue)
         
         return vals
-
-    # item: mongodb document
-    def extractTableEntry(self, displayedKeys, item):
-        assert(len(displayedKeys) > 0)
-        entry = [item['_id']]
-        for e in displayedKeys:
-            val = item.get(e)
-            entry.append(val if val != None else Keys.notDefinedValue)
-
-        return entry
 
     def setStyle(self, style):
         self.app.setStyleSheet(None)
