@@ -103,7 +103,7 @@ class MainWindowManager(QtCore.QObject):
     def setupEventAndActionHandlers(self):
         self.window.installEventFilter(self)
 
-        self.window.findPushButton.clicked.connect(self.viewItems)
+        self.window.findPushButton.clicked.connect(lambda: QThreadPool.globalInstance().start(qt_util.LambdaTask(self.viewItems)))
         
         self.window.actionDark.triggered.connect(lambda : self.setStyle(Style.Dark))
         self.window.actionLight.triggered.connect(lambda : self.setStyle(Style.Light))
@@ -251,6 +251,9 @@ class MainWindowManager(QtCore.QObject):
         return num
 
     def initDocumentProgress(self, maxVal):
+        if not isinstance(maxVal, int):
+            maxVal = 0
+            
         qt_util.runInMainThread(self.window.documentProgressBar.setMaximum, maxVal)
 
     def updateDocumentProgress(self, val):
@@ -258,15 +261,16 @@ class MainWindowManager(QtCore.QObject):
 
     @timeit
     def viewItems(self):
-        #self.dbManager.insertOrModifyDocument("Test_Collection", "paul", {"name":"Paul", "address":f"Litauen{str(random())}", "some_other_entry":5})
-
         if len(self.tableModel.displayedKeys) == 0:
             return
 
         qt_util.runInMainThread(self.window.findPushButton.setEnabled, False)
 
         qt_util.runInMainThread(self.tableModel.clear)
-        maxDisplayedItems = self.getMaxDisplayedTableItems()
+        try:
+            maxDisplayedItems = self.getMaxDisplayedTableItems()
+        except:
+            maxDisplayedItems = "unknown"
         qt_util.runInMainThread(lambda:self.window.itemCountLabel.setText("Item Count: " + str(maxDisplayedItems)))
 
         if maxDisplayedItems == 0:
@@ -277,17 +281,22 @@ class MainWindowManager(QtCore.QObject):
 
         entries = []
         i = 0
-        for collectionName in self.collectionViewer.yieldSelectedCollectionNames():
-            for item in self.getFilteredDocumentsOfCollection(collectionName):
-                if self.appInfo.applicationQuitting:
-                    return
+        try:
+            for collectionName in self.collectionViewer.yieldSelectedCollectionNames():
+                for item in self.getFilteredDocumentsOfCollection(collectionName):
+                    if self.appInfo.applicationQuitting:
+                        return
 
-                i += 1
-                tableEntry = self.extractTableEntry(self.tableModel.displayedKeys, item)
-                entries.append(tableEntry)
-                self.updateDocumentProgress(i)
+                    i += 1
+                    tableEntry = self.extractTableEntry(self.tableModel.displayedKeys, item)
+                    entries.append(tableEntry)
+                    self.updateDocumentProgress(i)
+        except Exception as e:
+            logger.error(f'Failed to retrieve filtered items. Reason: {str(e)}')
         
         qt_util.runInMainThread(self.tableModel.addEntries, entries)
+        self.initDocumentProgress(i)
+        qt_util.runInMainThread(lambda:self.window.itemCountLabel.setText("Item Count: " + str(i)))
         qt_util.runInMainThread(self.updateDocumentProgress, 0.0)
 
         qt_util.runInMainThread(self.window.findPushButton.setEnabled, True)
