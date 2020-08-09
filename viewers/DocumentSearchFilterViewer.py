@@ -1,3 +1,4 @@
+import PySide2
 import asset_manager
 from qt_extensions import qt_util
 from TableModel import TableModel
@@ -8,21 +9,61 @@ from AppInfo import AppInfo
 import logging
 from qt_extensions.Completer import Completer
 from PySide2 import QtCore, QtWidgets
-from PySide2.QtWidgets import QCheckBox, QListWidget, QListWidgetItem
+from PySide2.QtWidgets import QCheckBox, QListWidget, QListWidgetItem, QHBoxLayout, QLineEdit, QWidget, QLayout, QAbstractItemView, QVBoxLayout
+from PySide2 import QtGui
 from PySide2.QtCore import QThreadPool
 import json
 from typing import List
 import os
 import re
 from MetadataManagerCore.util import timeit
+from MetadataManagerCore.filtering.DocumentFilter import DocumentFilter
+from MetadataManagerCore.filtering.DocumentFilterManager import DocumentFilterManager
 
-class CustomFilter(object):
-    def __init__(self, checkbox, filterFunction):
-        self.checkbox = checkbox
-        self.filterFunction = filterFunction
+class DocumentFilterView(object):
+    def __init__(self, documentFilter : DocumentFilter):
+        self.documentFilter = documentFilter
+
+        self.activeCheckBox = QCheckBox()
+        self.activeCheckBox.stateChanged.connect(self.onActiveCheckBoxChanged)
+        self.activeCheckBox.setText(self.documentFilter.uniqueFilterLabel)
+
+        self.negateCheckBox = QCheckBox()
+        self.negateCheckBox.stateChanged.connect(self.onNegateCheckBoxChanged)
+        self.negateCheckBox.setText('Negate')
+
+        self.container = QWidget()
+        layout = QHBoxLayout()
+        self.container.setLayout(layout)
+        self.container.layout().addWidget(self.activeCheckBox)
+        self.container.layout().addWidget(self.negateCheckBox)
+
+        if documentFilter.hasStringArg:
+            self.textEdit = QLineEdit()
+            self.textEdit.textChanged.connect(self.onTextEditChanged)
+            self.container.layout().addWidget(self.textEdit)
+
+        self.container.layout().setAlignment(QtCore.Qt.AlignLeft)
+        self.container.adjustSize()
+
+        self.container.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0,0,0,0)
+        self.container.setFixedHeight(20)
+    
+    def isFilterActive(self):
+        return self.activeCheckBox.isChecked() if not self.negateCheckBox.isChecked() else not self.activeCheckBox.isChecked()
+
+    def onActiveCheckBoxChanged(self, _):
+        self.documentFilter.setActive(self.activeCheckBox.isChecked())
+    
+    def onNegateCheckBoxChanged(self, _):
+        self.documentFilter.setNegateFilter(self.negateCheckBox.isChecked())
+
+    def onTextEditChanged(self, text):
+        self.documentFilter.setArgs(text)
 
 class DocumentSearchFilterViewer(QtCore.QObject):
-    def __init__(self, appInfo : AppInfo, mainWindow, dbManager : MongoDBManager, 
+    def __init__(self, appInfo : AppInfo, mainWindow, dbManager : MongoDBManager, documentFilterManager : DocumentFilterManager, 
                  documentTableModel : TableModel, collectionViewer : CollectionViewer):
         super().__init__()
 
@@ -32,26 +73,19 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         self.appInfo = appInfo
         self.mainWindow = mainWindow
         self.dbManager = dbManager
+        self.documentFilterManager = documentFilterManager
         self.documentTableModel = documentTableModel
         self.collectionViewer = collectionViewer
-        self.customFilters : List[CustomFilter] = []
-        self.customFilterListWidget : QListWidget = self.widget.customFilterListWidget
+        self.documentFilterViews : List[DocumentFilterView] = []
 
+        self.customFilterScrollAreaLayout : QVBoxLayout = self.widget.customFilterScrollAreaLayout
+        self.customFilterScrollAreaLayout.setAlignment(QtCore.Qt.AlignTop)
         self.widget.findPushButton.clicked.connect(lambda: QThreadPool.globalInstance().start(qt_util.LambdaTask(self.viewItems)))
-        #self.widget.findPushButton.clicked.connect(self.viewItems)
 
         self.setupFilter()
+        self.updateDisplayedFilters()
 
-    def addCustomFilter(self, filterText, filterFunction):
-        checkbox = QCheckBox()
-        checkbox.setText(filterText)
-        item = QListWidgetItem()
-
-        self.customFilterListWidget.addItem(item)
-        self.customFilterListWidget.setItemWidget(item, checkbox)
-        customFilter = CustomFilter(checkbox, filterFunction)
-
-        self.customFilters.append(customFilter)
+        self.documentFilterManager.onFilterListUpdateEvent.subscribe(self.updateDisplayedFilters)
 
     def setupFilter(self):
         wordList = [("\"" + f + "\"") for f in self.documentTableModel.displayedKeys]
@@ -59,7 +93,6 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         filterCompleter.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
         filterCompleter.setFilterMode(QtCore.Qt.MatchContains)
         filterCompleter.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
-        #filterCompleter.activated.connect(self.insertCompletion)
         self.widget.filterEdit.setCompleter(filterCompleter)
 
         wordList = [f for f in self.documentTableModel.displayedKeys]
@@ -67,29 +100,21 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         distinctCompleter.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
         distinctCompleter.setFilterMode(QtCore.Qt.MatchContains)
         distinctCompleter.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
-        #filterCompleter.activated.connect(self.insertCompletion)
         self.widget.distinctEdit.setCompleter(distinctCompleter)
 
-        self.addCustomFilter("Has Preview", self.hasPreviewFilter)
+    def updateDisplayedFilters(self):
+        self.documentFilterViews.clear()
+        qt_util.clearContainer(self.customFilterScrollAreaLayout)
 
-    def hasPreviewFilter(self, document):
-        try:
-            previewPath = document.get('preview')
-            animPattern = r'(.*)\.(#+)\.(.*)'
-            animMatch = re.match(animPattern, previewPath)
-            if animMatch:
-                hashtagCount = len(animMatch.group(2))
-                animIndexStr = ''.join(['0' for _ in range(hashtagCount)])
-                firstFramePath = re.sub(animPattern, fr'\1.{animIndexStr}.\3', previewPath)
-                altFirstFramePath = re.sub(animPattern, fr'\1.{animIndexStr[:-1] + "1"}.\3', previewPath)
-                return os.path.exists(firstFramePath) or os.path.exists(altFirstFramePath[:-1] + '1')
-                
-            return os.path.exists(previewPath)
-        except:
-            return False
+        for docFilter in self.documentFilterManager.customFilters:
+            filterView = DocumentFilterView(docFilter)
+            self.documentFilterViews.append(filterView)
+            self.customFilterScrollAreaLayout.addWidget(filterView.container)
 
     def getFilteredDocumentsOfCollection(self, collectionName):
-        for d in self.dbManager.getFilteredDocuments(collectionName, self.getItemsFilter(), distinctionText=self.widget.distinctEdit.text()):
+        for d in self.documentFilterManager.yieldFilteredDocuments(collectionName, self.getItemsFilter(), 
+                                                                   distinctionText=self.widget.distinctEdit.text(), 
+                                                                   filters=self.documentFilterManager.customFilters):
             yield d
 
     def getItemsFilter(self):
@@ -142,13 +167,6 @@ class DocumentSearchFilterViewer(QtCore.QObject):
 
         return entry
 
-    def applyCustomFilter(self, document):
-        for customFilter in self.customFilters:
-            if customFilter.checkbox.isChecked() and not customFilter.filterFunction(document):
-                return False
-
-        return True
-
     @timeit
     def viewItems(self):
         if len(self.documentTableModel.displayedKeys) == 0:
@@ -174,9 +192,6 @@ class DocumentSearchFilterViewer(QtCore.QObject):
                 for item in self.getFilteredDocumentsOfCollection(collectionName):
                     if self.appInfo.applicationQuitting:
                         return
-
-                    if not self.applyCustomFilter(item):
-                        continue
 
                     i += 1
                     tableEntry = self.extractTableEntry(self.documentTableModel.displayedKeys, item)

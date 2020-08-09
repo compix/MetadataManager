@@ -99,7 +99,9 @@ class MainWindowManager(QtCore.QObject):
         self.actionsManagerViewer = ActionManagerViewer(self.window, self.serviceRegistry.actionManager, self.serviceRegistry.dbManager)
         self.deadlineServiceViewer = DeadlineServiceViewer(self.window, self.serviceRegistry.deadlineService)
 
-        self.documentSearchFilterViewer = DocumentSearchFilterViewer(self.appInfo, self.window, self.dbManager, self.tableModel, self.collectionViewer)
+        self.documentSearchFilterViewer = DocumentSearchFilterViewer(self.appInfo, self.window, self.dbManager, 
+                                                                     self.serviceRegistry.documentFilterManager, 
+                                                                     self.tableModel, self.collectionViewer)
         self.window.documentSearchFilterFrame.layout().addWidget(self.documentSearchFilterViewer.widget)
 
     def setupEventAndActionHandlers(self):

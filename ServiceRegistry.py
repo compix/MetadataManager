@@ -1,3 +1,4 @@
+from MetadataManagerCore.filtering.DocumentFilterManager import DocumentFilterManager
 from MetadataManagerCore.mongodb_manager import MongoDBManager
 from MetadataManagerCore.third_party_integrations.deadline.deadline_service import DeadlineService
 from MetadataManagerCore.actions.ActionManager import ActionManager
@@ -19,3 +20,4 @@ class ServiceRegistry(object):
         self.deadlineService : DeadlineService= None
         self.visualScripting : ExtendedVisualScripting = None
         self.taskProcessor : TaskProcessor = None
+        self.documentFilterManager : DocumentFilterManager = None

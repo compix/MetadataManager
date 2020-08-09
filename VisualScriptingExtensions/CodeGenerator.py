@@ -1,3 +1,4 @@
+from VisualScriptingExtensions.DocumentFilterNode import DocumentFilterNode
 from VisualScripting.node_exec import code_generator
 from VisualScriptingExtensions.document_action_nodes import DocumentActionNode
 from VisualScriptingExtensions.action_nodes import ActionNode
@@ -7,13 +8,15 @@ import os
 import sys
 import importlib
 from MetadataManagerCore.actions.ActionManager import ActionManager
-from VisualScripting.node_exec.GraphManager import GraphManager
+from MetadataManagerCore.filtering.DocumentFilterManager import DocumentFilterManager
+from MetadataManagerCore.filtering.DocumentFilter import DocumentFilter
 
 class CodeGenerator(code_generator.CodeGenerator):
-    def __init__(self, actionManager):
+    def __init__(self, actionManager, documentFilterManager : DocumentFilterManager):
         super().__init__()
         
         self.actionManager : ActionManager = actionManager
+        self.documentFilterManager = documentFilterManager
 
     def writeCodeLine(self, srcFile, codeLine, indent, suffix="\n"):
         srcFile.write(code_generator.makeCodeLine(codeLine, indent) + suffix)
@@ -75,5 +78,21 @@ class CodeGenerator(code_generator.CodeGenerator):
                 self.actionManager.unregisterActionId(docAction.id)
 
             self.actionManager.registerAction(docAction)
+        elif isinstance(startNode, DocumentFilterNode):
+            with open(srcFilePath, "a+") as srcFile:
+                srcFile.write("\n")
+
+                srcFile.write(f"HAS_STRING_ARG = {startNode.hasStringArg}\n")
+                srcFile.write(f"UNIQUE_LABEL_NAME = {startNode.uniqueLabelName}\n")
+
+            pathonFileDir = os.path.dirname(srcFilePath)
+
+            if not pathonFileDir in sys.path:
+                sys.path.append(pathonFileDir)
+                
+            execModule = importlib.import_module(moduleName)
+            importlib.reload(execModule)
+
+            self.documentFilterManager.addFilter(DocumentFilter(execModule.execute, execModule.UNIQUE_LABEL_NAME, hasStringArg=execModule.HAS_STRING_ARG))
 
         return srcFilePath

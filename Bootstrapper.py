@@ -1,3 +1,4 @@
+from MetadataManagerCore.filtering.DocumentFilterManager import DocumentFilterManager
 from PySide2.QtCore import QThreadPool
 from PySide2 import QtCore
 from PySide2.QtWidgets import QApplication
@@ -144,19 +145,23 @@ class Bootstrapper(object):
         self.serviceRegistry.environmentManager = EnvironmentManager()
         self.serviceRegistry.services.append(self.serviceRegistry.environmentManager)
 
-        self.serviceRegistry.codeGenerator = CodeGenerator(self.serviceRegistry.actionManager)
-        self.serviceRegistry.services.append(self.serviceRegistry.codeGenerator)
-
         self.serviceRegistry.dbManager = self.dbManager
         self.serviceRegistry.services.append(self.dbManager)
 
+        self.serviceRegistry.documentFilterManager = DocumentFilterManager(self.serviceRegistry.dbManager)
+        self.serviceRegistry.services.append(self.serviceRegistry.documentFilterManager)
+
+        self.serviceRegistry.codeGenerator = CodeGenerator(self.serviceRegistry.actionManager, self.serviceRegistry.documentFilterManager)
+        self.serviceRegistry.services.append(self.serviceRegistry.codeGenerator)
+
         visualScriptingSaveDataFolder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "VisualScripting_SaveData")
         self.serviceRegistry.visualScripting = ExtendedVisualScripting([visualScriptingSaveDataFolder], self.serviceRegistry.actionManager, 
+                                                                       self.serviceRegistry.documentFilterManager,
                                                                        self.serviceRegistry.codeGenerator)
         self.serviceRegistry.services.append(self.serviceRegistry.visualScripting)
 
         self.serviceRegistry.taskProcessor = TaskProcessor()
-        actionTaskPicker = ActionTaskPicker(self.serviceRegistry.actionManager, self.dbManager)
+        actionTaskPicker = ActionTaskPicker(self.serviceRegistry.actionManager, self.serviceRegistry.documentFilterManager)
         self.serviceRegistry.taskProcessor.addTaskPicker(actionTaskPicker)
         self.serviceRegistry.services.append(self.serviceRegistry.taskProcessor)
 
