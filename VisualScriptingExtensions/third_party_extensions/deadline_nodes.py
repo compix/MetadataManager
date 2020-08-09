@@ -98,6 +98,7 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
     
     with open(tempMaxScriptFilename, "w+") as f:
         f.write("global executePipelineRequest\n\n")
+        f.write("python.Init()\n\n")
         f.write("try (\n")
         f.write(f"  fileIn \"{pipelineMaxScriptFilename}\"\n\n")
         f.write(f"  infoFile = (getFilenamePath (getSourceFileName())) + \"{os.path.basename(tempPipelineInfoFilename)}\"\n")
