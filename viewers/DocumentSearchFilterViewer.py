@@ -96,6 +96,19 @@ class DocumentSearchFilterViewer(QtCore.QObject):
 
         self.setupHistoryContextMenu()
 
+        self.widget.fullFilterApplyButton.clicked.connect(self.onFullFilterApplyButtonClicked)
+        self.widget.copyFullSearchToClipboardButton.clicked.connect(self.onCopyFullSearchToClipboardClicked)
+
+    def onFullFilterApplyButtonClicked(self):
+        try:
+            self.applyFullSearchFilterEntry(json.loads(self.widget.fullFilterLineEdit.text()))
+        except:
+            QtWidgets.QMessageBox.warning(self.widget, 'Invalid Filter', 'The entered filter is not valid.')
+
+    def onCopyFullSearchToClipboardClicked(self):
+        jsonAsStr = json.dumps(self.getCurrentFullSearchFilterEntry())
+        QtGui.QGuiApplication.clipboard().setText(jsonAsStr)
+        
     def viewItemsOverThreadPool(self, saveSearchHistoryEntry = True):
         QThreadPool.globalInstance().start(qt_util.LambdaTask(self.viewItems, saveSearchHistoryEntry))
 
@@ -110,6 +123,19 @@ class DocumentSearchFilterViewer(QtCore.QObject):
             self.historyMenu.exec_(QtGui.QCursor.pos())
         else:
              QtWidgets.QMessageBox.warning(self.widget, "Empty Search History", "The search history is empty.")
+
+    def applyFullSearchFilterEntry(self, entry):
+        self.widget.filterEdit.setText(entry['itemsFilterText'])
+        self.widget.distinctEdit.setText(entry['distinctionText'])
+
+        for filterDict in entry['customFilters']:
+            for searchFilter in self.documentFilterManager.customFilters:
+                if searchFilter.uniqueFilterLabel == filterDict['uniqueFilterLabel']:
+                    searchFilter.setFromDict(filterDict)
+                    break
+
+        self.updateDisplayedFilters()
+        self.viewItemsOverThreadPool(False)
 
     def updateSearchHistory(self):
         self.historyMenu = QtWidgets.QMenu(self.widget)
@@ -129,23 +155,9 @@ class DocumentSearchFilterViewer(QtCore.QObject):
             action = QtWidgets.QAction(filterText, self.widget)
             self.historyMenu.addAction(action)
 
-            def applyEntry(entry):
-                self.widget.filterEdit.setText(entry['itemsFilterText'])
-                self.widget.distinctEdit.setText(entry['distinctionText'])
+            action.triggered.connect((lambda searchFilterEntry_: lambda: self.applyFullSearchFilterEntry(searchFilterEntry_))(searchFilterEntry))
 
-                for filterDict in entry['customFilters']:
-                    for searchFilter in self.documentFilterManager.customFilters:
-                        if searchFilter.uniqueFilterLabel == filterDict['uniqueFilterLabel']:
-                            searchFilter.setFromDict(filterDict)
-                            break
-                
-
-                self.updateDisplayedFilters()
-                self.viewItemsOverThreadPool(False)
-            
-            action.triggered.connect((lambda searchFilterEntry_: lambda: applyEntry(searchFilterEntry_))(searchFilterEntry))
-
-    def addCurrentSearchHistoryEntry(self):
+    def getCurrentFullSearchFilterEntry(self):
         customFilters = []
         for searchFilter in self.documentFilterManager.customFilters:
             customFilters.append(searchFilter.asDict())
@@ -156,7 +168,10 @@ class DocumentSearchFilterViewer(QtCore.QObject):
             'customFilters': customFilters
         }
 
-        self.searchFilterQueue.insert(0,entry)
+        return entry
+
+    def addCurrentSearchHistoryEntry(self):
+        self.searchFilterQueue.insert(0,self.getCurrentFullSearchFilterEntry())
         if len(self.searchFilterQueue) > 10:
             self.searchFilterQueue.pop()
 
