@@ -272,6 +272,8 @@ class MainWindowManager(QtCore.QObject):
             if isinstance(dockWidget, DockWidget):
                 dockWidget.saveState(settings)
 
+        self.documentSearchFilterViewer.saveState(settings)
+
     def restoreState(self, settings = None):
         if settings == None:
             settings = QtCore.QSettings(self.appInfo.company, self.appInfo.appName)
@@ -287,6 +289,8 @@ class MainWindowManager(QtCore.QObject):
         for dockWidget in self.dockWidgets:
             if isinstance(dockWidget, DockWidget):
                 dockWidget.restoreState(settings)
+
+        self.documentSearchFilterViewer.restoreState(settings)
 
     def eventFilter(self, obj, event):
         if obj is self.window and event.type() == QtCore.QEvent.Close:

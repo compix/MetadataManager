@@ -19,16 +19,19 @@ import re
 from MetadataManagerCore.util import timeit
 from MetadataManagerCore.filtering.DocumentFilter import DocumentFilter
 from MetadataManagerCore.filtering.DocumentFilterManager import DocumentFilterManager
+from queue import Queue
 
 class DocumentFilterView(object):
     def __init__(self, documentFilter : DocumentFilter):
         self.documentFilter = documentFilter
 
         self.activeCheckBox = QCheckBox()
+        self.activeCheckBox.setChecked(documentFilter.active)
         self.activeCheckBox.stateChanged.connect(self.onActiveCheckBoxChanged)
         self.activeCheckBox.setText(self.documentFilter.uniqueFilterLabel)
 
         self.negateCheckBox = QCheckBox()
+        self.negateCheckBox.setChecked(documentFilter.negate)
         self.negateCheckBox.stateChanged.connect(self.onNegateCheckBoxChanged)
         self.negateCheckBox.setText('Negate')
 
@@ -39,7 +42,9 @@ class DocumentFilterView(object):
         self.container.layout().addWidget(self.negateCheckBox)
 
         if documentFilter.hasStringArg:
+            self.container.layout().addWidget(QtWidgets.QLabel("Input:"))
             self.textEdit = QLineEdit()
+            self.textEdit.setText(documentFilter.args)
             self.textEdit.textChanged.connect(self.onTextEditChanged)
             self.container.layout().addWidget(self.textEdit)
 
@@ -77,15 +82,85 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         self.documentTableModel = documentTableModel
         self.collectionViewer = collectionViewer
         self.documentFilterViews : List[DocumentFilterView] = []
+        self.searchFilterQueue = []
+        self.historyMenu = None
 
         self.customFilterScrollAreaLayout : QVBoxLayout = self.widget.customFilterScrollAreaLayout
         self.customFilterScrollAreaLayout.setAlignment(QtCore.Qt.AlignTop)
-        self.widget.findPushButton.clicked.connect(lambda: QThreadPool.globalInstance().start(qt_util.LambdaTask(self.viewItems)))
+        self.widget.findPushButton.clicked.connect(lambda: self.viewItemsOverThreadPool())
 
         self.setupFilter()
         self.updateDisplayedFilters()
 
         self.documentFilterManager.onFilterListUpdateEvent.subscribe(self.updateDisplayedFilters)
+
+        self.setupHistoryContextMenu()
+
+    def viewItemsOverThreadPool(self, saveSearchHistoryEntry = True):
+        QThreadPool.globalInstance().start(qt_util.LambdaTask(self.viewItems, saveSearchHistoryEntry))
+
+    def setupHistoryContextMenu(self):
+        # set button context menu policy
+        self.widget.historyButton.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.widget.historyButton.customContextMenuRequested.connect(self.onHistoryContextMenu)
+        self.widget.historyButton.clicked.connect(self.onHistoryContextMenu)
+
+    def onHistoryContextMenu(self):
+        if self.historyMenu:
+            self.historyMenu.exec_(QtGui.QCursor.pos())
+        else:
+             QtWidgets.QMessageBox.warning(self.widget, "Empty Search History", "The search history is empty.")
+
+    def updateSearchHistory(self):
+        self.historyMenu = QtWidgets.QMenu(self.widget)
+
+        for searchFilterEntry in self.searchFilterQueue:
+            filterText = searchFilterEntry['itemsFilterText']
+            # Add filter info:
+            for filterDict in searchFilterEntry['customFilters']:
+                if filterDict['active']:
+                    filterText += '; ' + filterDict['uniqueFilterLabel']
+                    if filterDict['hasStringArg']:
+                        filterText += f'({filterDict["args"]})'
+
+            if len(filterText) > 100:
+                filterText = filterText[:100] + "..."
+
+            action = QtWidgets.QAction(filterText, self.widget)
+            self.historyMenu.addAction(action)
+
+            def applyEntry(entry):
+                self.widget.filterEdit.setText(entry['itemsFilterText'])
+                self.widget.distinctEdit.setText(entry['distinctionText'])
+
+                for filterDict in entry['customFilters']:
+                    for searchFilter in self.documentFilterManager.customFilters:
+                        if searchFilter.uniqueFilterLabel == filterDict['uniqueFilterLabel']:
+                            searchFilter.setFromDict(filterDict)
+                            break
+                
+
+                self.updateDisplayedFilters()
+                self.viewItemsOverThreadPool(False)
+            
+            action.triggered.connect((lambda searchFilterEntry_: lambda: applyEntry(searchFilterEntry_))(searchFilterEntry))
+
+    def addCurrentSearchHistoryEntry(self):
+        customFilters = []
+        for searchFilter in self.documentFilterManager.customFilters:
+            customFilters.append(searchFilter.asDict())
+
+        entry = {
+            'itemsFilterText': self.widget.filterEdit.text(),
+            'distinctionText': self.widget.distinctEdit.text(),
+            'customFilters': customFilters
+        }
+
+        self.searchFilterQueue.insert(0,entry)
+        if len(self.searchFilterQueue) > 10:
+            self.searchFilterQueue.pop()
+
+        self.updateSearchHistory()
 
     def setupFilter(self):
         wordList = [("\"" + f + "\"") for f in self.documentTableModel.displayedKeys]
@@ -110,6 +185,13 @@ class DocumentSearchFilterViewer(QtCore.QObject):
             filterView = DocumentFilterView(docFilter)
             self.documentFilterViews.append(filterView)
             self.customFilterScrollAreaLayout.addWidget(filterView.container)
+
+        maxWidth = 0
+        for filterView in self.documentFilterViews:
+            maxWidth = max(maxWidth, filterView.activeCheckBox.width())
+
+        for filterView in self.documentFilterViews:
+            filterView.activeCheckBox.setFixedWidth(maxWidth)
 
     def getFilteredDocumentsOfCollection(self, collectionName):
         for d in self.documentFilterManager.yieldFilteredDocuments(collectionName, self.getItemsFilter(), 
@@ -168,7 +250,7 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         return entry
 
     @timeit
-    def viewItems(self):
+    def viewItems(self, saveSearchHistoryEntry = True):
         if len(self.documentTableModel.displayedKeys) == 0:
             return
 
@@ -205,3 +287,18 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         self.updateDocumentProgress(0.0)
 
         qt_util.runInMainThread(self.widget.findPushButton.setEnabled, True)
+        if saveSearchHistoryEntry:
+            qt_util.runInMainThread(self.addCurrentSearchHistoryEntry)
+
+    def saveState(self, settings: QtCore.QSettings):
+        settings.setValue("searchFilterQueue", self.searchFilterQueue)
+
+    def restoreState(self, settings: QtCore.QSettings):
+        try:
+            self.searchFilterQueue = settings.value("searchFilterQueue")
+            self.updateSearchHistory()
+        except:
+            pass
+
+        if not self.searchFilterQueue:
+            self.searchFilterQueue = []

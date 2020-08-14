@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icons">
+    <file>history.png</file>
     <file>fill.png</file>
     <file>fast_forward_icon.png</file>
     <file>rewind_icon.png</file>
