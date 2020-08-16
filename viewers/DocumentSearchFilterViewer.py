@@ -83,7 +83,10 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         self.collectionViewer = collectionViewer
         self.documentFilterViews : List[DocumentFilterView] = []
         self.searchFilterQueue = []
+        self.savedFilters = []
+        self.savedFilterNameToActionMap = dict()
         self.historyMenu = None
+        self.maxSearchFilterDisplayedCharCount = 100
 
         self.customFilterScrollAreaLayout : QVBoxLayout = self.widget.customFilterScrollAreaLayout
         self.customFilterScrollAreaLayout.setAlignment(QtCore.Qt.AlignTop)
@@ -98,6 +101,50 @@ class DocumentSearchFilterViewer(QtCore.QObject):
 
         self.widget.fullFilterApplyButton.clicked.connect(self.onFullFilterApplyButtonClicked)
         self.widget.copyFullSearchToClipboardButton.clicked.connect(self.onCopyFullSearchToClipboardClicked)
+
+        self.setupSavedFiltersUI()
+
+    def setupSavedFiltersUI(self):
+        self.widget.saveFilterButton.clicked.connect(self.onSaveFilter)
+
+        self.widget.savedFiltersComboBox.currentTextChanged.connect(self.applySavedFilter)
+        self.widget.savedFiltersComboBox.customContextMenuRequested.connect(self.onSavedFiltersComboBoxContextMenu)
+
+        self.savedFiltersComboBoxMenu = QtWidgets.QMenu(self.widget)
+        action = QtWidgets.QAction("Delete Selected", self.widget)
+        self.savedFiltersComboBoxMenu.addAction(action)
+
+        action.triggered.connect(self.onDeleteSelectedSavedFilter)
+
+    def onDeleteSelectedSavedFilter(self):
+        entryName = self.widget.savedFiltersComboBox.currentText()
+        self.savedFilters = [savedFilter for savedFilter in self.savedFilters if not self.getSearchFilterEntryName(savedFilter, self.maxSearchFilterDisplayedCharCount) == entryName]
+        self.updateSavedFiltersComboBox()
+
+    def onSavedFiltersComboBoxContextMenu(self, point):
+        self.savedFiltersComboBoxMenu.exec_(QtGui.QCursor.pos())
+
+    def applySavedFilter(self, filterName):
+        filterAction = self.savedFilterNameToActionMap.get(filterName)
+        if filterAction:
+            filterAction()
+
+    def onSaveFilter(self):
+        entry = self.getCurrentFullSearchFilterEntry()
+        self.savedFilters.append(entry)
+        self.updateSavedFiltersComboBox()
+
+    def updateSavedFiltersComboBox(self):
+        self.widget.savedFiltersComboBox.currentTextChanged.disconnect()
+        self.widget.savedFiltersComboBox.clear()
+
+        for searchFilterEntry in self.savedFilters:
+            entryName = self.getSearchFilterEntryName(searchFilterEntry, self.maxSearchFilterDisplayedCharCount)
+            self.widget.savedFiltersComboBox.addItem(entryName)
+
+            self.savedFilterNameToActionMap[entryName] = (lambda searchFilterEntry_: lambda: self.applyFullSearchFilterEntry(searchFilterEntry_))(searchFilterEntry)
+
+        self.widget.savedFiltersComboBox.currentTextChanged.connect(self.applySavedFilter)
 
     def onFullFilterApplyButtonClicked(self):
         try:
@@ -137,22 +184,27 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         self.updateDisplayedFilters()
         self.viewItemsOverThreadPool(False)
 
+    def getSearchFilterEntryName(self, entry: dict, maxCharacterCount: int):
+        entryName = entry['itemsFilterText']
+        # Add filter info:
+        for filterDict in entry['customFilters']:
+            if filterDict['active']:
+                entryName += '; ' + filterDict['uniqueFilterLabel']
+                if filterDict['hasStringArg']:
+                    entryName += f'({filterDict["args"]})'
+
+        if len(entryName) > maxCharacterCount:
+            entryName = entryName[:maxCharacterCount] + "..."
+        
+        return entryName
+
     def updateSearchHistory(self):
         self.historyMenu = QtWidgets.QMenu(self.widget)
 
         for searchFilterEntry in self.searchFilterQueue:
-            filterText = searchFilterEntry['itemsFilterText']
-            # Add filter info:
-            for filterDict in searchFilterEntry['customFilters']:
-                if filterDict['active']:
-                    filterText += '; ' + filterDict['uniqueFilterLabel']
-                    if filterDict['hasStringArg']:
-                        filterText += f'({filterDict["args"]})'
+            entryName = self.getSearchFilterEntryName(searchFilterEntry, self.maxSearchFilterDisplayedCharCount)
 
-            if len(filterText) > 100:
-                filterText = filterText[:100] + "..."
-
-            action = QtWidgets.QAction(filterText, self.widget)
+            action = QtWidgets.QAction(entryName, self.widget)
             self.historyMenu.addAction(action)
 
             action.triggered.connect((lambda searchFilterEntry_: lambda: self.applyFullSearchFilterEntry(searchFilterEntry_))(searchFilterEntry))
@@ -307,6 +359,7 @@ class DocumentSearchFilterViewer(QtCore.QObject):
 
     def saveState(self, settings: QtCore.QSettings):
         settings.setValue("searchFilterQueue", self.searchFilterQueue)
+        settings.setValue("savedSearchFilters", self.savedFilters)
 
     def restoreState(self, settings: QtCore.QSettings):
         try:
@@ -314,6 +367,15 @@ class DocumentSearchFilterViewer(QtCore.QObject):
             self.updateSearchHistory()
         except:
             pass
+
+        try:
+            self.savedFilters = settings.value("savedSearchFilters")
+            self.updateSavedFiltersComboBox()
+        except:
+            pass
+
+        if not self.savedFilters:
+            self.savedFilters = []
 
         if not self.searchFilterQueue:
             self.searchFilterQueue = []

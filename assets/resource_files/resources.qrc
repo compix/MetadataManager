@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="icons">
+    <file>copy.png</file>
+    <file>search.png</file>
+    <file>save.png</file>
     <file>history.png</file>
     <file>fill.png</file>
     <file>fast_forward_icon.png</file>

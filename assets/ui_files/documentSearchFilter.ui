@@ -177,7 +177,7 @@
                    <x>0</x>
                    <y>0</y>
                    <width>314</width>
-                   <height>69</height>
+                   <height>68</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="customFilterScrollAreaLayout">
@@ -226,12 +226,20 @@
                   <property name="text">
                    <string>Apply</string>
                   </property>
+                  <property name="icon">
+                   <iconset resource="../resource_files/resources.qrc">
+                    <normaloff>:/icons/search.png</normaloff>:/icons/search.png</iconset>
+                  </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QPushButton" name="copyFullSearchToClipboardButton">
                   <property name="text">
                    <string>Copy Current to Clipboard</string>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="../resource_files/resources.qrc">
+                    <normaloff>:/icons/copy.png</normaloff>:/icons/copy.png</iconset>
                   </property>
                  </widget>
                 </item>
@@ -263,7 +271,7 @@
             <widget class="QFrame" name="frame_2">
              <property name="maximumSize">
               <size>
-               <width>150</width>
+               <width>200</width>
                <height>16777215</height>
               </size>
              </property>
@@ -309,7 +317,11 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>Find</string>
+                   <string>Search</string>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="../resource_files/resources.qrc">
+                    <normaloff>:/icons/search.png</normaloff>:/icons/search.png</iconset>
                   </property>
                  </widget>
                 </item>
@@ -330,6 +342,34 @@
                   <property name="icon">
                    <iconset resource="../resource_files/resources.qrc">
                     <normaloff>:/icons/history.png</normaloff>:/icons/history.png</iconset>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_2">
+                <item>
+                 <widget class="QComboBox" name="savedFiltersComboBox">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="contextMenuPolicy">
+                   <enum>Qt::CustomContextMenu</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item alignment="Qt::AlignRight">
+                 <widget class="QPushButton" name="saveFilterButton">
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="../resource_files/resources.qrc">
+                    <normaloff>:/icons/save.png</normaloff>:/icons/save.png</iconset>
                   </property>
                  </widget>
                 </item>
