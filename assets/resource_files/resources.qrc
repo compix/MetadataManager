@@ -1,5 +1,11 @@
 <RCC>
   <qresource prefix="icons">
+    <file>new.png</file>
+    <file>select.png</file>
+    <file>archive.png</file>
+    <file>delete.png</file>
+    <file>folder.png</file>
+    <file>file.png</file>
     <file>copy.png</file>
     <file>search.png</file>
     <file>save.png</file>
