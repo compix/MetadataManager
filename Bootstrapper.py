@@ -1,3 +1,6 @@
+from MetadataManagerCore.file.FileHandlerManager import FileHandlerManager
+from MetadataManagerCore.service.WatchDogService import WatchDogService
+from MetadataManagerCore.service.ServiceManager import ServiceManager
 from MetadataManagerCore.filtering.DocumentFilterManager import DocumentFilterManager
 from PySide2.QtCore import QThreadPool
 from PySide2 import QtCore
@@ -24,6 +27,7 @@ from MetadataManagerCore.task_processor.TaskProcessor import TaskProcessor
 from MetadataManagerCore.task_processor.ActionTaskPicker import ActionTaskPicker
 import time
 from ConsoleApp import ConsoleApp
+from MetadataManagerCore.file.PrintFileHandler import PrintFileHandler
 
 # Visual Scripting imports:
 from VisualScriptingExtensions.ExtendedVisualScripting import ExtendedVisualScripting
@@ -80,6 +84,12 @@ class Bootstrapper(object):
             status = self.consoleApp.exec()
             self.logger.info("Quitting application...")
             QtCore.QThreadPool.globalInstance().waitForDone()
+        else:
+            status = None
+            self.logger.error(f'Unknown Mode: {self.mode}')
+
+        self.serviceManager.shutdown()
+
         if self.appInfo.initialized:
             self.save()
 
@@ -168,6 +178,17 @@ class Bootstrapper(object):
         VisualScriptingExtensions.mongodb_nodes.DB_MANAGER = self.dbManager
         VisualScriptingExtensions.environment_nodes.ENVIRONMENT_MANAGER = self.serviceRegistry.environmentManager
         VisualScriptingExtensions.third_party_extensions.deadline_nodes.DEADLINE_SERVICE = self.serviceRegistry.deadlineService
+
+        self.serviceManager = ServiceManager(self.dbManager, self.serviceRegistry)
+        self.serviceRegistry.serviceManager = self.serviceManager
+        self.serviceRegistry.services.append(self.serviceManager)
+        self.serviceManager.registerServiceClass(WatchDogService)
+
+        self.fileHandlerManager = FileHandlerManager()
+        self.serviceRegistry.fileHandlerManager = self.fileHandlerManager
+        self.serviceRegistry.services.append(self.fileHandlerManager)
+
+        self.fileHandlerManager.registerFileHandlerClass(PrintFileHandler)
 
         MDApi.ENVIRONMNET_MANAGER = self.serviceRegistry.environmentManager
         MDApi.DB_MANAGER = self.dbManager

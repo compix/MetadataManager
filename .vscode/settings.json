@@ -1,3 +1,10 @@
 {
-    "python.pythonPath": "C:\\Users\\compix\\AppData\\Local\\Programs\\Python\\Python37\\python.exe"
+    "python.pythonPath": "C:\\Users\\compix\\AppData\\Local\\Programs\\Python\\Python37\\python.exe",
+    "cSpell.ignoreWords": [
+        "manager",
+        "mongodb",
+        "mongodb manager",
+        "sftp",
+        "unregister"
+    ]
 }

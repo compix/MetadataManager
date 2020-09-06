@@ -1,5 +1,6 @@
 from PySide2 import QtCore
 from PySide2.QtCore import QRunnable
+from PySide2.QtWidgets import QFileDialog, QLineEdit, QPushButton
 
 # From https://stackoverflow.com/questions/10991991/pyside-easier-way-of-updating-gui-from-another-thread
 # by chfoo: https://stackoverflow.com/users/1524507/chfoo
@@ -39,3 +40,19 @@ class LambdaTask(QRunnable):
 def clearContainer(container):
     for i in reversed(range(container.count())): 
         container.itemAt(i).widget().setParent(None)
+
+def connectFileSelection(parentWidget, lineEdit : QLineEdit, button: QPushButton):
+    def onSelect():
+        fileName,_ = QFileDialog.getOpenFileName(parentWidget, "Open", "", "Any File (*.*)")
+        if fileName != None and fileName != "":
+            lineEdit.setText(fileName)
+
+    button.clicked.connect(onSelect)
+
+def connectFolderSelection(parentWidget, lineEdit : QLineEdit, button: QPushButton):
+    def onSelect():
+        dirName = QFileDialog.getExistingDirectory(parentWidget, "Open", "")
+        if dirName != None and dirName != "":
+            lineEdit.setText(dirName)
+    
+    button.clicked.connect(onSelect)

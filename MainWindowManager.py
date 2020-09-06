@@ -1,5 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import sys
+from viewers.service.ServiceManagerViewer import ServiceManagerViewer
 from PySide2 import QtCore, QtWidgets, QtUiTools, QtGui
 from enum import Enum
 from MetadataManagerCore.mongodb_manager import MongoDBManager
@@ -104,6 +105,8 @@ class MainWindowManager(QtCore.QObject):
                                                                      self.tableModel, self.collectionViewer)
         self.window.documentSearchFilterFrame.layout().addWidget(self.documentSearchFilterViewer.widget)
 
+        self.serviceManagerViewer = ServiceManagerViewer(self.window, self.serviceRegistry)
+
     def setupEventAndActionHandlers(self):
         self.window.installEventFilter(self)
         
@@ -148,6 +151,7 @@ class MainWindowManager(QtCore.QObject):
         self.setupDockWidget(self.actionsManagerViewer)
         self.setupDockWidget(self.deadlineServiceViewer)
         self.setupDockWidget(self.environmentManagerViewer)
+        self.setupDockWidget(self.serviceManagerViewer)
 
     def setupDockWidget(self, dockWidget : DockWidget, initialDockArea=None):
         self.dockWidgets.append(dockWidget)
@@ -239,7 +243,20 @@ class MainWindowManager(QtCore.QObject):
             palette.setColor(QtGui.QPalette.Link, QtGui.QColor(42, 130, 218))
             palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(42, 130, 218))
             palette.setColor(QtGui.QPalette.HighlightedText, QtCore.Qt.black)
-            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Button, QtGui.QColor(25, 25, 25))
+            disabledColor = QtGui.QColor(25, 25, 25)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Window, disabledColor)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, disabledColor)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Base, disabledColor)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.AlternateBase, disabledColor)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.ToolTipBase, disabledColor)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.ToolTipText, disabledColor)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Text, disabledColor)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Button, disabledColor)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText, disabledColor)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.BrightText, disabledColor)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Link, disabledColor)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Highlight, disabledColor)
+            palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.HighlightedText, disabledColor)
             self.app.setPalette(palette)
         elif (style == Style.Light or style == None) and self.currentStyle != style:
             self.app.setStyleSheet(None)

@@ -1,6 +1,7 @@
 <RCC>
   <qresource prefix="icons">
     <file>new.png</file>
+    <file>service.png</file>
     <file>select.png</file>
     <file>archive.png</file>
     <file>delete.png</file>
