@@ -188,10 +188,9 @@ class Bootstrapper(object):
         self.serviceRegistry.fileHandlerManager = self.fileHandlerManager
         self.serviceRegistry.services.append(self.fileHandlerManager)
 
-        self.fileHandlerManager.registerFileHandlerClass(PrintFileHandler)
-
         MDApi.ENVIRONMNET_MANAGER = self.serviceRegistry.environmentManager
         MDApi.DB_MANAGER = self.dbManager
+        MDApi.SERVICE_REGISTRY = self.serviceRegistry
 
     def onDBManagerConnected(self):
         self.initServices()
