@@ -47,7 +47,7 @@ class Style(Enum):
     Light = 1
 
 class MainWindowManager(QtCore.QObject):
-    def __init__(self, app, appInfo : AppInfo, serviceRegistry : ServiceRegistry):
+    def __init__(self, app, appInfo : AppInfo, serviceRegistry : ServiceRegistry, bootstrapper):
         super(MainWindowManager, self).__init__()
         self.app = app
         self.appInfo = appInfo
@@ -56,6 +56,7 @@ class MainWindowManager(QtCore.QObject):
         self.dockWidgets : List[DockWidget] = []
         self.serviceRegistry = serviceRegistry
         self.dbManager = self.serviceRegistry.dbManager
+        self.bootstrapper = bootstrapper
 
         # Load the main window ui
         file = QtCore.QFile(asset_manager.getUIFilePath("main.ui"))
@@ -324,7 +325,7 @@ class MainWindowManager(QtCore.QObject):
         self.appInfo.applicationQuitting = True
         logger.info("Quitting application...")
         
-        QtCore.QThreadPool.globalInstance().waitForDone()
+        self.bootstrapper.shutdown()
         self.app.quit()
 
     def show(self):

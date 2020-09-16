@@ -2,6 +2,6 @@
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
 from MetadataManagerCore.mongodb_manager import MongoDBManager
 
-ENVIRONMNET_MANAGER : EnvironmentManager = None
+ENVIRONMENT_MANAGER : EnvironmentManager = None
 DB_MANAGER : MongoDBManager = None
 SERVICE_REGISTRY : ServiceRegistry = None

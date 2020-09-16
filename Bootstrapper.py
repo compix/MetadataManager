@@ -1,3 +1,4 @@
+from MetadataManagerCore.host.HostController import HostController
 from MetadataManagerCore.file.FileHandlerManager import FileHandlerManager
 from MetadataManagerCore.service.WatchDogService import WatchDogService
 from MetadataManagerCore.service.ServiceManager import ServiceManager
@@ -62,14 +63,15 @@ class Bootstrapper(object):
         self.appInfo.appName = SETTINGS.value("app_name")
         self.mongodbHost = SETTINGS.value("mongodb_host")
         self.dbName = SETTINGS.value("db_name")
-
+        self.hostController = None
+        self.serviceManager = None
         self.dbManager = None
         self.serviceRegistry = ServiceRegistry()
 
         dbInitTimeout = None
         if self.mode == ApplicationMode.GUI:
             self.app = QApplication([])
-            self.loaderWindow = LoaderWindow(self.app, self.appInfo, self.logger)
+            self.loaderWindow = LoaderWindow(self.app, self.appInfo, self.logger, self)
         elif self.mode == ApplicationMode.Console:
             dbInitTimeout = 60.0
             self.consoleApp = ConsoleApp(self.appInfo, self.serviceRegistry, taskFilePath=self.taskFilePath, initTimeout = 120.0)
@@ -83,17 +85,24 @@ class Bootstrapper(object):
             # Wait for initialization completion:
             status = self.consoleApp.exec()
             self.logger.info("Quitting application...")
-            QtCore.QThreadPool.globalInstance().waitForDone()
+            self.shutdown()
         else:
             status = None
             self.logger.error(f'Unknown Mode: {self.mode}')
 
-        self.serviceManager.shutdown()
+        return status
+
+    def shutdown(self):
+        if self.hostController:
+            self.hostController.shutdown()
+            
+        if self.serviceManager:
+            self.serviceManager.shutdown()
 
         if self.appInfo.initialized:
             self.save()
 
-        return status
+        QtCore.QThreadPool.globalInstance().waitForDone()
 
     def initLogging(self):
         logFilename = asset_manager.getLogFilePath()
@@ -142,7 +151,7 @@ class Bootstrapper(object):
 
     def onDBManagerConnectionTimeout(self):
         if self.app:
-            QtCore.QThreadPool.globalInstance().waitForDone()
+            self.shutdown()
             self.app.quit()
 
     def initServices(self):
@@ -188,21 +197,27 @@ class Bootstrapper(object):
         self.serviceRegistry.fileHandlerManager = self.fileHandlerManager
         self.serviceRegistry.services.append(self.fileHandlerManager)
 
-        MDApi.ENVIRONMNET_MANAGER = self.serviceRegistry.environmentManager
+        MDApi.ENVIRONMENT_MANAGER = self.serviceRegistry.environmentManager
         MDApi.DB_MANAGER = self.dbManager
         MDApi.SERVICE_REGISTRY = self.serviceRegistry
 
     def onDBManagerConnected(self):
+        self.initHostController()
+
         self.initServices()
         self.load()
         self.appInfo.initialized = True
 
         if self.mode == ApplicationMode.GUI:
-            qt_util.runInMainThread(self.loaderWindow.window.hide)
+            qt_util.runInMainThread(self.loaderWindow.hide)
             qt_util.runInMainThread(self.setupMainWindowManager)
 
+    def initHostController(self):
+        self.hostController = HostController(self.dbManager)
+        QThreadPool.globalInstance().start(qt_util.LambdaTask(self.hostController.run))
+
     def setupMainWindowManager(self):
-        self.mainWindowManager = MainWindowManager(self.app, self.appInfo, self.serviceRegistry)
+        self.mainWindowManager = MainWindowManager(self.app, self.appInfo, self.serviceRegistry, self)
         self.mainWindowManager.show()
 
     def load(self, settings = None):
