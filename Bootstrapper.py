@@ -1,4 +1,4 @@
-from MetadataManagerCore.host.HostController import HostController
+from MetadataManagerCore.host.HostProcessController import HostProcessController
 from MetadataManagerCore.file.FileHandlerManager import FileHandlerManager
 from MetadataManagerCore.service.WatchDogService import WatchDogService
 from MetadataManagerCore.service.ServiceManager import ServiceManager
@@ -63,7 +63,7 @@ class Bootstrapper(object):
         self.appInfo.appName = SETTINGS.value("app_name")
         self.mongodbHost = SETTINGS.value("mongodb_host")
         self.dbName = SETTINGS.value("db_name")
-        self.hostController = None
+        self.hostProcessController = None
         self.serviceManager = None
         self.dbManager = None
         self.serviceRegistry = ServiceRegistry()
@@ -93,8 +93,8 @@ class Bootstrapper(object):
         return status
 
     def shutdown(self):
-        if self.hostController:
-            self.hostController.shutdown()
+        if self.hostProcessController:
+            self.hostProcessController.shutdown()
             
         if self.serviceManager:
             self.serviceManager.shutdown()
@@ -188,7 +188,7 @@ class Bootstrapper(object):
         VisualScriptingExtensions.environment_nodes.ENVIRONMENT_MANAGER = self.serviceRegistry.environmentManager
         VisualScriptingExtensions.third_party_extensions.deadline_nodes.DEADLINE_SERVICE = self.serviceRegistry.deadlineService
 
-        self.serviceManager = ServiceManager(self.dbManager, self.serviceRegistry)
+        self.serviceManager = ServiceManager(self.dbManager, self.hostProcessController, self.serviceRegistry)
         self.serviceRegistry.serviceManager = self.serviceManager
         self.serviceRegistry.services.append(self.serviceManager)
         self.serviceManager.registerServiceClass(WatchDogService)
@@ -202,7 +202,7 @@ class Bootstrapper(object):
         MDApi.SERVICE_REGISTRY = self.serviceRegistry
 
     def onDBManagerConnected(self):
-        self.initHostController()
+        self.initHostProcessController()
 
         self.initServices()
         self.load()
@@ -212,9 +212,9 @@ class Bootstrapper(object):
             qt_util.runInMainThread(self.loaderWindow.hide)
             qt_util.runInMainThread(self.setupMainWindowManager)
 
-    def initHostController(self):
-        self.hostController = HostController(self.dbManager)
-        QThreadPool.globalInstance().start(qt_util.LambdaTask(self.hostController.run))
+    def initHostProcessController(self):
+        self.hostProcessController = HostProcessController(self.dbManager)
+        QThreadPool.globalInstance().start(qt_util.LambdaTask(self.hostProcessController.run))
 
     def setupMainWindowManager(self):
         self.mainWindowManager = MainWindowManager(self.app, self.appInfo, self.serviceRegistry, self)
