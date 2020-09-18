@@ -18,7 +18,7 @@ class ServiceManagerViewer(DockWidget):
     def __init__(self, parentWindow, serviceRegistry):
         super().__init__("Services", parentWindow, asset_manager.getUIFilePath("services.ui"))
 
-        self.serviceManager = serviceRegistry.serviceManager
+        self.serviceManager: ServiceManager = serviceRegistry.serviceManager
         self.serviceRegistry = serviceRegistry
         # Maps service class to viewer
         self.serviceViewerClassMap : dict = dict()
@@ -46,7 +46,7 @@ class ServiceManagerViewer(DockWidget):
         
         self.updateServiceList()
 
-        self.serviceManager.serviceStatusChangedEvent.subscribe(self.onServiceStatusChanged)
+        self.serviceManager.onServiceActiveStatusChanged.subscribe(self.onServiceActiveStatusChanged)
 
         self.setupServicesTableWidgetContextMenu()
 
@@ -66,14 +66,15 @@ class ServiceManagerViewer(DockWidget):
     def setSelectedServicesActive(self, active: bool):
         for idx in self.servicesTableWidget.selectedIndexes():
             idx : QModelIndex = idx
-            service = self.serviceManager.services[idx.row()]
-            service.setActive(active)
+
+            serviceName = self.servicesTableWidget.item(idx, 0)
+            self.serviceManager.setServiceActive(serviceName, active)
 
     def onServicesTableWidgetContextMenu(self):
         self.servicesTableWidgetContextMenu.setEnabled(len(self.servicesTableWidget.selectedIndexes()) > 0)
         self.servicesTableWidgetContextMenu.exec_(QtGui.QCursor.pos())
 
-    def onServiceStatusChanged(self, service: Service, status: ServiceStatus):
+    def onServiceActiveStatusChanged(self, serviceName: str, active: bool):
         self.updateServiceList()
 
     def registerServiceViewerClass(self, serviceClass, viewerClass):
@@ -81,22 +82,27 @@ class ServiceManagerViewer(DockWidget):
 
     def updateServiceList(self):
         self.servicesTableWidget.clear()
-        self.servicesTableWidget.setRowCount(len(self.serviceManager.services))
+        self.servicesTableWidget.setRowCount(len(self.serviceManager.serviceMonitors))
 
         pattern = re.compile(self.serviceFilterLineEdit.text())
 
-        for i in range(0, len(self.serviceManager.services)):
-            service = self.serviceManager.services[i]
-            if not re.search(pattern, service.name):
+        for i in range(0, len(self.serviceManager.serviceMonitors)):
+            serviceMonitor = self.serviceManager.serviceMonitors[i]
+            serviceName = serviceMonitor.serviceName
+            if serviceName == None:
+                logger.error(f'No service name available in service monitor.')
                 continue
 
-            nameItem = QtWidgets.QTableWidgetItem(service.name)
-            descItem = QtWidgets.QTableWidgetItem(service.description)
-            statusItem = QtWidgets.QTableWidgetItem(service.status.value)
+            if not re.search(pattern, serviceName):
+                continue
+
+            nameItem = QtWidgets.QTableWidgetItem(serviceName)
+            descItem = QtWidgets.QTableWidgetItem(serviceMonitor.serviceDescription)
+            activeStatusItem = QtWidgets.QTableWidgetItem('Enabled' if serviceMonitor.serviceActive else 'Disabled')
 
             self.servicesTableWidget.setItem(i, 0, nameItem)
             self.servicesTableWidget.setItem(i, 1, descItem)
-            self.servicesTableWidget.setItem(i, 2, statusItem)
+            self.servicesTableWidget.setItem(i, 2, activeStatusItem)
 
     def extendNewServiceView(self, newServiceWidget : QWidget, serviceClassName : str):
         qt_util.clearContainer(newServiceWidget.serviceExtensionFrame.layout())
@@ -145,7 +151,7 @@ class ServiceManagerViewer(DockWidget):
 
             if self.currentServiceViewer:
                 serviceInfoDict = self.currentServiceViewer.getServiceInfoDict(serviceClassName, name, desc, initialStatus)
-                self.serviceManager.addServiceFromDict(serviceInfoDict)
+                self.serviceManager.addServiceFromDict(serviceInfoDict, newService=True)
             else:
                logger.warning(f'Could not find a viewer for service {serviceClassName}')
                 
