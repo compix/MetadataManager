@@ -104,7 +104,11 @@
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_5">
           <item>
-           <widget class="QTableWidget" name="serviceProcessesTableWidget"/>
+           <widget class="QTableWidget" name="serviceProcessesTableWidget">
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>

@@ -11,8 +11,34 @@ from MetadataManagerCore.service.ServiceManager import ServiceManager
 import re
 from qt_extensions import qt_util
 import logging
+from MetadataManagerCore.service.ServiceInfo import ServiceInfo
 
 logger = logging.getLogger(__name__)
+
+class ServiceProcessHeader(object):
+    info = [
+        ('_id', 'ID'),
+        ('name', 'Service Name'),
+        ('status', 'Status'),
+        ('hostname', 'Hostname'),
+        ('pid', 'PID')
+    ]
+
+    @staticmethod
+    def count() -> int:
+        return len(ServiceProcessHeader.info)
+
+    @staticmethod
+    def keyAt(idx: int) -> str:
+        return ServiceProcessHeader.info[idx][0]
+
+    @staticmethod
+    def headerLabels():
+        return [v[1] for v in ServiceProcessHeader.info]
+    
+    @staticmethod
+    def keys():
+        return [v[0] for v in ServiceProcessHeader.info]
 
 class ServiceManagerViewer(DockWidget):
     def __init__(self, parentWindow, serviceRegistry):
@@ -36,8 +62,6 @@ class ServiceManagerViewer(DockWidget):
         self.widget.mainFrame.layout().insertWidget(0, menuBar)
 
         self.servicesTableWidget : QtWidgets.QTableWidget = self.widget.servicesTableWidget
-        self.servicesTableWidget.setColumnCount(3)
-        self.servicesTableWidget.setHorizontalHeaderLabels(['Name', 'Description', 'Status'])
 
         self.serviceFilterLineEdit : QtWidgets.QLineEdit = self.widget.serviceFilterLineEdit 
         self.serviceFilterLineEdit.returnPressed.connect(self.updateServiceList)
@@ -46,9 +70,53 @@ class ServiceManagerViewer(DockWidget):
         
         self.updateServiceList()
 
-        self.serviceManager.onServiceActiveStatusChanged.subscribe(self.onServiceActiveStatusChanged)
+        self.serviceManager.onServiceActiveStatusChanged.subscribe(lambda _: qt_util.runInMainThread(self.updateServiceList))
+        self.serviceManager.onServiceAdded.subscribe(lambda _: qt_util.runInMainThread(self.updateServiceList))
 
         self.setupServicesTableWidgetContextMenu()
+
+        self.setupServiceProcessTableWidget()
+        self.updateServiceProcessTable()
+
+        self.serviceManager.onServiceProcessChanged.subscribe(lambda _: self.updateServiceProcessTable())
+
+    def setupServiceProcessTableWidget(self):
+        self.serviceProcessesTableWidget : QtWidgets.QTableWidget = self.widget.serviceProcessesTableWidget
+
+    def getAllServiceProcessInfos(self):
+        serviceProcessInfos = []
+        for serviceMonitor in self.serviceManager.serviceMonitors:
+            for serviceProcessInfo in serviceMonitor.serviceProcessInfos:
+                serviceProcessInfos.append(serviceProcessInfo)
+
+        return serviceProcessInfos
+
+    def updateServiceProcessTable(self):
+        self.serviceProcessesTableWidget.clear()
+        serviceProcessInfos = self.getAllServiceProcessInfos()
+        self.serviceProcessesTableWidget.setRowCount(len(serviceProcessInfos))
+
+        headerLabels = ServiceProcessHeader.headerLabels()
+        self.serviceProcessesTableWidget.setColumnCount(len(headerLabels))
+        self.serviceProcessesTableWidget.setHorizontalHeaderLabels(headerLabels)
+
+        pattern = re.compile(self.serviceFilterLineEdit.text())
+
+        for i in range(0, len(serviceProcessInfos)):
+            serviceProcessInfo = serviceProcessInfos[i]
+            serviceProcessId = serviceProcessInfo.id
+            if serviceProcessId == None:
+                logger.error(f'No service process id available.')
+                continue
+
+            if not re.search(pattern, serviceProcessId):
+                continue
+            
+            for keyIdx in range(0, ServiceProcessHeader.count()):
+                key = ServiceProcessHeader.keyAt(keyIdx)
+                value = str(serviceProcessInfo.get(key))
+                item = QtWidgets.QTableWidgetItem(value if value else 'None')
+                self.serviceProcessesTableWidget.setItem(i, keyIdx, item)
 
     def setupServicesTableWidgetContextMenu(self):
         self.servicesTableWidgetContextMenu = QtWidgets.QMenu(self.widget)
@@ -65,17 +133,14 @@ class ServiceManagerViewer(DockWidget):
 
     def setSelectedServicesActive(self, active: bool):
         for idx in self.servicesTableWidget.selectedIndexes():
-            idx : QModelIndex = idx
+            idx : int = idx.row()
 
-            serviceName = self.servicesTableWidget.item(idx, 0)
+            serviceName = self.servicesTableWidget.item(idx, 0).text()
             self.serviceManager.setServiceActive(serviceName, active)
 
     def onServicesTableWidgetContextMenu(self):
         self.servicesTableWidgetContextMenu.setEnabled(len(self.servicesTableWidget.selectedIndexes()) > 0)
         self.servicesTableWidgetContextMenu.exec_(QtGui.QCursor.pos())
-
-    def onServiceActiveStatusChanged(self, serviceName: str, active: bool):
-        self.updateServiceList()
 
     def registerServiceViewerClass(self, serviceClass, viewerClass):
         self.serviceViewerClassMap[serviceClass.__name__] = viewerClass
@@ -83,6 +148,10 @@ class ServiceManagerViewer(DockWidget):
     def updateServiceList(self):
         self.servicesTableWidget.clear()
         self.servicesTableWidget.setRowCount(len(self.serviceManager.serviceMonitors))
+
+        headerLabels = ['Name', 'Description', 'Status']
+        self.servicesTableWidget.setColumnCount(len(headerLabels))
+        self.servicesTableWidget.setHorizontalHeaderLabels(headerLabels)
 
         pattern = re.compile(self.serviceFilterLineEdit.text())
 
