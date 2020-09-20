@@ -1,3 +1,4 @@
+from MetadataManagerCore.service.ServiceInfo import ServiceInfo
 from PySide2.QtCore import QModelIndex
 from MetadataManagerCore.service.WatchDogService import WatchDogService
 from PySide2.QtWidgets import QSizePolicy, QVBoxLayout, QWidget
@@ -11,11 +12,27 @@ from MetadataManagerCore.service.ServiceManager import ServiceManager
 import re
 from qt_extensions import qt_util
 import logging
-from MetadataManagerCore.service.ServiceInfo import ServiceInfo
 
 logger = logging.getLogger(__name__)
 
-class ServiceProcessHeader(object):
+class HeaderInfo(object):
+    @classmethod
+    def count(cls) -> int:
+        return len(cls.info)
+
+    @classmethod
+    def keyAt(cls, idx: int) -> str:
+        return cls.info[idx][0]
+
+    @classmethod
+    def headerLabels(cls):
+        return [v[1] for v in cls.info]
+    
+    @classmethod
+    def keys(cls):
+        return [v[0] for v in cls.info]
+
+class ServiceProcessHeader(HeaderInfo):
     info = [
         ('_id', 'ID'),
         ('name', 'Service Name'),
@@ -24,21 +41,13 @@ class ServiceProcessHeader(object):
         ('pid', 'PID')
     ]
 
-    @staticmethod
-    def count() -> int:
-        return len(ServiceProcessHeader.info)
-
-    @staticmethod
-    def keyAt(idx: int) -> str:
-        return ServiceProcessHeader.info[idx][0]
-
-    @staticmethod
-    def headerLabels():
-        return [v[1] for v in ServiceProcessHeader.info]
-    
-    @staticmethod
-    def keys():
-        return [v[0] for v in ServiceProcessHeader.info]
+class ServiceHeader(HeaderInfo):
+    info = [
+        ('name', 'Name'),
+        ('description', 'Description'),
+        ('active', 'Enabled'),
+        ('health', 'Health Status')
+    ]
 
 class ServiceManagerViewer(DockWidget):
     def __init__(self, parentWindow, serviceRegistry):
@@ -118,6 +127,8 @@ class ServiceManagerViewer(DockWidget):
                 item = QtWidgets.QTableWidgetItem(value if value else 'None')
                 self.serviceProcessesTableWidget.setItem(i, keyIdx, item)
 
+        self.updateServiceList()
+
     def setupServicesTableWidgetContextMenu(self):
         self.servicesTableWidgetContextMenu = QtWidgets.QMenu(self.widget)
 
@@ -149,29 +160,40 @@ class ServiceManagerViewer(DockWidget):
         self.servicesTableWidget.clear()
         self.servicesTableWidget.setRowCount(len(self.serviceManager.serviceMonitors))
 
-        headerLabels = ['Name', 'Description', 'Status']
+        headerLabels = ServiceHeader.headerLabels()
         self.servicesTableWidget.setColumnCount(len(headerLabels))
         self.servicesTableWidget.setHorizontalHeaderLabels(headerLabels)
 
         pattern = re.compile(self.serviceFilterLineEdit.text())
 
+        specializedKeyHandlers = {
+            'active': lambda serviceMonitor: 'Enabled' if serviceMonitor.serviceActive else 'Disabled',
+            'health': lambda serviceMonitor: serviceMonitor.getServiceHealthStatusString()
+        }
+
         for i in range(0, len(self.serviceManager.serviceMonitors)):
             serviceMonitor = self.serviceManager.serviceMonitors[i]
-            serviceName = serviceMonitor.serviceName
+            serviceInfo = serviceMonitor.serviceInfo
+            serviceName = serviceInfo.name
             if serviceName == None:
                 logger.error(f'No service name available in service monitor.')
                 continue
 
             if not re.search(pattern, serviceName):
                 continue
+            
+            headerKeys = ServiceHeader.keys()
+            for keyIdx in range(0, len(headerKeys)):
+                key = headerKeys[keyIdx]
 
-            nameItem = QtWidgets.QTableWidgetItem(serviceName)
-            descItem = QtWidgets.QTableWidgetItem(serviceMonitor.serviceDescription)
-            activeStatusItem = QtWidgets.QTableWidgetItem('Enabled' if serviceMonitor.serviceActive else 'Disabled')
+                handler = specializedKeyHandlers.get(key)
+                if handler:
+                    value = handler(serviceMonitor)
+                else:
+                    value = serviceInfo.get(key)
 
-            self.servicesTableWidget.setItem(i, 0, nameItem)
-            self.servicesTableWidget.setItem(i, 1, descItem)
-            self.servicesTableWidget.setItem(i, 2, activeStatusItem)
+                item = QtWidgets.QTableWidgetItem(str(value))
+                self.servicesTableWidget.setItem(i, keyIdx, item)
 
     def extendNewServiceView(self, newServiceWidget : QWidget, serviceClassName : str):
         qt_util.clearContainer(newServiceWidget.serviceExtensionFrame.layout())
