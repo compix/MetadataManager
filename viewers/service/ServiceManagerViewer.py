@@ -1,3 +1,4 @@
+from MetadataManagerCore.service.ServiceInfo import ServiceInfo
 from PySide2.QtCore import QModelIndex
 from MetadataManagerCore.service.WatchDogService import WatchDogService
 from PySide2.QtWidgets import QSizePolicy, QVBoxLayout, QWidget
@@ -14,11 +15,45 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+class HeaderInfo(object):
+    @classmethod
+    def count(cls) -> int:
+        return len(cls.info)
+
+    @classmethod
+    def keyAt(cls, idx: int) -> str:
+        return cls.info[idx][0]
+
+    @classmethod
+    def headerLabels(cls):
+        return [v[1] for v in cls.info]
+    
+    @classmethod
+    def keys(cls):
+        return [v[0] for v in cls.info]
+
+class ServiceProcessHeader(HeaderInfo):
+    info = [
+        ('_id', 'ID'),
+        ('name', 'Service Name'),
+        ('status', 'Status'),
+        ('hostname', 'Hostname'),
+        ('pid', 'PID')
+    ]
+
+class ServiceHeader(HeaderInfo):
+    info = [
+        ('name', 'Name'),
+        ('description', 'Description'),
+        ('active', 'Enabled'),
+        ('health', 'Health Status')
+    ]
+
 class ServiceManagerViewer(DockWidget):
     def __init__(self, parentWindow, serviceRegistry):
         super().__init__("Services", parentWindow, asset_manager.getUIFilePath("services.ui"))
 
-        self.serviceManager = serviceRegistry.serviceManager
+        self.serviceManager: ServiceManager = serviceRegistry.serviceManager
         self.serviceRegistry = serviceRegistry
         # Maps service class to viewer
         self.serviceViewerClassMap : dict = dict()
@@ -36,8 +71,6 @@ class ServiceManagerViewer(DockWidget):
         self.widget.mainFrame.layout().insertWidget(0, menuBar)
 
         self.servicesTableWidget : QtWidgets.QTableWidget = self.widget.servicesTableWidget
-        self.servicesTableWidget.setColumnCount(3)
-        self.servicesTableWidget.setHorizontalHeaderLabels(['Name', 'Description', 'Status'])
 
         self.serviceFilterLineEdit : QtWidgets.QLineEdit = self.widget.serviceFilterLineEdit 
         self.serviceFilterLineEdit.returnPressed.connect(self.updateServiceList)
@@ -46,9 +79,55 @@ class ServiceManagerViewer(DockWidget):
         
         self.updateServiceList()
 
-        self.serviceManager.serviceStatusChangedEvent.subscribe(self.onServiceStatusChanged)
+        self.serviceManager.onServiceActiveStatusChanged.subscribe(lambda _: qt_util.runInMainThread(self.updateServiceList))
+        self.serviceManager.onServiceAdded.subscribe(lambda _: qt_util.runInMainThread(self.updateServiceList))
 
         self.setupServicesTableWidgetContextMenu()
+
+        self.setupServiceProcessTableWidget()
+        self.updateServiceProcessTable()
+
+        self.serviceManager.onServiceProcessChangedEvent.subscribe(lambda _: self.updateServiceProcessTable())
+
+    def setupServiceProcessTableWidget(self):
+        self.serviceProcessesTableWidget : QtWidgets.QTableWidget = self.widget.serviceProcessesTableWidget
+
+    def getAllServiceProcessInfos(self):
+        serviceProcessInfos = []
+        for serviceMonitor in self.serviceManager.serviceMonitors:
+            for serviceProcessInfo in serviceMonitor.serviceProcessInfos:
+                serviceProcessInfos.append(serviceProcessInfo)
+
+        return serviceProcessInfos
+
+    def updateServiceProcessTable(self):
+        self.serviceProcessesTableWidget.clear()
+        serviceProcessInfos = self.getAllServiceProcessInfos()
+        self.serviceProcessesTableWidget.setRowCount(len(serviceProcessInfos))
+
+        headerLabels = ServiceProcessHeader.headerLabels()
+        self.serviceProcessesTableWidget.setColumnCount(len(headerLabels))
+        self.serviceProcessesTableWidget.setHorizontalHeaderLabels(headerLabels)
+
+        pattern = re.compile(self.serviceFilterLineEdit.text())
+
+        for i in range(0, len(serviceProcessInfos)):
+            serviceProcessInfo = serviceProcessInfos[i]
+            serviceProcessId = serviceProcessInfo.id
+            if serviceProcessId == None:
+                logger.error(f'No service process id available.')
+                continue
+
+            if not re.search(pattern, serviceProcessId):
+                continue
+            
+            for keyIdx in range(0, ServiceProcessHeader.count()):
+                key = ServiceProcessHeader.keyAt(keyIdx)
+                value = str(serviceProcessInfo.get(key))
+                item = QtWidgets.QTableWidgetItem(value if value else 'None')
+                self.serviceProcessesTableWidget.setItem(i, keyIdx, item)
+
+        self.updateServiceList()
 
     def setupServicesTableWidgetContextMenu(self):
         self.servicesTableWidgetContextMenu = QtWidgets.QMenu(self.widget)
@@ -65,38 +144,56 @@ class ServiceManagerViewer(DockWidget):
 
     def setSelectedServicesActive(self, active: bool):
         for idx in self.servicesTableWidget.selectedIndexes():
-            idx : QModelIndex = idx
-            service = self.serviceManager.services[idx.row()]
-            service.setActive(active)
+            idx : int = idx.row()
+
+            serviceName = self.servicesTableWidget.item(idx, 0).text()
+            self.serviceManager.setServiceActive(serviceName, active)
 
     def onServicesTableWidgetContextMenu(self):
         self.servicesTableWidgetContextMenu.setEnabled(len(self.servicesTableWidget.selectedIndexes()) > 0)
         self.servicesTableWidgetContextMenu.exec_(QtGui.QCursor.pos())
-
-    def onServiceStatusChanged(self, service: Service, status: ServiceStatus):
-        self.updateServiceList()
 
     def registerServiceViewerClass(self, serviceClass, viewerClass):
         self.serviceViewerClassMap[serviceClass.__name__] = viewerClass
 
     def updateServiceList(self):
         self.servicesTableWidget.clear()
-        self.servicesTableWidget.setRowCount(len(self.serviceManager.services))
+        self.servicesTableWidget.setRowCount(len(self.serviceManager.serviceMonitors))
+
+        headerLabels = ServiceHeader.headerLabels()
+        self.servicesTableWidget.setColumnCount(len(headerLabels))
+        self.servicesTableWidget.setHorizontalHeaderLabels(headerLabels)
 
         pattern = re.compile(self.serviceFilterLineEdit.text())
 
-        for i in range(0, len(self.serviceManager.services)):
-            service = self.serviceManager.services[i]
-            if not re.search(pattern, service.name):
+        specializedKeyHandlers = {
+            'active': lambda serviceMonitor: 'Enabled' if serviceMonitor.serviceActive else 'Disabled',
+            'health': lambda serviceMonitor: serviceMonitor.getServiceHealthStatusString()
+        }
+
+        for i in range(0, len(self.serviceManager.serviceMonitors)):
+            serviceMonitor = self.serviceManager.serviceMonitors[i]
+            serviceInfo = serviceMonitor.serviceInfo
+            serviceName = serviceInfo.name
+            if serviceName == None:
+                logger.error(f'No service name available in service monitor.')
                 continue
 
-            nameItem = QtWidgets.QTableWidgetItem(service.name)
-            descItem = QtWidgets.QTableWidgetItem(service.description)
-            statusItem = QtWidgets.QTableWidgetItem(service.status.value)
+            if not re.search(pattern, serviceName):
+                continue
+            
+            headerKeys = ServiceHeader.keys()
+            for keyIdx in range(0, len(headerKeys)):
+                key = headerKeys[keyIdx]
 
-            self.servicesTableWidget.setItem(i, 0, nameItem)
-            self.servicesTableWidget.setItem(i, 1, descItem)
-            self.servicesTableWidget.setItem(i, 2, statusItem)
+                handler = specializedKeyHandlers.get(key)
+                if handler:
+                    value = handler(serviceMonitor)
+                else:
+                    value = serviceInfo.get(key)
+
+                item = QtWidgets.QTableWidgetItem(str(value))
+                self.servicesTableWidget.setItem(i, keyIdx, item)
 
     def extendNewServiceView(self, newServiceWidget : QWidget, serviceClassName : str):
         qt_util.clearContainer(newServiceWidget.serviceExtensionFrame.layout())
@@ -145,7 +242,7 @@ class ServiceManagerViewer(DockWidget):
 
             if self.currentServiceViewer:
                 serviceInfoDict = self.currentServiceViewer.getServiceInfoDict(serviceClassName, name, desc, initialStatus)
-                self.serviceManager.addServiceFromDict(serviceInfoDict)
+                self.serviceManager.addServiceFromDict(serviceInfoDict, newService=True)
             else:
                logger.warning(f'Could not find a viewer for service {serviceClassName}')
                 
