@@ -188,7 +188,7 @@ class Bootstrapper(object):
         VisualScriptingExtensions.environment_nodes.ENVIRONMENT_MANAGER = self.serviceRegistry.environmentManager
         VisualScriptingExtensions.third_party_extensions.deadline_nodes.DEADLINE_SERVICE = self.serviceRegistry.deadlineService
 
-        self.serviceManager = ServiceManager(self.dbManager, self.hostProcessController, self.serviceRegistry)
+        self.serviceManager = ServiceManager(self.dbManager, self.hostProcessController, self.serviceRegistry, self.mode == ApplicationMode.Console)
         self.serviceRegistry.serviceManager = self.serviceManager
         self.serviceRegistry.services.append(self.serviceManager)
         self.serviceManager.registerServiceClass(WatchDogService)
