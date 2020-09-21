@@ -87,7 +87,7 @@ class ServiceManagerViewer(DockWidget):
         self.setupServiceProcessTableWidget()
         self.updateServiceProcessTable()
 
-        self.serviceManager.onServiceProcessChanged.subscribe(lambda _: self.updateServiceProcessTable())
+        self.serviceManager.onServiceProcessChangedEvent.subscribe(lambda _: self.updateServiceProcessTable())
 
     def setupServiceProcessTableWidget(self):
         self.serviceProcessesTableWidget : QtWidgets.QTableWidget = self.widget.serviceProcessesTableWidget
