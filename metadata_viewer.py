@@ -15,7 +15,7 @@ os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = plugin_path
 def main():
     parser = argparse.ArgumentParser(description="Metadata manager and automation tool.")
     appModeList = ', '.join(str(appMode) for appMode in list(ApplicationMode))
-    parser.add_argument('-mode', metavar='Application Mode', type=ApplicationMode, default=ApplicationMode.Console,
+    parser.add_argument('-mode', metavar='Application Mode', type=ApplicationMode, default=ApplicationMode.GUI,
                         choices=list(ApplicationMode), help=f"Application mode: {appModeList}")
 
     parser.add_argument('-task', metavar='Task Json File Path', type=str, default=None,
