@@ -11,3 +11,10 @@
     ```powershell
     Set-ExecutionPolicy Unrestricted -Force
     ```
+
+## Deploy
+Use pyinstaller inside .env:
+```powershell
+cd .env
+pyinstaller ../metadata_viewer.spec
+```

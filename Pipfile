@@ -13,6 +13,7 @@ watchdog = "*"
 xmltodict = "*"
 xlrd = "*"
 pyzipper = "*"
+pyinstaller = "*"
 
 [requires]
 python_version = "3.7"
