@@ -17,4 +17,5 @@ Use pyinstaller inside .env:
 ```powershell
 cd .env
 pyinstaller ../metadata_viewer.spec
+pyinstaller ../launcher/launcher.spec
 ```
