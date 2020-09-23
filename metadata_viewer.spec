@@ -3,6 +3,8 @@
 block_cipher = None
 
 import os
+import zipfile
+from datetime import datetime
 
 spec_root = os.path.abspath(SPECPATH)
 
@@ -40,3 +42,15 @@ coll = COLLECT(exe,
                upx=True,
                upx_exclude=[],
                name='MetadataManager')
+
+def zipDir(path: str, zipFilename: str):
+    filenames = [os.path.join(root,fn) for root,_,filenames in os.walk(path) for fn in filenames]
+    with zipfile.ZipFile(zipFilename, 'w', zipfile.ZIP_DEFLATED) as zipFile:
+        for f in filenames:
+            zipFile.write(f, os.path.relpath(f, path))
+
+distPath = os.path.join(spec_root, '.env', 'dist')
+zipTargetFolder = os.path.join(distPath, 'MetadataManager')
+curDateStr = datetime.now().strftime("%d_%m_%Y")
+print('Zipping ' + zipTargetFolder)
+zipDir(zipTargetFolder, os.path.join(distPath, curDateStr + '.zip'))

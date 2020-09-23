@@ -1,3 +1,5 @@
+from ApplicationMode import ApplicationMode
+from updater.Updater import Updater
 from MetadataManagerCore.host.HostProcessController import HostProcessController
 from MetadataManagerCore.file.FileHandlerManager import FileHandlerManager
 from MetadataManagerCore.service.WatchDogService import WatchDogService
@@ -40,18 +42,12 @@ import VisualScriptingExtensions.versioning_nodes
 import VisualScriptingExtensions.third_party_extensions.deadline_nodes
 import VisualScriptingExtensions.environment_nodes
 
-class ApplicationMode(Enum):
-    GUI = 'GUI'
-    Console = 'Console'
-
-    def __str__(self):
-        return self.value
-
 class Bootstrapper(object):
-    def __init__(self, mode : ApplicationMode, taskFilePath: str):
+    def __init__(self, mode : ApplicationMode, taskFilePath: str, launcherFilename: str):
         super().__init__()
         self.mode = mode
         self.taskFilePath = taskFilePath
+        self.launcherFilename = launcherFilename
         self.initLogging()
 
         self.logger.info(f"Initializing application with mode: {mode}")
@@ -61,12 +57,15 @@ class Bootstrapper(object):
         self.appInfo = AppInfo()
         self.appInfo.company = SETTINGS.value("company")
         self.appInfo.appName = SETTINGS.value("app_name")
+        self.appInfo.mode = mode
         self.mongodbHost = SETTINGS.value("mongodb_host")
         self.dbName = SETTINGS.value("db_name")
         self.hostProcessController = None
         self.serviceManager = None
         self.dbManager = None
         self.serviceRegistry = ServiceRegistry()
+
+        self.updateRequested = False
 
         dbInitTimeout = None
         if self.mode == ApplicationMode.GUI:
@@ -77,6 +76,10 @@ class Bootstrapper(object):
             self.consoleApp = ConsoleApp(self.appInfo, self.serviceRegistry, taskFilePath=self.taskFilePath, initTimeout = 120.0)
         
         QThreadPool.globalInstance().start(qt_util.LambdaTask(self.initDataBaseManager, dbInitTimeout))
+
+    def requestUpdate(self):
+        self.updateRequested = True
+        self.mainWindowManager.close()
 
     def run(self):
         if self.mode == ApplicationMode.GUI:
@@ -98,6 +101,9 @@ class Bootstrapper(object):
             
         if self.serviceManager:
             self.serviceManager.shutdown()
+
+        if self.updater:
+            self.updater.shutdown()
 
         if self.appInfo.initialized:
             self.save()
@@ -211,6 +217,10 @@ class Bootstrapper(object):
         if self.mode == ApplicationMode.GUI:
             qt_util.runInMainThread(self.loaderWindow.hide)
             qt_util.runInMainThread(self.setupMainWindowManager)
+            qt_util.runInMainThread(self.setupUpdater)
+    
+    def setupUpdater(self):
+        self.updater = Updater(self.launcherFilename, self, self.mainWindowManager.window) if self.launcherFilename else None
 
     def initHostProcessController(self):
         self.hostProcessController = HostProcessController(self.dbManager)

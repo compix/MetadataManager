@@ -317,6 +317,9 @@ class MainWindowManager(QtCore.QObject):
             return True
         return super(MainWindowManager, self).eventFilter(obj, event)
 
+    def close(self):
+        self.window.close()
+        
     @QtCore.Slot()
     def quitApp(self, bSaveState = True):
         if bSaveState:

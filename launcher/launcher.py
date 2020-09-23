@@ -3,6 +3,8 @@ import os
 import logging
 import zipfile
 import shutil
+import subprocess
+import time
 
 BASE_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -58,6 +60,8 @@ class Launcher(object):
 
     def checkForUpdates(self):
         self.logger.info('Checking for updates...')
+        time.sleep(2.0)
+
         with open(self.launcherInfoFilename) as f:
             launcherInfoDict = json.load(f)
             repositoryDir = launcherInfoDict['app_repository_dir']
@@ -85,7 +89,7 @@ class Launcher(object):
             exeName = launcherInfoDict['exe_name']
 
         exeFilename = os.path.join(BASE_PATH, currentVersion, exeName)
-        os.startfile(os.path.normpath(exeFilename))
+        subprocess.Popen([os.path.normpath(exeFilename), '-launcher', f'"os.path.join(BASE_PATH, sys.argv[0])"'])
 
     def run(self):
         try:

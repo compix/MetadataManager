@@ -1,9 +1,11 @@
+from ApplicationMode import ApplicationMode
 import argparse
 import sys
 import os
 import PySide2
-from Bootstrapper import Bootstrapper, ApplicationMode
+from Bootstrapper import Bootstrapper
 import logging
+import subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +23,16 @@ def main():
     parser.add_argument('-task', metavar='Task Json File Path', type=str, default=None,
                         help=f"Path to a json file with task information.")
 
+    parser.add_argument('-launcher', help='Path to the launcher.', type=str, default=None)
+
     args = parser.parse_args()
-    bootstrapper = Bootstrapper(args.mode, args.task)
+    bootstrapper = Bootstrapper(args.mode, args.task, args.launcher)
     status = bootstrapper.run()
+
+    if bootstrapper.updateRequested:
+        logger.info(f'Opening launcher: {args.launcher}')
+        os.chdir(os.path.dirname(args.launcher))
+        subprocess.Popen([args.launcher])
 
     logger.info(f"Application closed with code {status}.")
     sys.exit(status)
