@@ -224,7 +224,13 @@ class Bootstrapper(object):
 
     def initHostProcessController(self):
         self.hostProcessController = HostProcessController(self.dbManager)
+        self.hostProcessController.thisHost.onRequestedApplicationClose.subscribe(self.onRequestedApplicationClose)
+        self.serviceRegistry.hostProcessController = self.hostProcessController
         QThreadPool.globalInstance().start(qt_util.LambdaTask(self.hostProcessController.run))
+
+    def onRequestedApplicationClose(self):
+        if self.mainWindowManager:
+            qt_util.runInMainThread(self.mainWindowManager.close)
 
     def setupMainWindowManager(self):
         self.mainWindowManager = MainWindowManager(self.app, self.appInfo, self.serviceRegistry, self)

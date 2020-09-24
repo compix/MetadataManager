@@ -143,10 +143,8 @@ class ServiceManagerViewer(DockWidget):
         self.servicesTableWidget.customContextMenuRequested.connect(self.onServicesTableWidgetContextMenu)
 
     def setSelectedServicesActive(self, active: bool):
-        for idx in self.servicesTableWidget.selectedIndexes():
-            idx : int = idx.row()
-
-            serviceName = self.servicesTableWidget.item(idx, 0).text()
+        for rowIdx in set(idx.row() for idx in self.servicesTableWidget.selectedIndexes()):
+            serviceName = self.servicesTableWidget.item(rowIdx, 0).text()
             self.serviceManager.setServiceActive(serviceName, active)
 
     def onServicesTableWidgetContextMenu(self):

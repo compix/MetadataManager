@@ -1,5 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import sys
+from viewers.HostProcessViewer import HostProcessViewer
 from viewers.service.ServiceManagerViewer import ServiceManagerViewer
 from PySide2 import QtCore, QtWidgets, QtUiTools, QtGui
 from enum import Enum
@@ -108,6 +109,8 @@ class MainWindowManager(QtCore.QObject):
 
         self.serviceManagerViewer = ServiceManagerViewer(self.window, self.serviceRegistry)
 
+        self.hostProcessViewer = HostProcessViewer(self.window, self.serviceRegistry.hostProcessController)
+
     def setupEventAndActionHandlers(self):
         self.window.installEventFilter(self)
         
@@ -153,6 +156,7 @@ class MainWindowManager(QtCore.QObject):
         self.setupDockWidget(self.deadlineServiceViewer)
         self.setupDockWidget(self.environmentManagerViewer)
         self.setupDockWidget(self.serviceManagerViewer)
+        self.setupDockWidget(self.hostProcessViewer)
 
     def setupDockWidget(self, dockWidget : DockWidget, initialDockArea=None):
         self.dockWidgets.append(dockWidget)

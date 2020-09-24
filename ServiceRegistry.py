@@ -1,3 +1,4 @@
+from MetadataManagerCore.host.HostProcessController import HostProcessController
 from MetadataManagerCore.file.FileHandlerManager import FileHandlerManager
 from MetadataManagerCore.service.ServiceManager import ServiceManager
 from MetadataManagerCore.filtering.DocumentFilterManager import DocumentFilterManager
@@ -25,3 +26,4 @@ class ServiceRegistry(object):
         self.documentFilterManager : DocumentFilterManager = None
         self.serviceManager : ServiceManager = None
         self.fileHandlerManager : FileHandlerManager = None
+        self.hostProcessController : HostProcessController = None
