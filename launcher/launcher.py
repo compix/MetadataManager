@@ -1,10 +1,12 @@
-import json
+from LauncherInfo import LauncherInfo
+from AppRepositoryInfo import AppRepositoryInfo
 import os
 import logging
 import zipfile
 import shutil
 import subprocess
 import time
+import sys
 
 BASE_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -26,70 +28,41 @@ class Launcher(object):
     def deleteLocalVersion(self, version: str):
         self.logger.info(f'Deleting local version: {version}...')
         shutil.rmtree(os.path.join(BASE_PATH, version))
-
-    def versionFromFilename(self, versionFilename: str):
-        if versionFilename == None:
-            return None
-
-        base, _ = os.path.splitext(os.path.basename(versionFilename))
-        return base
         
     def update(self, currentVersionFilename: str, newVersionFilename: str):
         self.logger.info(f'Updating to newest version: {newVersionFilename}...')
 
-        currentVersion = self.versionFromFilename(currentVersionFilename)
-        if currentVersion:
-            self.deleteLocalVersion(currentVersion)
+        launcherInfo = LauncherInfo(BASE_PATH)
+
+        if currentVersionFilename:
+            self.deleteLocalVersion(launcherInfo.appFolderName)
         
         # Extract:
-        newVersion = self.versionFromFilename(newVersionFilename)
         with zipfile.ZipFile(newVersionFilename, 'r') as zip_ref:
-            zip_ref.extractall(os.path.join(BASE_PATH, newVersion))
+            zip_ref.extractall(os.path.join(BASE_PATH, launcherInfo.appFolderName))
 
-        # Update launcher info:
-        with open(self.launcherInfoFilename, mode='r') as f:
-            infoDict = json.load(f)
-            infoDict['current_version_filename'] = newVersionFilename
-
-        with open(self.launcherInfoFilename, mode='w') as f:
-            json.dump(infoDict, f, indent=4, sort_keys=True)
-
-    @property
-    def launcherInfoFilename(self):
-        return os.path.join(BASE_PATH, 'launcher.json')
+        launcherInfo.updateCurrentVersionFilename(newVersionFilename)
 
     def checkForUpdates(self):
         self.logger.info('Checking for updates...')
         time.sleep(2.0)
 
-        with open(self.launcherInfoFilename) as f:
-            launcherInfoDict = json.load(f)
-            repositoryDir = launcherInfoDict['app_repository_dir']
-            infoFilename = os.path.join(repositoryDir, 'info.json')
+        launcherInfo = LauncherInfo(BASE_PATH)
 
-        with open(infoFilename) as f:
-            infoDict = json.load(f)
-            latestVersionFilename = os.path.join(repositoryDir, infoDict['latest'])
-
-        curVersionFilename = launcherInfoDict.get('current_version_filename')
-        if curVersionFilename == None or curVersionFilename != latestVersionFilename:
-            self.update(curVersionFilename, latestVersionFilename)
+        repositoryInfo = AppRepositoryInfo(launcherInfo.appRepositoryDirectory)
+        curVersionFilename = launcherInfo.currentVersionFilename
+        if curVersionFilename == None or curVersionFilename != repositoryInfo.latestVersionFilename or not os.path.exists(self.exeFilename):
+            self.update(curVersionFilename, repositoryInfo.latestVersionFilename)
         else:
             self.logger.info('Already up to date.')
 
-    def currentVersion(self):
-        with open(self.launcherInfoFilename) as f:
-            launcherInfoDict = json.load(f)
-            return self.versionFromFilename(launcherInfoDict['current_version_filename'])
-
+    @property
+    def exeFilename(self):
+        launcherInfo = LauncherInfo(BASE_PATH)
+        return os.path.join(BASE_PATH, launcherInfo.appFolderName, launcherInfo.exeName)
+        
     def startApp(self):
-        with open(self.launcherInfoFilename) as f:
-            launcherInfoDict = json.load(f)
-            currentVersion = self.versionFromFilename(launcherInfoDict['current_version_filename'])
-            exeName = launcherInfoDict['exe_name']
-
-        exeFilename = os.path.join(BASE_PATH, currentVersion, exeName)
-        subprocess.Popen([os.path.normpath(exeFilename), '-launcher', f'"os.path.join(BASE_PATH, sys.argv[0])"'])
+        subprocess.Popen([os.path.normpath(self.exeFilename), '-launcher', f'{os.path.join(BASE_PATH, sys.argv[0])}'])
 
     def run(self):
         try:

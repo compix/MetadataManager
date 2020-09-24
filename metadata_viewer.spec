@@ -4,7 +4,6 @@ block_cipher = None
 
 import os
 import zipfile
-from datetime import datetime
 
 spec_root = os.path.abspath(SPECPATH)
 
@@ -51,6 +50,5 @@ def zipDir(path: str, zipFilename: str):
 
 distPath = os.path.join(spec_root, '.env', 'dist')
 zipTargetFolder = os.path.join(distPath, 'MetadataManager')
-curDateStr = datetime.now().strftime("%d_%m_%Y")
 print('Zipping ' + zipTargetFolder)
-zipDir(zipTargetFolder, os.path.join(distPath, curDateStr + '.zip'))
+zipDir(zipTargetFolder, os.path.join(distPath, 'MetadataManager.zip'))

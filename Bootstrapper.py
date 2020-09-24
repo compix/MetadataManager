@@ -50,7 +50,7 @@ class Bootstrapper(object):
         self.launcherFilename = launcherFilename
         self.initLogging()
 
-        self.logger.info(f"Initializing application with mode: {mode}")
+        self.logger.info(f"Initializing application with mode: {mode} and launcher: {launcherFilename}")
 
         SETTINGS = QtCore.QSettings(asset_manager.getMainSettingsPath(), QtCore.QSettings.IniFormat)
 
