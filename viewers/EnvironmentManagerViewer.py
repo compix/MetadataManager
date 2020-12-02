@@ -5,13 +5,14 @@ from qt_extensions import qt_util
 from PySide2 import QtWidgets, QtCore
 from PySide2.QtCore import Qt, QRegExp
 from PySide2.QtGui import QValidator, QRegExpValidator
-from PySide2.QtWidgets import QMessageBox, QFileDialog
+from PySide2.QtWidgets import QLineEdit, QMessageBox, QFileDialog, QPushButton
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
 from MetadataManagerCore.environment.Environment import Environment
 from qt_extensions.SimpleTableModel import SimpleTableModel
 import json, os
 import subprocess
 import logging
+import re
 
 class EnvironmentManagerViewer(DockWidget):
     def __init__(self, parentWindow, environmentManager: EnvironmentManager, dbManager : MongoDBManager, settings):
@@ -46,7 +47,31 @@ class EnvironmentManagerViewer(DockWidget):
 
         self.addMenuBar()
         self.refreshEnvironmentsComboBox()
+
+        keyLineEdit: QLineEdit = self.widget.keyLineEdit
+        keyLineEdit.textChanged.connect(self.onKeyLineEditTextChanged)
+        self.widget.searchButton.clicked.connect(lambda: self.updateSettingsTable())
         
+    def onKeyLineEditTextChanged(self, key: str):
+        searchButton: QPushButton = self.widget.searchButton
+
+        if searchButton.isChecked():
+            self.updateSettingsTable()
+
+    def updateSettingsTable(self):
+        if not self.currentEnvironment:
+            return
+
+        searchButton: QPushButton = self.widget.searchButton
+
+        self.settingsTable.clear()
+        for key, val in self.currentEnvironment.settings.items():
+            if searchButton.isChecked():
+                if re.search(self.widget.keyLineEdit.text(), key) or re.search(self.widget.keyLineEdit.text(), val):
+                    self.settingsTable.addEntry([key, val])
+            else:
+                self.settingsTable.addEntry([key, val])
+
     def onDeleteEntry(self):
         if self.currentEnvironment != None:
             key = self.widget.keyLineEdit.text()
@@ -166,9 +191,7 @@ class EnvironmentManagerViewer(DockWidget):
     def setCurrentEnvironment(self, env : Environment):
         self.currentEnvironment = env
         
-        self.settingsTable.clear()
-        for key, val in env.settings.items():
-            self.settingsTable.addEntry([key, val])
+        self.updateSettingsTable()
 
     def validateCurrentEnvironment(self):
         if self.currentEnvironment == None or not self.environmentManager.isValidEnvironmentId(self.currentEnvironment.uniqueEnvironmentId):

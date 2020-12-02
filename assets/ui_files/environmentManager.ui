@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>508</width>
+    <width>636</width>
     <height>402</height>
    </rect>
   </property>
@@ -103,6 +103,27 @@
         <widget class="QLineEdit" name="keyLineEdit">
          <property name="placeholderText">
           <string>Key</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="searchButton">
+         <property name="toolTip">
+          <string>Toggle search mode.</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="../resource_files/resources.qrc">
+           <normaloff>:/icons/search.png</normaloff>
+           <activeon>:/icons/search_highlighted.png</activeon>:/icons/search.png</iconset>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -223,12 +244,12 @@
         <widget class="QPushButton" name="addButton">
          <property name="maximumSize">
           <size>
-           <width>50</width>
+           <width>100</width>
            <height>16777215</height>
           </size>
          </property>
          <property name="text">
-          <string>Add</string>
+          <string>Add/Modify</string>
          </property>
          <property name="icon">
           <iconset resource="../resource_files/resources.qrc">

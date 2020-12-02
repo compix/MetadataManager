@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icons">
+    <file>search_highlighted.png</file>
     <file>new.png</file>
     <file>service.png</file>
     <file>select.png</file>

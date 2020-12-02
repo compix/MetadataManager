@@ -25,7 +25,7 @@ from MetadataManagerCore.actions.ActionManager import ActionManager
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
 import MDApi
 from ServiceRegistry import ServiceRegistry
-import viewers.resources_qrc
+import resources_qrc
 from MetadataManagerCore.task_processor.TaskProcessor import TaskProcessor
 from MetadataManagerCore.task_processor.ActionTaskPicker import ActionTaskPicker
 import time
