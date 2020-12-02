@@ -1,4 +1,5 @@
 import PySide2
+from PySide2.QtGui import QColor
 import asset_manager
 from qt_extensions import qt_util
 from TableModel import TableModel
@@ -9,11 +10,11 @@ from AppInfo import AppInfo
 import logging
 from qt_extensions.Completer import Completer
 from PySide2 import QtCore, QtWidgets
-from PySide2.QtWidgets import QCheckBox, QListWidget, QListWidgetItem, QHBoxLayout, QLineEdit, QWidget, QLayout, QAbstractItemView, QVBoxLayout
+from PySide2.QtWidgets import QCheckBox, QListWidget, QListWidgetItem, QHBoxLayout, QLineEdit, QTableWidget, QWidget, QLayout, QAbstractItemView, QVBoxLayout
 from PySide2 import QtGui
 from PySide2.QtCore import QThreadPool
 import json
-from typing import List
+from typing import Any, Dict, List
 import os
 import re
 from MetadataManagerCore.util import timeit
@@ -74,6 +75,8 @@ class DocumentSearchFilterViewer(QtCore.QObject):
 
         self.logger = logging.getLogger(__name__)
         self.widget = asset_manager.loadUIFile('documentSearchFilter.ui')
+        self.highlightDocumentsWithPreview = True
+        self.previewHighlightCache: Dict[int,bool] = dict()
 
         self.appInfo = appInfo
         self.mainWindow = mainWindow
@@ -103,6 +106,21 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         self.widget.copyFullSearchToClipboardButton.clicked.connect(self.onCopyFullSearchToClipboardClicked)
 
         self.setupSavedFiltersUI()
+
+        self.updateHighlightDocumentsWithPreviewColorFunction()
+        self.mainWindow.highlightDocumentsWithPreviewCheckBox.stateChanged.connect(self.onHighlightDocumentsWithPreviewCheckBoxChanged)
+
+    def updateHighlightDocumentsWithPreviewColorFunction(self):
+        checkBox: QCheckBox = self.mainWindow.highlightDocumentsWithPreviewCheckBox
+        if checkBox.isChecked():
+            self.documentTableModel.cellColorFunction = self.previewHighlightCellColorFunction
+        else:
+            self.documentTableModel.cellColorFunction = None
+
+        self.documentTableModel.update()
+
+    def onHighlightDocumentsWithPreviewCheckBoxChanged(self):
+        self.updateHighlightDocumentsWithPreviewColorFunction()
 
     def setupSavedFiltersUI(self):
         self.widget.saveFilterButton.clicked.connect(self.onSaveFilter)
@@ -321,6 +339,8 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         if len(self.documentTableModel.displayedKeys) == 0:
             return
 
+        self.previewHighlightCache = dict()
+
         qt_util.runInMainThread(self.widget.findPushButton.setEnabled, False)
 
         qt_util.runInMainThread(self.documentTableModel.clear)
@@ -349,6 +369,7 @@ class DocumentSearchFilterViewer(QtCore.QObject):
             self.logger.error(f'Failed to retrieve filtered items. Reason: {str(e)}')
         
         qt_util.runInMainThread(self.documentTableModel.addEntries, entries)
+
         self.initDocumentProgress(i if i > 0 else 1)
         qt_util.runInMainThread(lambda:self.mainWindow.itemCountLabel.setText("Item Count: " + str(i)))
         self.updateDocumentProgress(0.0)
@@ -356,6 +377,24 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         qt_util.runInMainThread(self.widget.findPushButton.setEnabled, True)
         if saveSearchHistoryEntry:
             qt_util.runInMainThread(self.addCurrentSearchHistoryEntry)
+
+    def previewHighlightCellColorFunction(self, rowIdx: int, colIdx: int, data):
+        v = self.previewHighlightCache.get(rowIdx)
+
+        if v != None:
+            return QColor.fromRgb(10,52,22) if v else None
+
+        uid = self.documentTableModel.getUID(rowIdx)
+        doc = self.dbManager.findOne(uid)
+        
+        if doc:
+            preview = doc.get('preview')
+            hasPreview = preview and os.path.exists(preview)
+            self.previewHighlightCache[rowIdx] = hasPreview
+            if hasPreview:
+                return QColor.fromRgb(10,52,22)
+
+        return None
 
     def saveState(self, settings: QtCore.QSettings):
         settings.setValue("searchFilterQueue", self.searchFilterQueue)

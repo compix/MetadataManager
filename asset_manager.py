@@ -21,6 +21,9 @@ def getLogFilePath():
 
     return path.abspath(path.join("log_output", logFilename))
 
+def getImagePath(imageBasename: str):
+    return path.join(BASE_PATH, 'images', imageBasename)
+
 def loadUIFile(uiFileName):
     fullPath = getUIFilePath(uiFileName)
 

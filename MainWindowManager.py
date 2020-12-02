@@ -76,6 +76,7 @@ class MainWindowManager(QtCore.QObject):
 
         self.restoreState()
 
+
     def initTable(self):
         self.tableModel = TableModel(self.window, [], [], [])
         self.window.tableView.setModel(self.tableModel)
@@ -110,6 +111,8 @@ class MainWindowManager(QtCore.QObject):
         self.serviceManagerViewer = ServiceManagerViewer(self.window, self.serviceRegistry)
 
         self.hostProcessViewer = HostProcessViewer(self.window, self.serviceRegistry.hostProcessController)
+
+        self.addPreviewToAllEntries()
 
     def setupEventAndActionHandlers(self):
         self.window.installEventFilter(self)
@@ -210,8 +213,6 @@ class MainWindowManager(QtCore.QObject):
             collection = self.dbManager.db[collectionName]
             for item in collection.find({}):
                 collection.update_one({"_id":item["_id"]}, {"$set": {"preview":"C:/Users/compix/Desktop/surprised_pikachu.png"}})
-
-
 
     def showItemInInspector(self, uid):
         form = self.window.inspectorFormLayout

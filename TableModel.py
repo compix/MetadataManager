@@ -7,6 +7,7 @@ class TableModel(QtCore.QAbstractTableModel):
         self.entries = entries
         self.header = header
         self.displayedKeys = displayedKeys
+        self.cellColorFunction = None
 
     def getUID(self, rowIdx):
         return self.entries[rowIdx][0]
@@ -20,9 +21,13 @@ class TableModel(QtCore.QAbstractTableModel):
     def data(self, index, role):
         if not index.isValid():
             return None
-        elif role != QtCore.Qt.DisplayRole:
-            return None
-        return self.entries[index.row()][index.column() + 1]
+        elif role == QtCore.Qt.DisplayRole:
+            return self.entries[index.row()][index.column() + 1]
+        elif role == QtCore.Qt.BackgroundRole and self.cellColorFunction:
+            data = self.entries[index.row()][index.column() + 1]
+            return self.cellColorFunction(index.row(), index.column() + 1, data)
+
+        return None
 
     def headerData(self, col, orientation, role):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
@@ -64,3 +69,7 @@ class TableModel(QtCore.QAbstractTableModel):
             self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
             self.entries = []
             self.emit(QtCore.SIGNAL("layoutChanged()"))
+
+    def update(self):
+        self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
+        self.emit(QtCore.SIGNAL("layoutChanged()"))

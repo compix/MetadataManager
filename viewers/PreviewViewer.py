@@ -70,8 +70,10 @@ class PreviewViewer(DockWidget):
 
     def showPreview(self, path):
         if path == None:
-            self.clearPreview()
-            return
+            #self.clearPreview()
+            #return
+
+            path = asset_manager.getImagePath('missing_rendering.jpg')
 
         self.curFrameIdx = 0
         self.frames = []
