@@ -258,5 +258,38 @@
  <resources>
   <include location="../resource_files/resources.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>keyLineEdit</sender>
+   <signal>returnPressed()</signal>
+   <receiver>addButton</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>319</x>
+     <y>44</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>483</x>
+     <y>85</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>valueLineEdit</sender>
+   <signal>returnPressed()</signal>
+   <receiver>addButton</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>203</x>
+     <y>78</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>473</x>
+     <y>85</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

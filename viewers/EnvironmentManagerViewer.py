@@ -11,15 +11,17 @@ from MetadataManagerCore.environment.Environment import Environment
 from qt_extensions.SimpleTableModel import SimpleTableModel
 import json, os
 import subprocess
+import logging
 
 class EnvironmentManagerViewer(DockWidget):
     def __init__(self, parentWindow, environmentManager: EnvironmentManager, dbManager : MongoDBManager, settings):
         super().__init__("Environment Manager", parentWindow, asset_manager.getUIFilePath("environmentManager.ui"))
         
-        self.autoExportPath : str = None
         self.environmentManager : EnvironmentManager = environmentManager
         self.dbManager : MongoDBManager = dbManager
         self.settings = settings
+
+        self.logger = logging.getLogger(__name__)
 
         self.widget.addButton.clicked.connect(self.onAddKeyValue)
 
@@ -155,10 +157,11 @@ class EnvironmentManagerViewer(DockWidget):
                 self.environmentManager.addEnvironment(self.currentEnvironment)
                 self.environmentsComboBox.addItem(self.currentEnvironment.displayName)
             else:
-                QMessageBox.warning("Invalid Environment Name", "Please enter a valid environment name.")
+                QMessageBox.warning(self, "Invalid Environment Name", "Please enter a valid environment name.")
 
         self.environmentManager.save(self.settings, self.dbManager)
-        self.exportSettingsAsJson(self.autoExportPath)
+        if self.currentEnvironment:
+            self.exportSettingsAsJson(self.currentEnvironment.autoExportPath)
 
     def setCurrentEnvironment(self, env : Environment):
         self.currentEnvironment = env
@@ -243,9 +246,12 @@ class EnvironmentManagerViewer(DockWidget):
             self.saveEnvironment()
 
     def exportSettingsAsJson(self, filePath):
-        if filePath != None and filePath != "" and os.path.exists(filePath):
-            with open(filePath, 'w+') as f:
-                json.dump(self.currentEnvironment.getEvaluatedSettings(), f, indent=4, sort_keys=True)
+        if filePath != None and filePath != "":
+            try:
+                with open(filePath, 'w+') as f:
+                    json.dump(self.currentEnvironment.getEvaluatedSettings(), f, indent=4, sort_keys=True)
+            except Exception as e:
+                self.logger.error(f'Failed to export settings file at path {filePath}. Exception: {str(e)}')
 
     def onExportAsJson(self):
         if not self.validateCurrentEnvironment():
@@ -255,15 +261,19 @@ class EnvironmentManagerViewer(DockWidget):
         self.exportSettingsAsJson(filePath)
 
     def onSelectAutoExportPath(self):
+        if not self.currentEnvironment:
+            QMessageBox.warning(self, "No Active Environment", "Please set an active environment.")
+            return
+
         filePath,_ = QFileDialog.getSaveFileName(self, "Save Settings As Json", "", "Any File (*.*)")
 
         if filePath != None and filePath != "":
-            self.autoExportPath = filePath
+            self.currentEnvironment.autoExportPath = filePath
             self.exportSettingsAsJson(filePath)
             self.saveEnvironment()
 
     def saveState(self, settings: QtCore.QSettings):
-        settings.setValue("EnvironmentManagerViewer_AutoExportPath", self.autoExportPath)
+        pass
 
     def restoreState(self, settings: QtCore.QSettings):
-        self.autoExportPath = settings.value("EnvironmentManagerViewer_AutoExportPath")
+        pass
