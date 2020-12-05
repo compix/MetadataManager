@@ -66,6 +66,7 @@ class Bootstrapper(object):
         self.serviceRegistry = ServiceRegistry()
 
         self.updateRequested = False
+        self.updater = None
 
         dbInitTimeout = None
         if self.mode == ApplicationMode.GUI:
