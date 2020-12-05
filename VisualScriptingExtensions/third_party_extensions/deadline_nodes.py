@@ -88,7 +88,7 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
     pipelineInfoFileHandle, tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")
     auxiliaryFilenames.append(tempPipelineInfoFilename)
     with open(tempPipelineInfoFilename, "w+") as f:
-        json.dump(pipelineInfoDict, f)
+        json.dump(pipelineInfoDict, f, sort_keys=True, indent=4)
 
     os.close(pipelineInfoFileHandle)
 
@@ -180,7 +180,7 @@ def submitMetadataManagerJob(taskInfoDict, jobInfoDict, asPythonJob=False, quiet
     taskFileHandle, taskFilename = tempfile.mkstemp(suffix=".json")
     auxiliaryFilenames.append(taskFilename)
     with open(taskFilename, "w+") as f:
-        json.dump(taskInfoDict, f)
+        json.dump(taskInfoDict, f, sort_keys=True, indent=4)
 
     os.close(taskFileHandle)
 
@@ -192,7 +192,7 @@ def submitMetadataManagerJob(taskInfoDict, jobInfoDict, asPythonJob=False, quiet
     return job
 
 @defNode("Create Metadata Manager Action Task Dictionary", isExecutable=True, returnNames=["Task Dictionary"], identifier=DEADLINE_IDENTIFIER)
-def createMetadataManagerActionTaskDict(taskType="DocumentAction", actionId="", collections=None, documentFilter="{}", distinctionFilter=""):
+def createMetadataManagerActionTaskDict(taskType="DocumentAction", actionId="", collections=None, documentFilter="{}", distinctionFilter="", customFilters=None):
     if collections == None:
         collections = []
 
@@ -200,4 +200,33 @@ def createMetadataManagerActionTaskDict(taskType="DocumentAction", actionId="", 
         collections = [collections]
 
     return {"taskType":taskType, "actionId":actionId, "collections":collections, 
-            "documentFilter":documentFilter, "distinctionFilter":distinctionFilter}
+            "documentFilter":documentFilter, "distinctionFilter":distinctionFilter, 
+            "customDocumentFilters": customFilters}
+
+@defNode("Create Custom Filter Dict", isExecutable=False, returnNames=["Custom Filter"], identifier=DEADLINE_IDENTIFIER)
+def createCustomFilterDict(filterLabel: str, args=None, active=True, negate=False, returnAsList=True):
+    d = {
+        'uniqueFilterLabel': filterLabel,
+        'active': active,
+        'args': args,
+        'hasStringArg': args != None,
+        'negate': negate
+    }
+
+    if returnAsList:
+        return [d]
+
+    return d
+
+@defNode("Create Metadata Manager Action Task Dictionary for Document", isExecutable=True, returnNames=["Task Dictionary"], identifier=DEADLINE_IDENTIFIER)
+def createMetadataManagerActionTaskDict(taskType="DocumentAction", actionId="", document=None, collections=None):
+    if collections == None:
+        collections = []
+
+    if not isinstance(collections, list):
+        collections = [collections]
+
+    docFilter = f'"s_id": "{document.get("s_id")}"'
+
+    return {"taskType":taskType, "actionId":actionId, "collections":collections, 
+            "documentFilter":"{" + docFilter + "}", "distinctionFilter":""} 
