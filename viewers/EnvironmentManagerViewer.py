@@ -256,15 +256,31 @@ class EnvironmentManagerViewer(DockWidget):
         filePath,_ = QFileDialog.getOpenFileName(self, "Open Settings File", "", "Any File (*.*)")
 
         if filePath != None and filePath != "":
-            with open(filePath, 'r') as f:
-                for line in f:
-                    tokens = line.split("=")
-                    
-                    if len(tokens) == 2:
-                        key = tokens[0].strip()
-                        value = tokens[1].strip()
+            # Try to open a json settings file first
+            readFromJson = False
 
-                        self.addEntry(key, value, save=False)
+            try:
+                with open(filePath) as f:
+                    settingsDict = json.load(f)
+
+                    for key,value in settingsDict.items():
+                        self.addEntry(key, value)
+
+                readFromJson = True
+            except:
+                pass
+
+            # If json settings file could not be opened read a settings file defined with key=value line by line
+            if not readFromJson:
+                with open(filePath, 'r') as f:
+                    for line in f:
+                        tokens = line.split("=")
+                        
+                        if len(tokens) == 2:
+                            key = tokens[0].strip()
+                            value = tokens[1].strip()
+
+                            self.addEntry(key, value, save=False)
 
             self.saveEnvironment()
 
