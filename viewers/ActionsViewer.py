@@ -1,3 +1,4 @@
+from MetadataManagerCore.actions.ActionType import ActionType
 from qt_extensions.DockWidget import DockWidget
 import asset_manager
 from qt_extensions import qt_util
@@ -90,13 +91,20 @@ class ActionsViewer(DockWidget):
             for actionId in availableActionIds:
                 a = self.actionManager.getActionById(actionId)
                 actionButton = QtWidgets.QPushButton(a.displayName, self.widget)
-                task = ActionButtonTask(self.executeDocumentAction, target, a)
+
+                if a.actionType == ActionType.DocumentAction:
+                    task = ActionButtonTask(self.executeDocumentAction, target, a)
+                    self.widget.documentActionsLayout.addWidget(actionButton)
+                else:
+                    task = ActionButtonTask(self.executeAction, a)
+                    self.widget.generalActionsLayout.addWidget(actionButton)
+
                 task.runsOnMainThread = a.runsOnMainThread
                 self.actionTasks.append(task)
                 actionButton.clicked.connect(task)
-                self.widget.documentActionsLayout.addWidget(actionButton)
 
             # Show general actions:
+            """
             for a in self.actionManager.getGeneralActions():
                 actionButton = QtWidgets.QPushButton(a.displayName, self.widget)
                 task = ActionButtonTask(self.executeAction, a)
@@ -104,6 +112,7 @@ class ActionsViewer(DockWidget):
                 self.actionTasks.append(task)
                 actionButton.clicked.connect(task)
                 self.widget.generalActionsLayout.addWidget(actionButton)
+            """
 
     def executeAction(self, action : Action):
         action.execute()

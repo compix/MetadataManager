@@ -51,7 +51,7 @@
           </size>
          </property>
          <property name="text">
-          <string>Environment:</string>
+          <string>Environment</string>
          </property>
         </widget>
        </item>
@@ -80,6 +80,43 @@
           <iconset resource="../resource_files/resources.qrc">
            <normaloff>:/icons/archive.png</normaloff>:/icons/archive.png</iconset>
          </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item alignment="Qt::AlignLeft">
+        <widget class="QLabel" name="label_4">
+         <property name="maximumSize">
+          <size>
+           <width>65</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Active Target:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="targetComboBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <item>
+          <property name="text">
+           <string>Production</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Preview</string>
+          </property>
+         </item>
         </widget>
        </item>
       </layout>

@@ -52,6 +52,9 @@ class EnvironmentManagerViewer(DockWidget):
         keyLineEdit.textChanged.connect(self.onKeyLineEditTextChanged)
         self.widget.searchButton.clicked.connect(lambda: self.updateSettingsTable())
         
+        self.targetComboBox: QtWidgets.QComboBox = self.widget.targetComboBox
+        self.setupTargetComboBox()
+
     def onKeyLineEditTextChanged(self, key: str):
         searchButton: QPushButton = self.widget.searchButton
 
@@ -157,6 +160,19 @@ class EnvironmentManagerViewer(DockWidget):
         validator = QRegExpValidator(rx, self.widget)
         self.widget.keyLineEdit.setValidator(validator)
         
+    def setupTargetComboBox(self):
+        if self.currentEnvironment != None:
+            currentTarget = self.currentEnvironment.target
+            if currentTarget:
+                self.targetComboBox.setCurrentText(currentTarget.value.capitalize())
+            else:
+                self.addEntry('target', self.targetComboBox.currentText())
+
+        self.targetComboBox.currentTextChanged.connect(self.onTargetComboBoxTextChanged)
+
+    def onTargetComboBoxTextChanged(self, txt: str):
+        self.addEntry('target', txt.lower())
+
     def setupEnvironmentComboBox(self):
         # Only allow alphabetic chars, digits, _, spaces:
         rx = QRegExp("[A-Za-z0-9 _]+")
@@ -184,7 +200,8 @@ class EnvironmentManagerViewer(DockWidget):
             else:
                 QMessageBox.warning(self, "Invalid Environment Name", "Please enter a valid environment name.")
 
-        self.environmentManager.save(self.settings, self.dbManager)
+        self.environmentManager.saveToDatabase()
+        
         if self.currentEnvironment:
             self.exportSettingsAsJson(self.currentEnvironment.autoExportPath)
 

@@ -1,3 +1,4 @@
+from MetadataManagerCore.actions.ActionType import ActionType
 from qt_extensions.DockWidget import DockWidget
 from MetadataManagerCore.actions.ActionManager import ActionManager
 from PySide2.QtGui import QStandardItemModel, QStandardItem
@@ -128,7 +129,8 @@ class ActionManagerViewer(DockWidget):
 
                 self.actionsTreeModel.appendRow(treeItem)
 
-            for a in self.actionManager.getDocumentActions():
+            # Add actions to the categories:
+            for a in self.actionManager.actions:
                 categoryTreeItem = categoryMap[a.category]
 
                 treeItem = QStandardItem(a.id)
