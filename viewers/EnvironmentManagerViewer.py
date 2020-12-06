@@ -55,6 +55,12 @@ class EnvironmentManagerViewer(DockWidget):
         self.targetComboBox: QtWidgets.QComboBox = self.widget.targetComboBox
         self.setupTargetComboBox()
 
+        self.environmentManager.onStateChanged.subscribe(self.onEnvironmentManagerStateChanged)
+
+    def onEnvironmentManagerStateChanged(self):
+        qt_util.runInMainThread(self.updateSettingsTable)
+        qt_util.runInMainThread(self.refreshEnvironmentsComboBox)
+
     def onKeyLineEditTextChanged(self, key: str):
         searchButton: QPushButton = self.widget.searchButton
 
@@ -74,6 +80,9 @@ class EnvironmentManagerViewer(DockWidget):
                     self.settingsTable.addEntry([key, val])
             else:
                 self.settingsTable.addEntry([key, val])
+
+            if key == 'target':
+                self.widget.targetComboBox.setCurrentText(val.capitalize())
 
     def onDeleteEntry(self):
         if self.currentEnvironment != None:
@@ -186,6 +195,7 @@ class EnvironmentManagerViewer(DockWidget):
         envId = self.environmentManager.getIdFromEnvironmentName(potentialEnvironmentName)
         env = self.environmentManager.getEnvironmentFromId(envId)
         if env != None:
+            self.environmentManager.checkForChanges()
             self.setCurrentEnvironment(env)
         else:
             env = Environment(envId)
@@ -201,7 +211,7 @@ class EnvironmentManagerViewer(DockWidget):
                 QMessageBox.warning(self, "Invalid Environment Name", "Please enter a valid environment name.")
 
         self.environmentManager.saveToDatabase()
-        
+
         if self.currentEnvironment:
             self.exportSettingsAsJson(self.currentEnvironment.autoExportPath)
 
@@ -225,6 +235,8 @@ class EnvironmentManagerViewer(DockWidget):
             if key.strip() == "":
                 QMessageBox.warning(self, "Invalid Key", "Please enter a valid key.")
                 return False
+    
+            self.environmentManager.checkForChanges()
 
             if not key in self.currentEnvironment.settings.keys():
                 self.settingsTable.addEntry([key, value])
@@ -234,6 +246,9 @@ class EnvironmentManagerViewer(DockWidget):
                     if existingTableKey == key:
                         self.settingsTable.replaceEntryAtRow(i, [key, value])
                         break
+
+            if key == 'target':
+                self.targetComboBox.setCurrentText(value.capitalize())
             
             self.widget.deleteEntryButton.setEnabled(True)
             self.currentEnvironment.settings[key] = value
@@ -249,10 +264,17 @@ class EnvironmentManagerViewer(DockWidget):
         self.addEntry(key, value)
 
     def refreshEnvironmentsComboBox(self):
+        curDisplayName = None
+        if self.currentEnvironment:
+            curDisplayName = self.currentEnvironment.displayName
+
         self.environmentsComboBox.clear()
 
         for env in self.environmentManager.environments:
             self.environmentsComboBox.addItem(env.displayName)
+
+        if curDisplayName:
+            self.environmentsComboBox.setCurrentText(curDisplayName)
 
     def showItem(self, uid):
         form = self.widget.formLayout

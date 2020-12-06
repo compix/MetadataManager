@@ -97,11 +97,15 @@ class Bootstrapper(object):
         return status
 
     def shutdown(self):
-        if self.hostProcessController:
-            self.hostProcessController.shutdown()
-            
-        if self.serviceManager:
-            self.serviceManager.shutdown()
+        for service in self.serviceRegistry.services:
+            try:
+                service.shutdown
+                hasShutdownFunction = True
+            except:
+                hasShutdownFunction = False
+
+            if hasShutdownFunction:                
+                service.shutdown()
 
         if self.updater:
             self.updater.shutdown()
@@ -227,6 +231,7 @@ class Bootstrapper(object):
         self.hostProcessController = HostProcessController(self.dbManager)
         self.hostProcessController.thisHost.onRequestedApplicationClose.subscribe(self.onRequestedApplicationClose)
         self.serviceRegistry.hostProcessController = self.hostProcessController
+        self.serviceRegistry.services.append(self.hostProcessController)
         QThreadPool.globalInstance().start(qt_util.LambdaTask(self.hostProcessController.run))
 
     def onRequestedApplicationClose(self):
