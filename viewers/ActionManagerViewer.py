@@ -1,3 +1,4 @@
+from viewers.CollectionViewer import CollectionViewer
 from MetadataManagerCore.actions.ActionType import ActionType
 from qt_extensions.DockWidget import DockWidget
 from MetadataManagerCore.actions.ActionManager import ActionManager
@@ -70,7 +71,7 @@ class CollectionActionListView(QListView):
                 super().dropEvent(e)
 
 class ActionManagerViewer(DockWidget):
-    def __init__(self, parentWindow, actionManager : ActionManager, dbManager : MongoDBManager):
+    def __init__(self, parentWindow, actionManager : ActionManager, dbManager : MongoDBManager, collectionViewer: CollectionViewer):
         super().__init__("Actions Manager", parentWindow, asset_manager.getUIFilePath("actionManager.ui"))
 
         self.actionManager : ActionManager = actionManager
@@ -100,6 +101,8 @@ class ActionManagerViewer(DockWidget):
         self.refreshCollectionView()
 
         self.actionManager.registerActionEvent.subscribe(lambda action: self.refreshTreeView())
+
+        collectionViewer.connectCollectionSelectionUpdateHandler(self.refreshCollectionView)
 
     @property
     def selectedCollectionName(self):

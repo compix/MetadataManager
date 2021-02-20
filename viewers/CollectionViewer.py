@@ -26,12 +26,35 @@ class CollectionViewer(DockWidget):
 
         self.headerUpdatedEvent = Event()
 
+        self.widget.refreshCollectionsButton.clicked.connect(self.onRefreshCollections)
+
+        self.settings = None
+        self.collectionCheckboxChangeListeners = []
+
+    def onRefreshCollections(self):
+        self.updateCollections()
+        self.collectionsComboBox.setCurrentIndex(0)
+
+        if self.settings:
+            self.restoreState(self.settings)
+
+        self.onCollectionCheckBoxStateChanged()
+
     def connectCollectionSelectionUpdateHandler(self, command):
-        for collectionCheckBox in self.collectionCheckBoxMap.values():
-            collectionCheckBox.stateChanged.connect(command)
+        self.collectionCheckboxChangeListeners.append(command)
+
+    def onCollectionCheckBoxStateChanged(self):
+        if self.settings:
+            self.saveState(self.settings)
+
+        for func in self.collectionCheckboxChangeListeners:
+            func()
 
     def onCollectionsComboBoxIndexChanged(self):
         currentCollection = self.collectionsComboBox.currentText()
+        if not currentCollection:
+            return
+
         keys = self.dbManager.findAllKeysInCollection(currentCollection)
         self.collectionTableWidget.clear()
         self.collectionHeaderKeyInfos.clear()
@@ -72,6 +95,9 @@ class CollectionViewer(DockWidget):
 
             rowIdx += 1
 
+        if not headerInfos or len(headerInfos) == 0:
+            self.updateHeader(currentCollection)
+
     def updateHeader(self, collectionName):
         for headerKeyInfo in self.collectionHeaderKeyInfos:
             headerKeyInfo.displayed = headerKeyInfo.displayCheckbox.isChecked()
@@ -102,6 +128,7 @@ class CollectionViewer(DockWidget):
         collectionCheckbox.setText(collectionName)
         self.collectionCheckBoxMap[collectionName] = collectionCheckbox
         self.collectionsLayout.addWidget(collectionCheckbox)
+        collectionCheckbox.stateChanged.connect(self.onCollectionCheckBoxStateChanged)
 
     def yieldSelectedCollectionNames(self):
         for collectionName in self.dbManager.getVisibleCollectionNames():
@@ -119,6 +146,7 @@ class CollectionViewer(DockWidget):
                 settings.setValue(f"{collectionName}CheckboxState", 1 if collectionCheckbox.isChecked() else 0)
 
     def restoreState(self, settings: QtCore.QSettings):
+        self.settings = settings
         for collectionName in self.dbManager.getVisibleCollectionNames():
             collectionCheckbox = self.collectionCheckBoxMap.get(collectionName)
             if collectionCheckbox != None:

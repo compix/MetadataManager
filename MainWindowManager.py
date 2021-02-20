@@ -100,7 +100,7 @@ class MainWindowManager(QtCore.QObject):
         self.inspector = Inspector(self.window, self.serviceRegistry.dbManager)
         self.actionsViewer = ActionsViewer(self.window, self.serviceRegistry.dbManager, self.serviceRegistry.actionManager, 
                                            self, self.collectionViewer, self.visualScriptingViewer)
-        self.actionsManagerViewer = ActionManagerViewer(self.window, self.serviceRegistry.actionManager, self.serviceRegistry.dbManager)
+        self.actionsManagerViewer = ActionManagerViewer(self.window, self.serviceRegistry.actionManager, self.serviceRegistry.dbManager, self.collectionViewer)
         self.deadlineServiceViewer = DeadlineServiceViewer(self.window, self.serviceRegistry.deadlineService)
 
         self.documentSearchFilterViewer = DocumentSearchFilterViewer(self.appInfo, self.window, self.dbManager, 
