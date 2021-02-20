@@ -88,7 +88,7 @@ class ActionsViewer(DockWidget):
             for collection in selectedCollectionNames:
                 availableActionIds = availableActionIds.intersection(self.actionManager.getCollectionActionIds(collection))
 
-            for actionId in availableActionIds:
+            for actionId in sorted(availableActionIds):
                 a = self.actionManager.getActionById(actionId)
                 actionButton = QtWidgets.QPushButton(a.displayName, self.widget)
 
