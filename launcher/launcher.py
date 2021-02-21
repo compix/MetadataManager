@@ -62,7 +62,7 @@ class Launcher(object):
         return os.path.join(BASE_PATH, launcherInfo.appFolderName, launcherInfo.exeName)
         
     def startApp(self):
-        subprocess.Popen([os.path.normpath(self.exeFilename), '-launcher', f'{os.path.join(BASE_PATH, sys.argv[0])}'])
+        subprocess.Popen([os.path.normpath(self.exeFilename), '-launcher', f'{os.path.join(BASE_PATH, sys.argv[0])}'] + sys.argv[1:])
 
     def run(self):
         try:
