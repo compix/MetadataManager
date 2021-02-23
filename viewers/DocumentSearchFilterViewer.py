@@ -20,7 +20,28 @@ import re
 from MetadataManagerCore.util import timeit
 from MetadataManagerCore.filtering.DocumentFilter import DocumentFilter
 from MetadataManagerCore.filtering.DocumentFilterManager import DocumentFilterManager
-from queue import Queue
+
+class FilteredDocumentsSnapshot(object):
+    def __init__(self, documentSearchFilterViewer) -> None:
+        super().__init__()
+
+        self.fullSearchFilterInfo = documentSearchFilterViewer.getCurrentFullSearchFilterEntry()
+        self.collectionNames = [cn for cn in documentSearchFilterViewer.collectionViewer.yieldSelectedCollectionNames()]
+        self.documentFilterManager = documentSearchFilterViewer.documentFilterManager
+        self.itemsFilter = documentSearchFilterViewer.getItemsFilter()
+
+    def yieldDocuments(self):
+        distinctionText = self.fullSearchFilterInfo['distinctionText']
+        customFilters = []
+        for filterDict in self.fullSearchFilterInfo['customFilters']:
+            f = DocumentFilter(None, None)
+            f.setFromDict(filterDict)
+            
+            customFilters.append(f)
+
+        for collectionName in self.collectionNames:
+            for d in self.documentFilterManager.yieldFilteredDocuments(collectionName, self.itemsFilter, distinctionText=distinctionText, filters=customFilters):
+                yield d
 
 class DocumentFilterView(object):
     def __init__(self, documentFilter : DocumentFilter):
@@ -55,6 +76,8 @@ class DocumentFilterView(object):
         self.container.setContentsMargins(0,0,0,0)
         layout.setContentsMargins(0,0,0,0)
         self.container.setFixedHeight(20)
+
+        self.currentDocumentCount = 0
     
     def isFilterActive(self):
         return self.activeCheckBox.isChecked() if not self.negateCheckBox.isChecked() else not self.activeCheckBox.isChecked()
@@ -109,6 +132,9 @@ class DocumentSearchFilterViewer(QtCore.QObject):
 
         self.updateHighlightDocumentsWithPreviewColorFunction()
         self.mainWindow.highlightDocumentsWithPreviewCheckBox.stateChanged.connect(self.onHighlightDocumentsWithPreviewCheckBoxChanged)
+
+    def getFilteredDocumentsSnapshot(self):
+        return FilteredDocumentsSnapshot(self)
 
     def updateHighlightDocumentsWithPreviewColorFunction(self):
         checkBox: QCheckBox = self.mainWindow.highlightDocumentsWithPreviewCheckBox
@@ -344,15 +370,9 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         qt_util.runInMainThread(self.widget.findPushButton.setEnabled, False)
 
         qt_util.runInMainThread(self.documentTableModel.clear)
-        maxDisplayedItems = "computing..."
-        qt_util.runInMainThread(lambda: self.mainWindow.itemCountLabel.setText("Item Count: " + str(maxDisplayedItems)))
+        qt_util.runInMainThread(lambda: self.mainWindow.itemCountLabel.setText("Item Count: Computing..."))
 
-        if maxDisplayedItems == 0:
-            qt_util.runInMainThread(self.widget.findPushButton.setEnabled, True)
-            return
-        
-        self.initDocumentProgress(maxDisplayedItems)
-        self.updateDocumentProgress(1)
+        self.initDocumentProgress(1)
 
         entries = []
         i = 0
@@ -370,6 +390,7 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         
         qt_util.runInMainThread(self.documentTableModel.addEntries, entries)
 
+        self.currentDocumentCount = i
         self.initDocumentProgress(i if i > 0 else 1)
         qt_util.runInMainThread(lambda:self.mainWindow.itemCountLabel.setText("Item Count: " + str(i)))
         self.updateDocumentProgress(0.0)

@@ -1,3 +1,4 @@
+from viewers.DocumentSearchFilterViewer import DocumentSearchFilterViewer
 from MetadataManagerCore.actions.ActionType import ActionType
 from qt_extensions.DockWidget import DockWidget
 import asset_manager
@@ -12,6 +13,9 @@ from MetadataManagerCore.actions.ActionManager import ActionManager
 from PySide2.QtCore import QThreadPool
 from VisualScripting.VisualScriptingViewer import VisualScriptingViewer
 from MetadataManagerCore.mongodb_manager import MongoDBManager
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ActionButtonTask(object):
     def __init__(self, func, *args, **kwargs):
@@ -20,11 +24,23 @@ class ActionButtonTask(object):
         self.kwargs = kwargs
         self.runsOnMainThread = False
 
+        self.confirmationFunc = None
+        self.confirmationFuncArgs = None
+        self.confirmationFuncKwargs = None
+
+    def setConfirmationFunction(self, confirmationFunc, *args, **kwargs):
+        self.confirmationFunc = confirmationFunc
+        self.confirmationFuncArgs = args
+        self.confirmationFuncKwargs = kwargs
+        
     def __call__(self):
-        if self.runsOnMainThread:
-            self.func(*self.args, **self.kwargs)
-        else:
-            QThreadPool.globalInstance().start(qt_util.LambdaTask(self.func, *self.args, **self.kwargs))
+        confirmed = self.confirmationFunc == None or self.confirmationFunc(*self.confirmationFuncArgs, **self.confirmationFuncKwargs)
+
+        if confirmed:
+            if self.runsOnMainThread:
+                self.func(*self.args, **self.kwargs)
+            else:
+                QThreadPool.globalInstance().start(qt_util.LambdaTask(self.func, *self.args, **self.kwargs))
         
 def clearContainer(container):
     for i in reversed(range(container.count())): 
@@ -47,6 +63,10 @@ class ActionsViewer(DockWidget):
 
         self.targetMap = {"Selected Items": self.executeActionOnAllSelectedDocuments, 
                           "Filtered Items": self.executeActionOnAllFilteredDocuments}
+
+        self.confirmationFunctionMap = {"Selected Items": self.documentActionConfirmationForSelectedItems, 
+                                        "Filtered Items": self.documentActionConfirmationForFilteredItems}
+
         for target in self.targetMap.keys():
             self.widget.targetComboBox.addItem(target)
 
@@ -94,6 +114,7 @@ class ActionsViewer(DockWidget):
 
                 if a.actionType == ActionType.DocumentAction:
                     task = ActionButtonTask(self.executeDocumentAction, target, a)
+                    task.setConfirmationFunction(self.confirmationFunctionMap[target], a)
                     self.widget.documentActionsLayout.addWidget(actionButton)
                 else:
                     task = ActionButtonTask(self.executeAction, a)
@@ -103,16 +124,18 @@ class ActionsViewer(DockWidget):
                 self.actionTasks.append(task)
                 actionButton.clicked.connect(task)
 
-            # Show general actions:
-            """
-            for a in self.actionManager.getGeneralActions():
-                actionButton = QtWidgets.QPushButton(a.displayName, self.widget)
-                task = ActionButtonTask(self.executeAction, a)
-                task.runsOnMainThread = a.runsOnMainThread
-                self.actionTasks.append(task)
-                actionButton.clicked.connect(task)
-                self.widget.generalActionsLayout.addWidget(actionButton)
-            """
+    def documentActionConfirmationForFilteredItems(self, action: DocumentAction):
+        count = self.mainWindowManager.documentSearchFilterViewer.currentDocumentCount
+        ret = QtWidgets.QMessageBox.question(self.parentWindow, f"Action Execution Confirmation", f"Execute \"{action.displayName}\" for {count} <b>filtered</b> documents?")
+        return ret == QtWidgets.QMessageBox.Yes
+
+    def documentActionConfirmationForSelectedItems(self, action: DocumentAction):
+        count = len([i for i in self.mainWindowManager.selectedDocumentIds])
+        if count > 1:
+            ret = QtWidgets.QMessageBox.question(self.parentWindow, f"Action Execution Confirmation", f"Execute \"{action.displayName}\" for {count} selected documents?")
+            return ret == QtWidgets.QMessageBox.Yes
+            
+        return True
 
     def executeAction(self, action : Action):
         action.execute()
@@ -121,12 +144,19 @@ class ActionsViewer(DockWidget):
         self.targetMap[target](action)
 
     def executeActionOnAllFilteredDocuments(self, action: DocumentAction):
-        for document in self.mainWindowManager.getFilteredDocuments():
+        documentSearchFilterViewer : DocumentSearchFilterViewer = self.mainWindowManager.documentSearchFilterViewer
+        snapshot = documentSearchFilterViewer.getFilteredDocumentsSnapshot()
+
+        for document in snapshot.yieldDocuments():
             action.execute(document)
 
     def executeActionOnAllSelectedDocuments(self, action: DocumentAction):
-        for uid in self.mainWindowManager.selectedDocumentIds:
+        selectedDocumentIds = [i for i in self.mainWindowManager.selectedDocumentIds]
+
+        for uid in selectedDocumentIds:
             document = self.dbManager.findOne(uid)
             if document != None:
                 action.execute(document)
+            else:
+                logger.warning(f'Could not find document with id {uid}')
             
