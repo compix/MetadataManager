@@ -372,7 +372,7 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         qt_util.runInMainThread(self.documentTableModel.clear)
         qt_util.runInMainThread(lambda: self.mainWindow.itemCountLabel.setText("Item Count: Computing..."))
 
-        self.initDocumentProgress(1)
+        self.initDocumentProgress(0)
 
         entries = []
         i = 0

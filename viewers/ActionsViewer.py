@@ -1,3 +1,4 @@
+from PySide2.QtWidgets import QProgressBar
 from viewers.DocumentSearchFilterViewer import DocumentSearchFilterViewer
 from MetadataManagerCore.actions.ActionType import ActionType
 from qt_extensions.DockWidget import DockWidget
@@ -73,7 +74,8 @@ class ActionsViewer(DockWidget):
         self.widget.targetComboBox.currentIndexChanged.connect(self.onTargetChanged)
 
         self.actionTasks = []
-
+        
+        self.actionProgressUpdateEventSubscriptions = []
         self.refreshActionView()
 
         self.collectionViewer.connectCollectionSelectionUpdateHandler(self.onCollectionSelectionChanged)
@@ -81,6 +83,9 @@ class ActionsViewer(DockWidget):
         self.actionManager.linkActionToCollectionEvent.subscribe(lambda actionId, collectionName: self.refreshActionView())
         self.actionManager.unlinkActionFromCollectionEvent.subscribe(lambda actionId, collectionName: self.refreshActionView())
         self.visualScriptingViewer.onSaveEvent.subscribe(self.onVisualScriptingSave)
+
+        self.progressDialog = None
+        self.setupProgressDialog()
 
     def onTargetChanged(self):
         self.refreshActionView()
@@ -98,6 +103,17 @@ class ActionsViewer(DockWidget):
             qt_util.clearContainer(self.widget.documentActionsLayout)
             qt_util.clearContainer(self.widget.generalActionsLayout)
             self.actionTasks = []
+            
+            # Clear previous action update event subscriptions
+            for action, onActionProgressUpdate in self.actionProgressUpdateEventSubscriptions:
+                action.progressUpdateEvent.unsubscribe(onActionProgressUpdate)
+
+            # Subscribe to action progress updates
+            self.actionProgressUpdateEventSubscriptions = []
+            for action in self.actionManager.actions:
+                onActionProgressUpdate = lambda progress, progressMessage: self.onActionProgressUpdate(action, progress, progressMessage)
+                self.actionProgressUpdateEventSubscriptions.append((action, onActionProgressUpdate))
+                action.progressUpdateEvent.subscribe(onActionProgressUpdate)
 
             # Only show actions that can be used for all selected collections:
             availableActionIds = set([a.id for a in self.actionManager.actions])
@@ -118,11 +134,24 @@ class ActionsViewer(DockWidget):
                     self.widget.documentActionsLayout.addWidget(actionButton)
                 else:
                     task = ActionButtonTask(self.executeAction, a)
+                    task.setConfirmationFunction(self.generalActionConfirmation, a)
                     self.widget.generalActionsLayout.addWidget(actionButton)
 
                 task.runsOnMainThread = a.runsOnMainThread
                 self.actionTasks.append(task)
                 actionButton.clicked.connect(task)
+
+    def onActionProgressUpdate(self, action: Action, progress: float, progressMessage: str):
+        if action.runsOnMainThread:
+            progressBar: QProgressBar = self.progressDialog.progressBar
+            progressBar.setMaximum(100)
+            progressBar.setValue(int(round(progress * 100)))
+            if progressMessage:
+                self.progressDialog.infoLabel.setText(progressMessage)
+            QtCore.QCoreApplication.processEvents()
+        else:
+            # TODO: Use info bar to show progress.
+            logger.info(f'{action.displayName} progress: {progress}')
 
     def documentActionConfirmationForFilteredItems(self, action: DocumentAction):
         count = self.mainWindowManager.documentSearchFilterViewer.currentDocumentCount
@@ -131,14 +160,31 @@ class ActionsViewer(DockWidget):
 
     def documentActionConfirmationForSelectedItems(self, action: DocumentAction):
         count = len([i for i in self.mainWindowManager.selectedDocumentIds])
-        if count > 1:
+        if count > 0:
             ret = QtWidgets.QMessageBox.question(self.parentWindow, f"Action Execution Confirmation", f"Execute \"{action.displayName}\" for {count} selected documents?")
             return ret == QtWidgets.QMessageBox.Yes
             
         return True
 
+    def setupProgressDialog(self):
+        self.progressDialog = asset_manager.loadDialog('progressDialog.ui')
+        self.progressDialog.setWindowFlags(self.progressDialog.windowFlags() & ~Qt.WindowContextHelpButtonHint & ~Qt.WindowCloseButtonHint)
+
     def executeAction(self, action : Action):
+        if action.runsOnMainThread:
+            self.progressDialog.progressBar.setMaximum(0)
+            self.progressDialog.setWindowTitle(action.displayName)
+            self.progressDialog.show()
+            QtCore.QCoreApplication.processEvents()
+
         action.execute()
+
+        if action.runsOnMainThread:
+            self.progressDialog.close()
+
+    def generalActionConfirmation(self, action: Action):
+        ret = QtWidgets.QMessageBox.question(self.parentWindow, f"Action Execution Confirmation", f"Execute \"{action.displayName}\"?")
+        return ret == QtWidgets.QMessageBox.Yes
 
     def executeDocumentAction(self, target, action : DocumentAction):
         self.targetMap[target](action)

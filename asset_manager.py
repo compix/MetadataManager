@@ -1,6 +1,8 @@
 from os import path
 from datetime import datetime
 from PySide2 import QtWidgets, QtCore, QtUiTools
+from PySide2.QtWidgets import QDialog
+from PySide2.QtCore import Qt
 
 BASE_PATH = path.join(path.dirname(path.realpath(__file__)), "assets")
 BASE_UI_FILES_PATH = path.join(BASE_PATH, "ui_files")
@@ -31,3 +33,8 @@ def loadUIFile(uiFileName):
     uiFile.open(QtCore.QFile.ReadOnly)
     loader = QtUiTools.QUiLoader()
     return loader.load(uiFile)
+
+def loadDialog(relUIPath) -> QDialog:
+    dialog = loadUIFile(relUIPath)
+    dialog.setWindowFlags(Qt.Dialog | Qt.MSWindowsFixedSizeDialogHint)
+    return dialog

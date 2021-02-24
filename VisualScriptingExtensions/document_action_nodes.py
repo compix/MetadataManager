@@ -8,7 +8,7 @@ class DocumentActionNode(ActionNode):
     NODE_NAME = 'Document Action'
 
     def __init__(self):
-        super().__init__()
+        super().__init__(createActionOutput=False)
 
         self.add_input('document')
         self.add_output('document')

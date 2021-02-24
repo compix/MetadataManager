@@ -38,10 +38,10 @@ class CodeGenerator(code_generator.CodeGenerator):
                 vsActionClassName = "ActionVS"
                 
                 self.writeCodeLine(srcFile, f"class {vsActionClassName}({actionClassName}):", "")
-
+    
                 execArgs = ["document"] if isinstance(startNode, DocumentActionNode) else []
                 self.writeCodeLine(srcFile, f"def execute({','.join(['self'] + execArgs)}):", code_generator.DEFAULT_INDENT)
-                self.writeCodeLine(srcFile, f"execute({','.join(execArgs)})", code_generator.DEFAULT_INDENT*2,suffix="\n\n")
+                self.writeCodeLine(srcFile, f"execute({','.join(['self'] + execArgs)})", code_generator.DEFAULT_INDENT*2,suffix="\n\n")
 
                 self.writeCodeLine(srcFile, "@property", code_generator.DEFAULT_INDENT)
                 self.writeCodeLine(srcFile, "def id(self):", code_generator.DEFAULT_INDENT)
