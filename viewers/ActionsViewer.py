@@ -1,4 +1,4 @@
-from PySide2.QtWidgets import QProgressBar
+from PySide2.QtWidgets import QProgressBar, QStatusBar
 from viewers.DocumentSearchFilterViewer import DocumentSearchFilterViewer
 from MetadataManagerCore.actions.ActionType import ActionType
 from qt_extensions.DockWidget import DockWidget
@@ -58,6 +58,7 @@ class ActionsViewer(DockWidget):
         self.actionManager : ActionManager = actionManager
         self.visualScriptingViewer : VisualScriptingViewer = visualScriptingViewer
         self.mainWindowManager = mainWindowManager
+        self.statusBar: QStatusBar = mainWindowManager.window.statusBar()
 
         self.widget.documentActionsLayout.setAlignment(QtCore.Qt.AlignTop)
         self.widget.generalActionsLayout.setAlignment(QtCore.Qt.AlignTop)
@@ -106,14 +107,15 @@ class ActionsViewer(DockWidget):
             
             # Clear previous action update event subscriptions
             for action, onActionProgressUpdate in self.actionProgressUpdateEventSubscriptions:
-                action.progressUpdateEvent.unsubscribe(onActionProgressUpdate)
+                if action.actionType != ActionType.DocumentAction:
+                    action.progressUpdateEvent.unsubscribe(onActionProgressUpdate)
 
             # Subscribe to action progress updates
             self.actionProgressUpdateEventSubscriptions = []
             for action in self.actionManager.actions:
-                onActionProgressUpdate = lambda progress, progressMessage: self.onActionProgressUpdate(action, progress, progressMessage)
-                self.actionProgressUpdateEventSubscriptions.append((action, onActionProgressUpdate))
-                action.progressUpdateEvent.subscribe(onActionProgressUpdate)
+                if action.actionType != ActionType.DocumentAction:
+                    self.actionProgressUpdateEventSubscriptions.append((action, self.onActionProgressUpdate))
+                    action.progressUpdateEvent.subscribe(self.onActionProgressUpdate)
 
             # Only show actions that can be used for all selected collections:
             availableActionIds = set([a.id for a in self.actionManager.actions])
@@ -150,8 +152,7 @@ class ActionsViewer(DockWidget):
                 self.progressDialog.infoLabel.setText(progressMessage)
             QtCore.QCoreApplication.processEvents()
         else:
-            # TODO: Use info bar to show progress.
-            logger.info(f'{action.displayName} progress: {progress}')
+            self.updateProgressAsync(action, progress, progressMessage)
 
     def documentActionConfirmationForFilteredItems(self, action: DocumentAction):
         count = self.mainWindowManager.documentSearchFilterViewer.currentDocumentCount
@@ -181,6 +182,8 @@ class ActionsViewer(DockWidget):
 
         if action.runsOnMainThread:
             self.progressDialog.close()
+        else:
+            self.clearProgressAsync()
 
     def generalActionConfirmation(self, action: Action):
         ret = QtWidgets.QMessageBox.question(self.parentWindow, f"Action Execution Confirmation", f"Execute \"{action.displayName}\"?")
@@ -192,17 +195,39 @@ class ActionsViewer(DockWidget):
     def executeActionOnAllFilteredDocuments(self, action: DocumentAction):
         documentSearchFilterViewer : DocumentSearchFilterViewer = self.mainWindowManager.documentSearchFilterViewer
         snapshot = documentSearchFilterViewer.getFilteredDocumentsSnapshot()
+        documentCount = snapshot.documentCount
+        i = 0
 
         for document in snapshot.yieldDocuments():
             action.execute(document)
 
+            self.updateProgressAsync(action, float(i+1) / documentCount, action.currentProgressMessage)
+            i += 1
+
+        self.clearProgressAsync()
+
     def executeActionOnAllSelectedDocuments(self, action: DocumentAction):
         selectedDocumentIds = [i for i in self.mainWindowManager.selectedDocumentIds]
+        selectedDocumentCount = len(selectedDocumentIds)
 
-        for uid in selectedDocumentIds:
+        for i, uid in enumerate(selectedDocumentIds):
             document = self.dbManager.findOne(uid)
             if document != None:
                 action.execute(document)
             else:
                 logger.warning(f'Could not find document with id {uid}')
+
+            self.updateProgressAsync(action, float(i+1) / selectedDocumentCount, action.currentProgressMessage)
+
+        self.clearProgressAsync()
+
+    def clearProgressAsync(self):
+        qt_util.runInMainThread(self.statusBar.showMessage, '')
             
+    def updateProgressAsync(self, action: Action, progress: float, progressMessage: str = None):
+        progressStr = str(int(progress * 100))
+        if progressMessage == None:
+            progressMessage = 'Executing...'
+
+        msg = f'{action.displayName}: {progressMessage} ({progressStr}%)'
+        qt_util.runInMainThread(self.statusBar.showMessage, msg)

@@ -29,6 +29,7 @@ class FilteredDocumentsSnapshot(object):
         self.collectionNames = [cn for cn in documentSearchFilterViewer.collectionViewer.yieldSelectedCollectionNames()]
         self.documentFilterManager = documentSearchFilterViewer.documentFilterManager
         self.itemsFilter = documentSearchFilterViewer.getItemsFilter()
+        self.documentCount = documentSearchFilterViewer.currentDocumentCount
 
     def yieldDocuments(self):
         distinctionText = self.fullSearchFilterInfo['distinctionText']

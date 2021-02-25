@@ -1,26 +1,18 @@
 # This Python file uses the following encoding: utf-8
 import sys
+
 from viewers.HostProcessViewer import HostProcessViewer
 from viewers.service.ServiceManagerViewer import ServiceManagerViewer
 from PySide2 import QtCore, QtWidgets, QtUiTools, QtGui
 from enum import Enum
 from MetadataManagerCore.mongodb_manager import MongoDBManager
-import operator
-from MetadataManagerCore.util import timeit
-from multiprocessing.dummy import Pool as ThreadPool 
-from time import sleep
 from qt_extensions import qt_util
-import json
-import numpy as np
-import pymongo
 from TableModel import TableModel
 from MetadataManagerCore import Keys
 from VisualScripting.VisualScriptingViewer import VisualScriptingViewer
-from PySide2.QtCore import QFile, QTextStream, QThreadPool
 
 import asset_manager
 from qt_extensions.DockWidget import DockWidget
-import os
 
 from viewers.CollectionViewer import CollectionViewer
 from viewers.PreviewViewer import PreviewViewer
@@ -31,7 +23,6 @@ from viewers.ActionManagerViewer import ActionManagerViewer
 from viewers.DeadlineServiceViewer import DeadlineServiceViewer
 from viewers.EnvironmentManagerViewer import EnvironmentManagerViewer
 from viewers.DocumentSearchFilterViewer import DocumentSearchFilterViewer
-from random import random
 
 from typing import List
 from AppInfo import AppInfo
@@ -76,6 +67,7 @@ class MainWindowManager(QtCore.QObject):
 
         self.restoreState()
 
+        self.documentSearchFilterViewer.viewItems()
 
     def initTable(self):
         self.tableModel = TableModel(self.window, [], [], [])
@@ -119,14 +111,6 @@ class MainWindowManager(QtCore.QObject):
         
         self.window.actionDark.triggered.connect(lambda : self.setStyle(Style.Dark))
         self.window.actionLight.triggered.connect(lambda : self.setStyle(Style.Light))
-
-    def initStatusInfo(self):
-        self.mainProgressBar = QtWidgets.QProgressBar(self.window)
-        self.mainProgressBar.setMaximumWidth(100)
-        self.mainProgressBar.setMaximumHeight(15)
-        self.window.statusBar().addPermanentWidget(self.mainProgressBar)
-
-        #self.window.statusBar().showMessage("Test")
 
     def updateTableModelHeader(self):
         headerInfos = self.dbManager.extractCollectionHeaderInfo(self.collectionViewer.yieldSelectedCollectionNames())
