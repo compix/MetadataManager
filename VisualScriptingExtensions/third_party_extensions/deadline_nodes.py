@@ -230,3 +230,10 @@ def createMetadataManagerActionTaskDict(taskType="DocumentAction", actionId="", 
 
     return {"taskType":taskType, "actionId":actionId, "collections":collections, 
             "documentFilter":"{" + docFilter + "}", "distinctionFilter":""} 
+
+@defNode("Get Deadline Job Names", isExecutable=True, returnNames=["Job Names"])
+def getDeadlineJobNames(quiet=False):
+    if DEADLINE_SERVICE == None:
+        return None
+
+    return DEADLINE_SERVICE.getJobNames(quiet=quiet)
