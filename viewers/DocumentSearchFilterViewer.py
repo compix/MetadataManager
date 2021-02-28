@@ -117,7 +117,9 @@ class DocumentSearchFilterViewer(QtCore.QObject):
 
         self.customFilterScrollAreaLayout : QVBoxLayout = self.widget.customFilterScrollAreaLayout
         self.customFilterScrollAreaLayout.setAlignment(QtCore.Qt.AlignTop)
-        self.widget.findPushButton.clicked.connect(lambda: self.viewItemsOverThreadPool())
+        self.widget.findPushButton.clicked.connect(self.viewItemsOverThreadPool)
+        self.widget.filterEdit.returnPressed.connect(self.viewItemsOverThreadPool)
+        self.widget.distinctEdit.returnPressed.connect(self.viewItemsOverThreadPool)
 
         self.setupFilter()
         self.updateDisplayedFilters()
@@ -127,6 +129,7 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         self.setupHistoryContextMenu()
 
         self.widget.fullFilterApplyButton.clicked.connect(self.onFullFilterApplyButtonClicked)
+        self.widget.fullFilterLineEdit.returnPressed.connect(self.onFullFilterApplyButtonClicked)
         self.widget.copyFullSearchToClipboardButton.clicked.connect(self.onCopyFullSearchToClipboardClicked)
 
         self.setupSavedFiltersUI()
