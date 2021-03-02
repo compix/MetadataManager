@@ -43,7 +43,7 @@ class CodeGenerator(code_generator.CodeGenerator):
                 self.writeCodeLine(srcFile, f"def execute({','.join(['self'] + execArgs)}):", code_generator.DEFAULT_INDENT)
 
                 extraArgs = []
-                if not isinstance(startNode, DocumentAction):
+                if not isinstance(startNode, DocumentActionNode):
                     extraArgs = ['self']
 
                 self.writeCodeLine(srcFile, f"execute({','.join(extraArgs + execArgs)})", code_generator.DEFAULT_INDENT*2,suffix="\n\n")
