@@ -27,7 +27,7 @@ class FilteredDocumentsSnapshot(object):
 
         self.fullSearchFilterInfo = documentSearchFilterViewer.getCurrentFullSearchFilterEntry()
         self.collectionNames = [cn for cn in documentSearchFilterViewer.collectionViewer.yieldSelectedCollectionNames()]
-        self.documentFilterManager = documentSearchFilterViewer.documentFilterManager
+        self.documentFilterManager: DocumentFilterManager = documentSearchFilterViewer.documentFilterManager
         self.itemsFilter = documentSearchFilterViewer.getItemsFilter()
         self.documentCount = documentSearchFilterViewer.currentDocumentCount
 
@@ -35,10 +35,17 @@ class FilteredDocumentsSnapshot(object):
         distinctionText = self.fullSearchFilterInfo['distinctionText']
         customFilters = []
         for filterDict in self.fullSearchFilterInfo['customFilters']:
-            f = DocumentFilter(None, None)
-            f.setFromDict(filterDict)
+            f = None
+            for filter_ in self.documentFilterManager.customFilters:
+                if filter_.uniqueFilterLabel == filterDict['uniqueFilterLabel']:
+                    f = filter_.copy()
+                    f.setFromDict(filterDict)
+                    break
             
-            customFilters.append(f)
+            if f:
+                customFilters.append(f)
+            else:
+                raise RuntimeError(f'Unknown filter: {filterDict["uniqueFilterLabel"]}')
 
         for collectionName in self.collectionNames:
             for d in self.documentFilterManager.yieldFilteredDocuments(collectionName, self.itemsFilter, distinctionText=distinctionText, filters=customFilters):
