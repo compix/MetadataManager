@@ -65,27 +65,13 @@
       </widget>
      </item>
      <item row="3" column="0">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>Deadline Standalone Path (Python3):</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QLineEdit" name="deadlineStandalonePathLineEdit">
-       <property name="text">
-        <string>C:\Users\compix\Desktop\Deadline_Python_Test\Deadline</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
       <widget class="QLabel" name="label_5">
        <property name="text">
         <string>Deadline Repository Path:</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="3" column="1">
       <widget class="QLineEdit" name="deadlineRepositoryLocationLineEdit">
        <property name="text">
         <string>C:\DeadlineRepository10</string>

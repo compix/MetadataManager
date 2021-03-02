@@ -219,7 +219,7 @@ def createCustomFilterDict(filterLabel: str, args=None, active=True, negate=Fals
     return d
 
 @defNode("Create Metadata Manager Action Task Dictionary for Document", isExecutable=True, returnNames=["Task Dictionary"], identifier=DEADLINE_IDENTIFIER)
-def createMetadataManagerActionTaskDict(taskType="DocumentAction", actionId="", document=None, collections=None):
+def createMetadataManagerActionTaskDictForDocument(taskType="DocumentAction", actionId="", document=None, collections=None):
     if collections == None:
         collections = []
 

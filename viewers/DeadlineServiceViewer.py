@@ -64,7 +64,6 @@ class DeadlineServiceViewer(DockWidget):
 
                 self.widget.hostLineEdit.setText(str(info.webserviceHost))
                 self.widget.portLineEdit.setText(str(info.webservicePort))
-                self.widget.deadlineStandalonePathLineEdit.setText(str(info.deadlineStandalonePythonPackagePath))
                 self.widget.deadlineInstallPathLineEdit.setText(str(info.deadlineInstallPath))
                 self.widget.deadlineRepositoryLocationLineEdit.setText(str(info.deadlineRepositoryLocation))
                 
@@ -85,7 +84,6 @@ class DeadlineServiceViewer(DockWidget):
 
         info = DeadlineServiceInfo()
         info.deadlineInstallPath = self.widget.deadlineInstallPathLineEdit.text()
-        info.deadlineStandalonePythonPackagePath = self.widget.deadlineStandalonePathLineEdit.text()
         info.webserviceHost = host
         info.webservicePort = port
         info.deadlineRepositoryLocation = self.widget.deadlineRepositoryLocationLineEdit.text()
