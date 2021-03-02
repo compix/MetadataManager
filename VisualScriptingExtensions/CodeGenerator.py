@@ -41,7 +41,12 @@ class CodeGenerator(code_generator.CodeGenerator):
     
                 execArgs = ["document"] if isinstance(startNode, DocumentActionNode) else []
                 self.writeCodeLine(srcFile, f"def execute({','.join(['self'] + execArgs)}):", code_generator.DEFAULT_INDENT)
-                self.writeCodeLine(srcFile, f"execute({','.join(['self'] + execArgs)})", code_generator.DEFAULT_INDENT*2,suffix="\n\n")
+
+                extraArgs = []
+                if not isinstance(startNode, DocumentAction):
+                    extraArgs = ['self']
+
+                self.writeCodeLine(srcFile, f"execute({','.join(extraArgs + execArgs)})", code_generator.DEFAULT_INDENT*2,suffix="\n\n")
 
                 self.writeCodeLine(srcFile, "@property", code_generator.DEFAULT_INDENT)
                 self.writeCodeLine(srcFile, "def id(self):", code_generator.DEFAULT_INDENT)
