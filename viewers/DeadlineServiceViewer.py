@@ -41,6 +41,7 @@ class DeadlineServiceViewer(DockWidget):
         qt_util.runInMainThread(self.widget.refreshConnectionButton.setText, "Connecting...")
         qt_util.runInMainThread(self.widget.refreshConnectionButton.setEnabled, False)
         self.deadlineService.updateInfo(info)
+        self.deadlineService.saveToDB()
         self.deadlineService.connect()
         qt_util.runInMainThread(self.widget.refreshConnectionButton.setText, "Refresh Connection")
         qt_util.runInMainThread(self.widget.refreshConnectionButton.setEnabled, True)
