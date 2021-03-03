@@ -164,8 +164,9 @@ class ActionsViewer(DockWidget):
         if count > 0:
             ret = QtWidgets.QMessageBox.question(self.parentWindow, f"Action Execution Confirmation", f"Execute \"{action.displayName}\" for {count} selected documents?")
             return ret == QtWidgets.QMessageBox.Yes
-            
-        return True
+        else:
+            QtWidgets.QMessageBox.warning(self.parentWindow, "Empty Selection", "Please select documents to execute actions.")
+            return False
 
     def setupProgressDialog(self):
         self.progressDialog = asset_manager.loadDialog('progressDialog.ui')
