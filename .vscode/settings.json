@@ -6,5 +6,11 @@
         "mongodb manager",
         "sftp",
         "unregister"
+    ],
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}\\plugins"
+    ],
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}\\plugins"
     ]
 }
