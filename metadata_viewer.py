@@ -29,7 +29,7 @@ def main():
     bootstrapper = Bootstrapper(args.mode, args.task, args.launcher)
     status = bootstrapper.run()
 
-    if bootstrapper.updateRequested:
+    if bootstrapper.restartRequested and args.launcher:
         logger.info(f'Opening launcher: {args.launcher}')
         os.chdir(os.path.dirname(args.launcher))
         subprocess.Popen([args.launcher])

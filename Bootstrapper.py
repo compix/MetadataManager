@@ -1,3 +1,4 @@
+from plugin.PluginManager import PluginManager
 from ApplicationMode import ApplicationMode
 from updater.Updater import Updater
 from MetadataManagerCore.host.HostProcessController import HostProcessController
@@ -65,7 +66,7 @@ class Bootstrapper(object):
         self.dbManager = None
         self.serviceRegistry = ServiceRegistry()
 
-        self.updateRequested = False
+        self.restartRequested = False
         self.updater = None
 
         dbInitTimeout = None
@@ -78,8 +79,8 @@ class Bootstrapper(object):
         
         QThreadPool.globalInstance().start(qt_util.LambdaTask(self.initDataBaseManager, dbInitTimeout))
 
-    def requestUpdate(self):
-        self.updateRequested = True
+    def requestRestart(self):
+        self.restartRequested = True
         self.mainWindowManager.close()
 
     def run(self):
@@ -208,6 +209,10 @@ class Bootstrapper(object):
         self.serviceRegistry.fileHandlerManager = self.fileHandlerManager
         self.serviceRegistry.services.append(self.fileHandlerManager)
 
+        pluginFolder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "plugins")
+        self.serviceRegistry.pluginManager = PluginManager([pluginFolder], self.serviceRegistry)
+        self.serviceRegistry.services.append(self.serviceRegistry.pluginManager)
+
         MDApi.ENVIRONMENT_MANAGER = self.serviceRegistry.environmentManager
         MDApi.DB_MANAGER = self.dbManager
         MDApi.SERVICE_REGISTRY = self.serviceRegistry
@@ -240,6 +245,8 @@ class Bootstrapper(object):
 
     def setupMainWindowManager(self):
         self.mainWindowManager = MainWindowManager(self.app, self.appInfo, self.serviceRegistry, self)
+        self.serviceRegistry.pluginManager.load(QtCore.QSettings(self.appInfo.company, self.appInfo.appName), self.dbManager)
+
         self.mainWindowManager.show()
 
     def load(self, settings = None):
@@ -247,6 +254,10 @@ class Bootstrapper(object):
             settings = QtCore.QSettings(self.appInfo.company, self.appInfo.appName)
         
         for service in self.serviceRegistry.services:
+            # Skip PluginManager if in GUI mode. It will be loaded after the main window manager is initialized.
+            if isinstance(service, PluginManager) and self.mode == ApplicationMode.GUI:
+                continue
+
             try:
                 service.load
                 hasLoadFunc = True

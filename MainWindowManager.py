@@ -23,6 +23,8 @@ from viewers.ActionManagerViewer import ActionManagerViewer
 from viewers.DeadlineServiceViewer import DeadlineServiceViewer
 from viewers.EnvironmentManagerViewer import EnvironmentManagerViewer
 from viewers.DocumentSearchFilterViewer import DocumentSearchFilterViewer
+from viewers.PluginManagerViewer import PluginManagerViewer
+from viewers.ViewerRegistry import ViewerRegistry
 
 from typing import List
 from AppInfo import AppInfo
@@ -49,6 +51,9 @@ class MainWindowManager(QtCore.QObject):
         self.serviceRegistry = serviceRegistry
         self.dbManager = self.serviceRegistry.dbManager
         self.bootstrapper = bootstrapper
+        self.viewerRegistry = ViewerRegistry()
+
+        self.viewerRegistry.mainWindowManager = self
 
         # Load the main window ui
         file = QtCore.QFile(asset_manager.getUIFilePath("main.ui"))
@@ -105,6 +110,24 @@ class MainWindowManager(QtCore.QObject):
         self.hostProcessViewer = HostProcessViewer(self.window, self.serviceRegistry.hostProcessController)
 
         self.addPreviewToAllEntries()
+        
+        self.pluginManagerViewer = PluginManagerViewer(self.window, self.serviceRegistry.pluginManager, self.bootstrapper.requestRestart)
+        self.serviceRegistry.pluginManager.setViewerRegistry(self.viewerRegistry)
+
+        # Setup viewer registry:
+        self.viewerRegistry.actionManagerViewer = self.actionsManagerViewer
+        self.viewerRegistry.actionsViewer = self.actionsViewer
+        self.viewerRegistry.collectionViewer = self.collectionViewer
+        self.viewerRegistry.deadlineServiceViewer = self.deadlineServiceViewer
+        self.viewerRegistry.documentSearchFilterViewer = self.documentSearchFilterViewer
+        self.viewerRegistry.environmentManagerViewer = self.environmentManagerViewer
+        self.viewerRegistry.hostProcessViewer = self.hostProcessViewer
+        self.viewerRegistry.pluginManagerViewer = self.pluginManagerViewer
+        self.inspector = self.inspector
+        self.viewerRegistry.settingsViewer = self.settingsViewer
+        self.viewerRegistry.previewViewer = self.previewViewer
+        self.viewerRegistry.inspector = self.inspector
+        self.viewerRegistry.visualScriptingViewer = self.visualScriptingViewer
 
     def setupEventAndActionHandlers(self):
         self.window.installEventFilter(self)
@@ -144,6 +167,7 @@ class MainWindowManager(QtCore.QObject):
         self.setupDockWidget(self.environmentManagerViewer)
         self.setupDockWidget(self.serviceManagerViewer)
         self.setupDockWidget(self.hostProcessViewer)
+        self.setupDockWidget(self.pluginManagerViewer)
 
     def setupDockWidget(self, dockWidget : DockWidget, initialDockArea=None):
         self.dockWidgets.append(dockWidget)
@@ -159,6 +183,7 @@ class MainWindowManager(QtCore.QObject):
         else:
             self.window.addDockWidget(QtCore.Qt.RightDockWidgetArea, dockWidget)
             dockWidget.toggleViewAction()
+            dockWidget.setVisible(False)
 
     def dockWidgetTopLevelChanged(self, changed):
         self.setDockWidgetFlags(self.sender())

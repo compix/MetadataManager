@@ -70,10 +70,10 @@ class CodeGenerator(code_generator.CodeGenerator):
                 runsOnMainThread = startNode.runsOnMainThread == True
                 self.writeCodeLine(srcFile, f"return {'True' if runsOnMainThread else 'False'}", code_generator.DEFAULT_INDENT*2)
 
-            pathonFileDir = os.path.dirname(srcFilePath)
+            pythonFileDir = os.path.dirname(srcFilePath)
 
-            if not pathonFileDir in sys.path:
-                sys.path.append(pathonFileDir)
+            if not pythonFileDir in sys.path:
+                sys.path.append(pythonFileDir)
 
             execModule = importlib.import_module(moduleName)
             importlib.reload(execModule)
@@ -90,10 +90,10 @@ class CodeGenerator(code_generator.CodeGenerator):
                 srcFile.write(f"HAS_STRING_ARG = {startNode.hasStringArg}\n")
                 srcFile.write(f"UNIQUE_LABEL_NAME = {startNode.uniqueLabelName}\n")
 
-            pathonFileDir = os.path.dirname(srcFilePath)
+            pythonFileDir = os.path.dirname(srcFilePath)
 
-            if not pathonFileDir in sys.path:
-                sys.path.append(pathonFileDir)
+            if not pythonFileDir in sys.path:
+                sys.path.append(pythonFileDir)
                 
             execModule = importlib.import_module(moduleName)
             importlib.reload(execModule)

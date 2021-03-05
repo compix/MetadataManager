@@ -61,7 +61,7 @@
         <x>0</x>
         <y>0</y>
         <width>492</width>
-        <height>180</height>
+        <height>179</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -115,7 +115,7 @@
         <x>0</x>
         <y>0</y>
         <width>492</width>
-        <height>180</height>
+        <height>179</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -132,7 +132,20 @@
         <number>0</number>
        </property>
        <item>
-        <layout class="QVBoxLayout" name="generalActionsLayout"/>
+        <layout class="QVBoxLayout" name="generalActionsLayout">
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+        </layout>
        </item>
       </layout>
      </widget>

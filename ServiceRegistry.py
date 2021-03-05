@@ -1,3 +1,4 @@
+from plugin.PluginManager import PluginManager
 from MetadataManagerCore.host.HostProcessController import HostProcessController
 from MetadataManagerCore.file.FileHandlerManager import FileHandlerManager
 from MetadataManagerCore.service.ServiceManager import ServiceManager
@@ -27,3 +28,4 @@ class ServiceRegistry(object):
         self.serviceManager : ServiceManager = None
         self.fileHandlerManager : FileHandlerManager = None
         self.hostProcessController : HostProcessController = None
+        self.pluginManager: PluginManager = None

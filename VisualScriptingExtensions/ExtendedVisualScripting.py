@@ -21,10 +21,10 @@ class ExtendedVisualScripting(VisualScripting):
         for graphSettings in allGraphSettings:
             moduleName = self.graphManager.getModuleNameFromGraphName(graphSettings.name)
             pythonFile = self.graphManager.getPythonCodePath(graphSettings)
-            pathonFileDir = os.path.dirname(pythonFile)
+            pythonFileDir = os.path.dirname(pythonFile)
 
-            if not pathonFileDir in sys.path:
-                sys.path.append(pathonFileDir)
+            if not pythonFileDir in sys.path:
+                sys.path.append(pythonFileDir)
 
             try:
                 execModule = importlib.import_module(moduleName)
