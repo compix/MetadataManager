@@ -1,37 +1,39 @@
+from typing import Dict, List
 from MetadataManagerCore.mongodb_manager import MongoDBManager, CollectionHeaderKeyInfo
 from PySide2 import QtWidgets, QtCore, QtUiTools
-from PySide2.QtWidgets import QTableWidget, QTableWidgetItem, QLineEdit
+from PySide2.QtWidgets import QCheckBox, QTableWidget, QTableWidgetItem, QLineEdit
 from MetadataManagerCore import Keys
 from qt_extensions import qt_util
 import os
 from qt_extensions.DockWidget import DockWidget
 import asset_manager
 from MetadataManagerCore.Event import Event
+from PySide2.QtCore import Qt
 
 class CollectionViewer(DockWidget):
     def __init__(self, parentWindow, dbManager : MongoDBManager):
         super().__init__("Collection Viewer", parentWindow, asset_manager.getUIFilePath("collectionManager.ui"))
         self.dbManager = dbManager
-        self.collectionCheckBoxMap = dict()
+        self.collectionCheckBoxMap: Dict[str,QCheckBox] = dict()
 
         self.collectionsLayout.setAlignment(QtCore.Qt.AlignTop)
         self.widget.collectionPropertiesVBox.setAlignment(QtCore.Qt.AlignTop)
 
         self.collectionsComboBox.currentIndexChanged.connect(self.onCollectionsComboBoxIndexChanged)
 
-        self.collectionHeaderKeyInfos = []
+        self.collectionHeaderKeyInfos: List[CollectionHeaderKeyInfo] = []
 
         self.collectionTableWidget : QTableWidget = self.widget.collectionPropertiesTableWidget
         self.updateCollections()
 
         self.headerUpdatedEvent = Event()
 
-        self.widget.refreshCollectionsButton.clicked.connect(self.onRefreshCollections)
+        self.widget.refreshCollectionsButton.clicked.connect(self.refreshCollections)
 
         self.settings = None
         self.collectionCheckboxChangeListeners = []
 
-    def onRefreshCollections(self):
+    def refreshCollections(self):
         self.updateCollections()
         self.collectionsComboBox.setCurrentIndex(0)
 
@@ -106,7 +108,14 @@ class CollectionViewer(DockWidget):
         self.dbManager.setCollectionHeaderInfo(collectionName, self.collectionHeaderKeyInfos)
 
         self.headerUpdatedEvent()
-        
+
+    def showSingleCollection(self, collectionName: str):
+        for collectionName_, checkbox in self.collectionCheckBoxMap.items():
+            if collectionName == collectionName_:
+                checkbox.setCheckState(Qt.CheckState.Checked)
+            else:
+                checkbox.setCheckState(Qt.CheckState.Unchecked)
+
     @property
     def collectionsLayout(self):
         return self.widget.collectionsLayout

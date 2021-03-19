@@ -41,17 +41,17 @@ def clearContainer(container):
     for i in reversed(range(container.count())): 
         container.itemAt(i).widget().setParent(None)
 
-def connectFileSelection(parentWidget, lineEdit : QLineEdit, button: QPushButton):
+def connectFileSelection(parentWidget, lineEdit : QLineEdit, button: QPushButton, filter="Any File (*.*)"):
     def onSelect():
-        fileName,_ = QFileDialog.getOpenFileName(parentWidget, "Open", "", "Any File (*.*)")
+        fileName,_ = QFileDialog.getOpenFileName(parentWidget, "Open", "", filter=filter)
         if fileName != None and fileName != "":
             lineEdit.setText(fileName)
 
     button.clicked.connect(onSelect)
 
-def connectFolderSelection(parentWidget, lineEdit : QLineEdit, button: QPushButton):
+def connectFolderSelection(parentWidget, lineEdit : QLineEdit, button: QPushButton, initialDir=""):
     def onSelect():
-        dirName = QFileDialog.getExistingDirectory(parentWidget, "Open", "")
+        dirName = QFileDialog.getExistingDirectory(parentWidget, "Open", initialDir)
         if dirName != None and dirName != "":
             lineEdit.setText(dirName)
     

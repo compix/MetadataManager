@@ -1,3 +1,4 @@
+from MetadataManagerCore.Event import Event
 from PySide2 import QtCore, QtWidgets
 import operator
 
@@ -8,6 +9,8 @@ class TableModel(QtCore.QAbstractTableModel):
         self.header = header
         self.displayedKeys = displayedKeys
         self.cellColorFunction = None
+
+        self.onSort = Event()
 
     def getUID(self, rowIdx):
         return self.entries[rowIdx][0]
@@ -41,6 +44,8 @@ class TableModel(QtCore.QAbstractTableModel):
         if order == QtCore.Qt.DescendingOrder:
             self.entries.reverse()
         self.emit(QtCore.SIGNAL("layoutChanged()"))
+
+        self.onSort()
 
     def addEntry(self, entry):
         self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))

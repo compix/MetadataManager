@@ -1,0 +1,1410 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>801</width>
+    <height>763</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Rendering Pipeline Creation</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="generalTab">
+      <attribute name="title">
+       <string>General</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_8">
+       <item>
+        <widget class="QScrollArea" name="scrollArea">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>740</width>
+            <height>1153</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_7">
+           <item>
+            <widget class="QFrame" name="frame">
+             <property name="frameShape">
+              <enum>QFrame::NoFrame</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_2">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <layout class="QFormLayout" name="formLayout">
+                <property name="bottomMargin">
+                 <number>10</number>
+                </property>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label">
+                  <property name="text">
+                   <string>Pipeline Name</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_2">
+                  <property name="text">
+                   <string>Base Project Folder</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayout">
+                  <item>
+                   <widget class="QLineEdit" name="baseProjectFolderEdit">
+                    <property name="toolTip">
+                     <string>This is the folder for the project where scenes, renderings and post results are usually stored.</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="baseProjectFolderButton">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../../assets/resource_files/resources.qrc">
+                      <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="label_3">
+                  <property name="text">
+                   <string>Pipeline Type</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QComboBox" name="pipelineTypeComboBox">
+                  <property name="toolTip">
+                   <string>Currently on 3ds Max is supported.</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="label_4">
+                  <property name="text">
+                   <string>Pipeline Class</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QComboBox" name="pipelineClassComboBox">
+                  <property name="toolTip">
+                   <string>The pipeline class determines the flow of the pipeline.</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0">
+                 <widget class="QLabel" name="label_5">
+                  <property name="text">
+                   <string>Render Scene Creation Script</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayout_2">
+                  <item>
+                   <widget class="QLineEdit" name="renderSceneCreationScriptEdit">
+                    <property name="toolTip">
+                     <string>The script that will create variation/render scenes. Make sure deadline workers can access this script.</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="renderSceneCreationScriptButton">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../../assets/resource_files/resources.qrc">
+                      <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item row="5" column="0">
+                 <widget class="QLabel" name="label_6">
+                  <property name="text">
+                   <string>Input Scene Creation Script</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayout_3">
+                  <item>
+                   <widget class="QLineEdit" name="inputSceneCreationScriptEdit">
+                    <property name="toolTip">
+                     <string>Optional script that will generate the input scenes which are used to create variation scenes.</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="inputSceneCreationScriptButton">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../../assets/resource_files/resources.qrc">
+                      <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item row="6" column="0">
+                 <widget class="QLabel" name="label_7">
+                  <property name="text">
+                   <string>Nuke Script</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="6" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayout_4">
+                  <item>
+                   <widget class="QLineEdit" name="nukeScriptEdit">
+                    <property name="toolTip">
+                     <string>Optional nuke script for post processing.</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="nukeScriptButton">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../../assets/resource_files/resources.qrc">
+                      <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item row="8" column="0">
+                 <widget class="QLabel" name="label_8">
+                  <property name="text">
+                   <string>Product Table</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="8" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayout_5">
+                  <item>
+                   <widget class="QLineEdit" name="productTableEdit">
+                    <property name="toolTip">
+                     <string>The product table is used to determine which renderings to generate. Prefer CSV tables to avoid representational issues.</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="productTableButton">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../../assets/resource_files/resources.qrc">
+                      <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item row="10" column="0">
+                 <widget class="QLabel" name="label_9">
+                  <property name="text">
+                   <string>Base Scene</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="10" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayout_6">
+                  <item>
+                   <widget class="QLineEdit" name="baseSceneEdit">
+                    <property name="toolTip">
+                     <string>The base scene will be loaded first and may contain environment and lighting which are shared in all variations. This scene may also define render settings.</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="baseSceneButton">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../../assets/resource_files/resources.qrc">
+                      <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item row="11" column="0">
+                 <widget class="QLabel" name="label_10">
+                  <property name="text">
+                   <string>Render Settings</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="11" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayout_7">
+                  <item>
+                   <widget class="QLineEdit" name="renderSettingsEdit">
+                    <property name="toolTip">
+                     <string>Optional render settings file.</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="renderSettingsButton">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../../assets/resource_files/resources.qrc">
+                      <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item row="12" column="0">
+                 <widget class="QLabel" name="label_11">
+                  <property name="text">
+                   <string>Replace German Characters</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="12" column="1">
+                 <widget class="QCheckBox" name="replaceGermanCharactersCheckBox">
+                  <property name="toolTip">
+                   <string>Some programs may have problems with german characters (öäüß). The checkbox indicates to replace them by common convention.</string>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="9" column="0">
+                 <widget class="QLabel" name="label_20">
+                  <property name="text">
+                   <string>Product Table Sheet Name</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="9" column="1">
+                 <widget class="QLineEdit" name="productTableSheetNameEdit">
+                  <property name="toolTip">
+                   <string>This field is required if an excel table is provided.</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="13" column="0">
+                 <widget class="QLabel" name="label_27">
+                  <property name="text">
+                   <string>Perspective Codes</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="13" column="1">
+                 <widget class="QLineEdit" name="perspectiveCodesEdit">
+                  <property name="toolTip">
+                   <string>Perspective codes separated by comma. These codes are used by the render scene creation script to generate perspective-variants.</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="15" column="0">
+                 <widget class="QLabel" name="label_12">
+                  <property name="text">
+                   <string>Post Output Extensions</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="15" column="1">
+                 <widget class="QLineEdit" name="postOutputExtensionsEdit">
+                  <property name="toolTip">
+                   <string>Comma-separated list of post output file extensions.</string>
+                  </property>
+                  <property name="text">
+                   <string>jpg,tif</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="14" column="0">
+                 <widget class="QLabel" name="label_30">
+                  <property name="text">
+                   <string>Rendering Extension</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="14" column="1">
+                 <widget class="QComboBox" name="renderingExtensionComboBox">
+                  <item>
+                   <property name="text">
+                    <string>exr</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>png</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>tif</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>jpg</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="7" column="0">
+                 <widget class="QLabel" name="label_40">
+                  <property name="text">
+                   <string>Nuke Version</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="7" column="1">
+                 <widget class="QComboBox" name="nukeVersionComboBox">
+                  <property name="currentText">
+                   <string>12.0</string>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string>10.0</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>10.5</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>11.0</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>11.1</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>11.2</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>11.3</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>12.0</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>12.1</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>12.2</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>12.3</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>12.4</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>12.5</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>13.0</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QComboBox" name="pipelineNameComboBox">
+                  <property name="toolTip">
+                   <string>Unique name of the rendering pipeline. You may choose an existing pipeline as a template but be careful to avoid folder collisions.</string>
+                  </property>
+                  <property name="inputMethodHints">
+                   <set>Qt::ImhNone</set>
+                  </property>
+                  <property name="editable">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_2">
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_3">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>10</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QGroupBox" name="groupBox_3">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="title">
+                    <string>Extracted Product Table Header</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="verticalLayout_6">
+                    <item>
+                     <widget class="QTableWidget" name="extractedProductTableWidget">
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>50</height>
+                       </size>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QCheckBox" name="headerConfirmationCheckBox">
+                      <property name="layoutDirection">
+                       <enum>Qt::RightToLeft</enum>
+                      </property>
+                      <property name="text">
+                       <string>The extracted header is correct. </string>
+                      </property>
+                      <property name="tristate">
+                       <bool>false</bool>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_2">
+                <property name="title">
+                 <string>Project Subfolders</string>
+                </property>
+                <property name="flat">
+                 <bool>false</bool>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_5">
+                 <property name="topMargin">
+                  <number>9</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>9</number>
+                 </property>
+                 <item>
+                  <layout class="QFormLayout" name="formLayout_3">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_21">
+                     <property name="text">
+                      <string>Render Scenes</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_18">
+                     <item>
+                      <widget class="QLineEdit" name="renderScenesFolderEdit">
+                       <property name="toolTip">
+                        <string>The render scenes are used for submission to generate renderings.</string>
+                       </property>
+                       <property name="text">
+                        <string>scenes/render</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="renderScenesFolderButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_22">
+                     <property name="text">
+                      <string>Input Scenes</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_19">
+                     <item>
+                      <widget class="QLineEdit" name="inputScenesFolderEdit">
+                       <property name="toolTip">
+                        <string>The input scenes are used to create variation/render scenes.</string>
+                       </property>
+                       <property name="text">
+                        <string>scenes/input</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="inputScenesFolderButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_28">
+                     <property name="text">
+                      <string>Environment Scenes</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_23">
+                     <item>
+                      <widget class="QLineEdit" name="environmentScenesEdit">
+                       <property name="toolTip">
+                        <string>Optional scenes that will be loaded after the base scene for scene (lighting, props...) variations based on product information.</string>
+                       </property>
+                       <property name="text">
+                        <string>scenes/environment</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="environmentScenesButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_32">
+                     <property name="text">
+                      <string>Nuke Scenes</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="label_23">
+                     <property name="text">
+                      <string>Renderings</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_20">
+                     <item>
+                      <widget class="QLineEdit" name="renderingsFolderEdit">
+                       <property name="toolTip">
+                        <string>The folder where renderings will be stored.</string>
+                       </property>
+                       <property name="text">
+                        <string>renderings/autogen</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="renderingsFolderButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="5" column="0">
+                    <widget class="QLabel" name="label_24">
+                     <property name="text">
+                      <string>Post</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_21">
+                     <item>
+                      <widget class="QLineEdit" name="postFolderEdit">
+                       <property name="toolTip">
+                        <string>The folder where post processed rendering results will be stored.</string>
+                       </property>
+                       <property name="text">
+                        <string>post/autogen</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="postFolderButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="7" column="0">
+                    <widget class="QLabel" name="label_25">
+                     <property name="text">
+                      <string>Delivery</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="7" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_22">
+                     <item>
+                      <widget class="QLineEdit" name="deliveryFolderEdit">
+                       <property name="toolTip">
+                        <string>The folder where final images will be stored for delivery to the customer. Note that this is only useful if the naminig convention is different from the images in post.</string>
+                       </property>
+                       <property name="text">
+                        <string>delivery</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="deliveryFolderButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="3" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_25">
+                     <item>
+                      <widget class="QLineEdit" name="nukeScenesFolderEdit">
+                       <property name="toolTip">
+                        <string>The folder where nuke scenes are stored.</string>
+                       </property>
+                       <property name="text">
+                        <string>scenes/nuke</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="nukeScenesFolderButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox">
+                <property name="title">
+                 <string>Naming Conventions</string>
+                </property>
+                <property name="flat">
+                 <bool>false</bool>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_4">
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_17">
+                   <item>
+                    <widget class="QLabel" name="label_19">
+                     <property name="maximumSize">
+                      <size>
+                       <width>20</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string/>
+                     </property>
+                     <property name="pixmap">
+                      <pixmap resource="../../assets/resource_files/resources.qrc">:/icons/information.png</pixmap>
+                     </property>
+                     <property name="scaledContents">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="label_18">
+                     <property name="text">
+                      <string>Naming conventions should contain table header columns as keys enclosed by [], e.g. [Key0]_[Key1].
+The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key0]/[Key0]_[Key1].</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QFormLayout" name="formLayout_2">
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_16">
+                     <property name="text">
+                      <string>Render Scene Relative File Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_13">
+                     <item>
+                      <widget class="QLineEdit" name="renderSceneNamingEdit">
+                       <property name="toolTip">
+                        <string>The naming convention for render scenes (aka variation scenes).</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_17">
+                     <property name="text">
+                      <string>Input Scene Relative File Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_14">
+                     <item>
+                      <widget class="QLineEdit" name="inputSceneNamingEdit">
+                       <property name="toolTip">
+                        <string>The naming convention for input scenes which are used to create variation scenes.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="5" column="0">
+                    <widget class="QLabel" name="label_13">
+                     <property name="text">
+                      <string>Rendering Relative File Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_12">
+                     <item>
+                      <widget class="QLineEdit" name="renderingNamingEdit">
+                       <property name="toolTip">
+                        <string>The naming convention for rendering results. Note that renderings are usually an intermediary result and may need post processing, e.g. in nuke.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="6" column="0">
+                    <widget class="QLabel" name="label_14">
+                     <property name="text">
+                      <string>Post Relative File Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="6" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_15">
+                     <item>
+                      <widget class="QLineEdit" name="postNamingEdit">
+                       <property name="toolTip">
+                        <string>The naming convention for post processed (final) images.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="8" column="0">
+                    <widget class="QLabel" name="label_15">
+                     <property name="text">
+                      <string>Delivery Relative File Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="8" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_16">
+                     <item>
+                      <widget class="QLineEdit" name="deliveryNamingEdit">
+                       <property name="toolTip">
+                        <string>This is often identical to the post naming convention, however the customer might define naming conventions that are suboptimal for internal usage.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_26">
+                     <property name="text">
+                      <string>SID Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_9">
+                     <item>
+                      <widget class="QLineEdit" name="sidNamingEdit">
+                       <property name="toolTip">
+                        <string>The SID is used for document identification. If there are no rendering duplicates, the sid can be identical to the rendering name.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_29">
+                     <property name="text">
+                      <string>Environment Scene Relative File Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_24">
+                     <item>
+                      <widget class="QLineEdit" name="environmentSceneNamingEdit">
+                       <property name="toolTip">
+                        <string>The naming convention for the environment scenes.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="label_31">
+                     <property name="text">
+                      <string>Nuke Scene Relative File Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_8">
+                     <item>
+                      <widget class="QLineEdit" name="nukeSceneNamingEdit">
+                       <property name="toolTip">
+                        <string>The naming convention for nuke scenes.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="commonDeadlineTab">
+      <attribute name="title">
+       <string>Deadline</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_11">
+       <item>
+        <widget class="QScrollArea" name="scrollArea_3">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents_3">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>757</width>
+            <height>564</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_12">
+           <item alignment="Qt::AlignTop">
+            <widget class="QFrame" name="frame_3">
+             <property name="frameShape">
+              <enum>QFrame::NoFrame</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_18">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QGroupBox" name="groupBox_5">
+                <property name="title">
+                 <string>General</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_16">
+                 <item>
+                  <layout class="QFormLayout" name="formLayout_8">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_34">
+                     <property name="text">
+                      <string>Base Priority</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLineEdit" name="deadlinePriorityEdit">
+                     <property name="text">
+                      <string>50</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_6">
+                <property name="title">
+                 <string>Pools</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_17">
+                 <item>
+                  <layout class="QFormLayout" name="formLayout_9">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_35">
+                     <property name="text">
+                      <string>Input Scene Pool</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_36">
+                     <property name="text">
+                      <string>Render Scene Pool</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_37">
+                     <property name="text">
+                      <string>Rendering Pool</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_38">
+                     <property name="text">
+                      <string>Nuke Pool</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="label_39">
+                     <property name="text">
+                      <string>Delivery Pool</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QComboBox" name="deadlineInputScenePoolComboBox"/>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QComboBox" name="deadlineRenderScenePoolComboBox"/>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QComboBox" name="deadlineRenderingPoolComboBox"/>
+                   </item>
+                   <item row="3" column="1">
+                    <widget class="QComboBox" name="deadlineNukePoolComboBox"/>
+                   </item>
+                   <item row="4" column="1">
+                    <widget class="QComboBox" name="deadlineDeliveryPoolComboBox"/>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_4">
+                <property name="title">
+                 <string>Timeouts (in minutes)</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_15">
+                 <item>
+                  <layout class="QFormLayout" name="formLayout_7">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_41">
+                     <property name="text">
+                      <string>Input Scene Creation Timeout</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLineEdit" name="inputSceneDeadlineTimeout">
+                     <property name="toolTip">
+                      <string>No timeout if unspecified.</string>
+                     </property>
+                     <property name="text">
+                      <string>8</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_42">
+                     <property name="text">
+                      <string>Render Scene Creation Timeout</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_43">
+                     <property name="text">
+                      <string>Rendering Timeout</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_44">
+                     <property name="text">
+                      <string>Nuke Timeout</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="label_45">
+                     <property name="text">
+                      <string>Delivery Timeout</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QLineEdit" name="renderSceneDeadlineTimeout">
+                     <property name="toolTip">
+                      <string>No timeout if unspecified.</string>
+                     </property>
+                     <property name="text">
+                      <string>8</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QLineEdit" name="renderingDeadlineTimeout">
+                     <property name="toolTip">
+                      <string>No timeout if unspecified.</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1">
+                    <widget class="QLineEdit" name="nukeDeadlineTimeout">
+                     <property name="toolTip">
+                      <string>No timeout if unspecified.</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <widget class="QLineEdit" name="deliveryDeadlineTimeout">
+                     <property name="toolTip">
+                      <string>No timeout if unspecified.</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="max3dsTab">
+      <attribute name="title">
+       <string>3ds Max</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_9">
+       <item>
+        <widget class="QScrollArea" name="scrollArea_2">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents_2">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>757</width>
+            <height>564</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_10">
+           <item>
+            <layout class="QFormLayout" name="formLayout_4">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_33">
+               <property name="text">
+                <string>3dsMax Version</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="versionOf3dsMaxComboBox">
+               <item>
+                <property name="text">
+                 <string>2017</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>2018</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>2019</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>2020</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>2021</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>2022</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="blenderTab">
+      <attribute name="title">
+       <string>Blender</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_13">
+       <item>
+        <widget class="QScrollArea" name="scrollArea_4">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents_4">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>757</width>
+            <height>564</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_14">
+           <item>
+            <layout class="QFormLayout" name="formLayout_6"/>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="statusLabel">
+     <property name="text">
+      <string>Status Label</string>
+     </property>
+    </widget>
+   </item>
+   <item alignment="Qt::AlignBottom">
+    <widget class="QFrame" name="frame_4">
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_10">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item alignment="Qt::AlignRight">
+       <widget class="QFrame" name="frame_5">
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_11">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="createButton">
+           <property name="text">
+            <string>Create</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="cancelButton">
+           <property name="text">
+            <string>Cancel</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../../assets/resource_files/resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

@@ -7,6 +7,7 @@ from MetadataManagerCore.third_party_integrations.deadline.deadline_service impo
 import os
 import tempfile
 import json
+import uuid
 
 DEADLINE_SERVICE : DeadlineService = None
 DEADLINE_IDENTIFIER = "Deadline"
@@ -117,6 +118,40 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
         removeFiles([tempPipelineInfoFilename, tempMaxScriptFilename])
 
     return job
+
+@defNode("Submit Nuke Job", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
+def submitNukeJob(jobInfoDict: dict, pluginInfoDict: dict, scriptFilename: str, scriptInfoDict: dict, jobDependencies=None):
+    # Create a python script file in the deadline repository:
+    directory = os.path.join(DEADLINE_SERVICE.info.customJobInfoDirectory, 'nuke', uuid.uuid4().hex)
+    os.makedirs(directory, exist_ok=True)
+
+    bootstrapScriptFilename = os.path.join(directory,  f'{uuid.uuid4().hex}.py')
+    infoFilename = os.path.join(directory, f'{uuid.uuid4().hex}.json')
+
+    scriptDirectory = os.path.dirname(scriptFilename)
+    scriptModule = os.path.splitext(os.path.basename(scriptFilename))[0]
+
+    code = \
+    f"""
+    import sys, json
+
+    sys.path.append("{scriptDirectory}")
+    import {scriptModule}
+    
+    infoDict = json.load({infoFilename})
+    {scriptModule}.process(infoDict)
+    """.strip()
+
+    with open(bootstrapScriptFilename, 'w+') as f:
+        f.write(code)
+
+    with open(infoFilename, 'w+') as f:
+        json.dump(scriptInfoDict, f)
+
+    jobInfoDict["Plugin"] = getNukePluginName()
+    pluginInfoDict["ScriptFilename"] = bootstrapScriptFilename
+
+    return submitJob(jobInfoDict, pluginInfoDict, jobDependencies=jobDependencies)
 
 @defNode("Create Nuke Plugin Info Dictionary", isExecutable=True, returnNames=["Plugin Info Dict"], identifier=DEADLINE_IDENTIFIER)
 def createNukePluginInfoDictionary(sceneFilename, scriptFilename=None, writeNode="", version="12.0", batchMode=True, 
@@ -237,3 +272,10 @@ def getDeadlineJobNames(quiet=False):
         return None
 
     return DEADLINE_SERVICE.getJobNames(quiet=quiet)
+
+@defNode("Get Deadline Pool Names", isExecutable=True, returnNames=["Pool Names"])
+def getDeadlinePoolNames(quiet=False):
+    if DEADLINE_SERVICE == None:
+        return None
+
+    return DEADLINE_SERVICE.getPoolNames(quiet=quiet)

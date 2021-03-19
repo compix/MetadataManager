@@ -8,9 +8,11 @@
         "unregister"
     ],
     "python.autoComplete.extraPaths": [
-        "${workspaceFolder}\\plugins"
+        "${workspaceFolder}\\plugins",
+        "${workspaceFolder}\\VisualScripting"
     ],
     "python.analysis.extraPaths": [
-        "${workspaceFolder}\\plugins"
+        "${workspaceFolder}\\plugins",
+        "${workspaceFolder}\\VisualScripting"
     ]
 }

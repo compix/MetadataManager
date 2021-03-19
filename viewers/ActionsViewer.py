@@ -1,3 +1,4 @@
+from typing import Any
 from PySide2.QtWidgets import QProgressBar, QStatusBar
 from viewers.DocumentSearchFilterViewer import DocumentSearchFilterViewer
 from MetadataManagerCore.actions.ActionType import ActionType
@@ -18,30 +19,41 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class ActionButtonTask(object):
+class FuncWrapper:
     def __init__(self, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self) -> Any:
+        return self.func(*self.args, **self.kwargs)
+
+class ActionButtonTask(object):
+    def __init__(self, action: Action, func, *args, **kwargs):
+        self.action = action
         self.func = func
         self.args = args
         self.kwargs = kwargs
         self.runsOnMainThread = False
 
         self.confirmationFunc = None
-        self.confirmationFuncArgs = None
-        self.confirmationFuncKwargs = None
 
     def setConfirmationFunction(self, confirmationFunc, *args, **kwargs):
-        self.confirmationFunc = confirmationFunc
-        self.confirmationFuncArgs = args
-        self.confirmationFuncKwargs = kwargs
+        self.confirmationFunc = FuncWrapper(confirmationFunc, *args, **kwargs)
         
     def __call__(self):
-        confirmed = self.confirmationFunc == None or self.confirmationFunc(*self.confirmationFuncArgs, **self.confirmationFuncKwargs)
+        if self.action.confirmationFunction:
+            confirmed = self.action.confirmationFunction()
+        elif self.action.useDefaultConfirmationFunction:
+            confirmed = self.confirmationFunc == None or self.confirmationFunc()
+
+        actionArgs = self.action.retrieveArgsFunction() if self.action.retrieveArgsFunction else []
 
         if confirmed:
             if self.runsOnMainThread:
-                self.func(*self.args, **self.kwargs)
+                self.func(*self.args, *actionArgs, **self.kwargs)
             else:
-                QThreadPool.globalInstance().start(qt_util.LambdaTask(self.func, *self.args, **self.kwargs))
+                QThreadPool.globalInstance().start(qt_util.LambdaTask(self.func, *self.args, *actionArgs, **self.kwargs))
         
 def clearContainer(container):
     for i in reversed(range(container.count())): 
@@ -131,11 +143,11 @@ class ActionsViewer(DockWidget):
                 actionButton = QtWidgets.QPushButton(a.displayName, self.widget)
 
                 if a.actionType == ActionType.DocumentAction:
-                    task = ActionButtonTask(self.executeDocumentAction, target, a)
+                    task = ActionButtonTask(a, self.executeDocumentAction, target, a)
                     task.setConfirmationFunction(self.confirmationFunctionMap[target], a)
                     self.widget.documentActionsLayout.addWidget(actionButton)
                 else:
-                    task = ActionButtonTask(self.executeAction, a)
+                    task = ActionButtonTask(a, self.executeAction, a)
                     task.setConfirmationFunction(self.generalActionConfirmation, a)
                     self.widget.generalActionsLayout.addWidget(actionButton)
 
@@ -172,14 +184,14 @@ class ActionsViewer(DockWidget):
         self.progressDialog = asset_manager.loadDialog('progressDialog.ui')
         self.progressDialog.setWindowFlags(self.progressDialog.windowFlags() & ~Qt.WindowContextHelpButtonHint & ~Qt.WindowCloseButtonHint)
 
-    def executeAction(self, action : Action):
+    def executeAction(self, action : Action, *actionArgs):
         if action.runsOnMainThread:
             self.progressDialog.progressBar.setMaximum(0)
             self.progressDialog.setWindowTitle(action.displayName)
             self.progressDialog.show()
             QtCore.QCoreApplication.processEvents()
 
-        action.execute()
+        action.execute(*actionArgs)
 
         if action.runsOnMainThread:
             self.progressDialog.close()
@@ -190,31 +202,31 @@ class ActionsViewer(DockWidget):
         ret = QtWidgets.QMessageBox.question(self.parentWindow, f"Action Execution Confirmation", f"Execute \"{action.displayName}\"?")
         return ret == QtWidgets.QMessageBox.Yes
 
-    def executeDocumentAction(self, target, action : DocumentAction):
-        self.targetMap[target](action)
+    def executeDocumentAction(self, target, action : DocumentAction, *actionArgs):
+        self.targetMap[target](action, *actionArgs)
 
-    def executeActionOnAllFilteredDocuments(self, action: DocumentAction):
+    def executeActionOnAllFilteredDocuments(self, action: DocumentAction, *actionArgs):
         documentSearchFilterViewer : DocumentSearchFilterViewer = self.mainWindowManager.documentSearchFilterViewer
         snapshot = documentSearchFilterViewer.getFilteredDocumentsSnapshot()
         documentCount = snapshot.documentCount
         i = 0
 
         for document in snapshot.yieldDocuments():
-            action.execute(document)
+            action.execute(document, *actionArgs)
 
             self.updateProgressAsync(action, float(i+1) / documentCount, action.currentProgressMessage)
             i += 1
 
         self.clearProgressAsync()
 
-    def executeActionOnAllSelectedDocuments(self, action: DocumentAction):
+    def executeActionOnAllSelectedDocuments(self, action: DocumentAction, *actionArgs):
         selectedDocumentIds = [i for i in self.mainWindowManager.selectedDocumentIds]
         selectedDocumentCount = len(selectedDocumentIds)
 
         for i, uid in enumerate(selectedDocumentIds):
             document = self.dbManager.findOne(uid)
             if document != None:
-                action.execute(document)
+                action.execute(document, *actionArgs)
             else:
                 logger.warning(f'Could not find document with id {uid}')
 

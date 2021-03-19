@@ -210,7 +210,7 @@ class Bootstrapper(object):
         self.serviceRegistry.services.append(self.fileHandlerManager)
 
         pluginFolder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "plugins")
-        self.serviceRegistry.pluginManager = PluginManager([pluginFolder], self.serviceRegistry)
+        self.serviceRegistry.pluginManager = PluginManager([pluginFolder], self.serviceRegistry, self.appInfo)
         self.serviceRegistry.services.append(self.serviceRegistry.pluginManager)
 
         MDApi.ENVIRONMENT_MANAGER = self.serviceRegistry.environmentManager

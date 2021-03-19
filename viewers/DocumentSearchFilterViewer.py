@@ -124,9 +124,9 @@ class DocumentSearchFilterViewer(QtCore.QObject):
 
         self.customFilterScrollAreaLayout : QVBoxLayout = self.widget.customFilterScrollAreaLayout
         self.customFilterScrollAreaLayout.setAlignment(QtCore.Qt.AlignTop)
-        self.widget.findPushButton.clicked.connect(self.viewItemsOverThreadPool)
-        self.widget.filterEdit.returnPressed.connect(self.viewItemsOverThreadPool)
-        self.widget.distinctEdit.returnPressed.connect(self.viewItemsOverThreadPool)
+        self.widget.findPushButton.clicked.connect(lambda: self.viewItemsOverThreadPool(True))
+        self.widget.filterEdit.returnPressed.connect(lambda: self.viewItemsOverThreadPool(True))
+        self.widget.distinctEdit.returnPressed.connect(lambda: self.viewItemsOverThreadPool(True))
 
         self.setupFilter()
         self.updateDisplayedFilters()
@@ -141,6 +141,7 @@ class DocumentSearchFilterViewer(QtCore.QObject):
 
         self.setupSavedFiltersUI()
 
+        self.documentTableModel.onSort.subscribe(lambda: self.previewHighlightCache.clear())
         self.updateHighlightDocumentsWithPreviewColorFunction()
         self.mainWindow.highlightDocumentsWithPreviewCheckBox.stateChanged.connect(self.onHighlightDocumentsWithPreviewCheckBoxChanged)
 
@@ -420,7 +421,7 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         doc = self.dbManager.findOne(uid)
         
         if doc:
-            preview = doc.get('preview')
+            preview = doc.get(Keys.preview)
             hasPreview = preview and os.path.exists(preview)
             self.previewHighlightCache[rowIdx] = hasPreview
             if hasPreview:

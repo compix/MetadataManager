@@ -1,3 +1,4 @@
+from AppInfo import AppInfo
 from MetadataManagerCore.Event import Event
 from MetadataManagerCore.mongodb_manager import MongoDBManager
 from plugin.Plugin import Plugin
@@ -40,12 +41,13 @@ class PluginInfo(object):
         return os.path.basename(self.pluginFolder)
 
 class PluginManager(object):
-    def __init__(self, pluginsFolders: List[str], serviceRegistry: 'ServiceRegistry') -> None:
+    def __init__(self, pluginsFolders: List[str], serviceRegistry: 'ServiceRegistry', appInfo: AppInfo) -> None:
         super().__init__()
 
         self.pluginsFolders = pluginsFolders
         self.viewerRegistry = None
         self.serviceRegistry = serviceRegistry
+        self.appInfo = appInfo
 
         self.pluginInfoMap: Dict[str,PluginInfo] = dict()
         self.requiresApplicationRestart = False
@@ -120,6 +122,7 @@ class PluginManager(object):
             pluginInstance: Plugin = pluginClass()
             pluginInstance.viewerRegistry = self.viewerRegistry
             pluginInstance.serviceRegistry = self.serviceRegistry
+            pluginInstance.appInfo = self.appInfo
             pluginInfo.pluginInstance = pluginInstance
             pluginInfo.pluginLoadingError = None
 

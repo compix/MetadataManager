@@ -1,4 +1,5 @@
 import typing
+from AppInfo import AppInfo
 
 if typing.TYPE_CHECKING:
     from viewers.ViewerRegistry import ViewerRegistry
@@ -10,6 +11,7 @@ class Plugin(object):
 
         self.serviceRegistry: "ServiceRegistry" = None
         self.viewerRegistry: "ViewerRegistry" = None
+        self.appInfo: AppInfo = None
 
     def init(self):
         pass

@@ -216,6 +216,7 @@ class EnvironmentManagerViewer(DockWidget):
             self.exportSettingsAsJson(self.currentEnvironment.autoExportPath)
 
     def setCurrentEnvironment(self, env : Environment):
+        self.environmentsComboBox.setCurrentText(env.displayName)
         self.currentEnvironment = env
         
         self.updateSettingsTable()

@@ -72,7 +72,11 @@ class MainWindowManager(QtCore.QObject):
 
         self.restoreState()
 
-        self.documentSearchFilterViewer.viewItems()
+        self.documentSearchFilterViewer.viewItems(saveSearchHistoryEntry=False)
+
+    @property
+    def menuBar(self) -> QtWidgets.QMenuBar:
+        return self.window.menubar
 
     def initTable(self):
         self.tableModel = TableModel(self.window, [], [], [])
@@ -214,7 +218,7 @@ class MainWindowManager(QtCore.QObject):
             uid = self.tableModel.getUID(lastSelectedRowIdx)
             item = self.dbManager.findOne(uid)
             if item != None:
-                self.previewViewer.showPreview(item.get("preview"))
+                self.previewViewer.showPreview(item.get(Keys.preview))
                 self.inspector.showItem(uid)
 
     def addPreviewToAllEntries(self):
