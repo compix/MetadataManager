@@ -1,4 +1,6 @@
 
+from viewers.ViewerRegistry import ViewerRegistry
+from AppInfo import AppInfo
 from typing import List
 from MetadataManagerCore.mongodb_manager import MongoDBManager
 from MetadataManagerCore import Keys
@@ -7,15 +9,21 @@ from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManage
 from MetadataManagerCore.Event import Event
 from RenderingPipelinePlugin import PipelineKeys
 import logging
+from ServiceRegistry import ServiceRegistry
 
 logger = logging.getLogger(__name__)
 
+RenderingPipelinesCollectionName = 'rendering_pipelines'
+
 class RenderingPipelineManager(object):
-    def __init__(self, environmentManager: EnvironmentManager, dbManager: MongoDBManager) -> None:
+    def __init__(self, serviceRegistry: ServiceRegistry, viewerRegistry: ViewerRegistry, appInfo: AppInfo) -> None:
         super().__init__()
 
-        self.environmentManager = environmentManager
-        self.dbManager = dbManager
+        self.appInfo = appInfo
+        self.serviceRegistry = serviceRegistry
+        self.viewerRegistry = viewerRegistry
+        self.environmentManager = serviceRegistry.environmentManager
+        self.dbManager = serviceRegistry.dbManager
 
         self.pipelines: List[RenderingPipeline] = []
         self.pipelineClasses = set()
@@ -64,7 +72,7 @@ class RenderingPipelineManager(object):
         pipelineClass = self.getPipelineClassFromName(className)
 
         if pipelineClass:
-            return pipelineClass(pipelineName, self.environmentManager, self.dbManager)
+            return pipelineClass(pipelineName, self.serviceRegistry, self.viewerRegistry, self.appInfo)
         else:
             logger.error(f'Could not construct pipeline from {pipelineInfoDict}')
 
@@ -86,9 +94,20 @@ class RenderingPipelineManager(object):
 
         return pipeline
 
-    def addNewPipelineInstance(self, pipeline: RenderingPipeline):
-        self.pipelines.append(pipeline)
-        self.save(pipeline)
+    def addNewPipelineInstance(self, pipeline: RenderingPipeline, replaceExisting=True):
+        existingPipeline = self.getPipelineFromName(pipeline.name)
+
+        addPipeline = True
+        if existingPipeline:
+            if replaceExisting:
+                self.pipelines.remove(existingPipeline)
+                addPipeline = True
+            else:
+                addPipeline = False
+
+        if addPipeline:
+            self.pipelines.append(pipeline)
+            self.save(pipeline)
 
     def saveProjectSubfolders(self, subfolderDict: dict):
         renderingPipelineState = self.dbManager.db[Keys.STATE_COLLECTION].find_one({'_id': 'rendering_pipeline'})
@@ -118,23 +137,25 @@ class RenderingPipelineManager(object):
         return projectSubfolderDict
 
     def save(self, pipeline: RenderingPipeline):
-        renderingPipelineState = self.dbManager.db[Keys.STATE_COLLECTION].find_one({'_id': 'rendering_pipeline'})
-        if not renderingPipelineState:
-            renderingPipelineState = dict()
-
-        pipelinesDict = renderingPipelineState.setdefault('pipelines', dict())
-        pipelinesDict[pipeline.name] = self.pipelineDict(pipeline)
-
-        self.dbManager.db[Keys.STATE_COLLECTION].replace_one({'_id': 'rendering_pipeline'}, renderingPipelineState, upsert=True)
+        collection = self.dbManager.db[RenderingPipelinesCollectionName]
+        collection.replace_one({'_id': pipeline.name}, self.pipelineDict(pipeline), upsert=True)
 
     def load(self, pipelineClassName: str):
         # Note that rendering pipeline classes must be registered/known at this point:
-        renderingPipelineState = self.dbManager.db[Keys.STATE_COLLECTION].find_one({'_id': 'rendering_pipeline'})
-        if renderingPipelineState:
-            renderingPipelineDicts = renderingPipelineState.get('pipelines', {})
-
-            for pipelineInfoDict in renderingPipelineDicts.values():
+        collection = self.dbManager.db[RenderingPipelinesCollectionName]
+        if collection:
+            for pipelineInfoDict in collection.find({}):
                 if pipelineInfoDict.get('className') == pipelineClassName:
                     pipeline = self.constructPipelineFromDict(pipelineInfoDict)
                     if pipeline:
                         self.pipelines.append(pipeline)
+
+    def deletePipeline(self, pipelineName: str):
+        pipeline = self.getPipelineFromName(pipelineName)
+        if pipeline:
+            if pipeline.environment:
+                self.environmentManager.archive(self.dbManager, pipeline.environment)
+            self.serviceRegistry.dbManager.dropCollection(pipeline.dbCollectionName)
+            self.serviceRegistry.dbManager.dropCollection(pipeline.dbCollectionName + Keys.OLD_VERSIONS_COLLECTION_SUFFIX)
+            self.pipelines.remove(pipeline)
+            self.dbManager.db[RenderingPipelinesCollectionName].delete_one({'_id': pipelineName})

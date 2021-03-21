@@ -76,7 +76,7 @@ class EnvironmentManagerViewer(DockWidget):
         self.settingsTable.clear()
         for key, val in self.currentEnvironment.settings.items():
             if searchButton.isChecked():
-                if re.search(self.widget.keyLineEdit.text(), key) or re.search(self.widget.keyLineEdit.text(), val):
+                if re.search(self.widget.keyLineEdit.text(), key) or (isinstance(val, str) and re.search(self.widget.keyLineEdit.text(), val)):
                     self.settingsTable.addEntry([key, val])
             else:
                 self.settingsTable.addEntry([key, val])
@@ -159,9 +159,8 @@ class EnvironmentManagerViewer(DockWidget):
             ret = QMessageBox.question(self, "Archive Environment", "Are you sure you want to archive the selected environment?")
             if ret == QMessageBox.Yes:
                 self.environmentManager.archive(self.dbManager, self.currentEnvironment)
-                self.environmentsComboBox.removeItem(self.environmentsComboBox.currentIndex())
-                self.environmentsComboBox.setCurrentText("")
-                self.settingsTable.clear()
+                self.refreshEnvironmentsComboBox()
+                self.environmentsComboBox.setCurrentIndex(0)
         
     def setupKeyLineEdit(self):
         # Only allow alphabetic chars, digits, _, spaces:

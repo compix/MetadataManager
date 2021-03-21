@@ -19,6 +19,6 @@ class Inspector(DockWidget):
             for key, val in item.items():
                 valueEdit = QtWidgets.QLineEdit()
                 valueEdit.setReadOnly(True)
-                valueEdit.setText(str(val))
+                valueEdit.setText(str(val) if val else '')
                 valueEdit.setStyleSheet("* { background-color: rgba(0, 0, 0, 0); }")
                 form.addRow(str(key), valueEdit)

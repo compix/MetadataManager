@@ -1,10 +1,13 @@
 from RenderingPipelinePlugin.NamingConvention import replaceGermanCharacters
-from RenderingPipelinePlugin import PipelineKeys
+from RenderingPipelinePlugin import PipelineKeys, RenderingPipelineUtil
 import VisualScriptingExtensions.third_party_extensions.deadline_nodes as deadline_nodes
 from typing import List
 from MetadataManagerCore.actions.DocumentAction import DocumentAction
 import os
 import typing
+import logging
+
+logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
@@ -34,6 +37,14 @@ class Submitter(object):
                 "Group":"",
                 "JobDependencies":(",".join(dependentJobIds) if isinstance(dependentJobIds, list) else dependentJobIds)}
 
+    def setTimeout(self, jobInfoDict: dict, documentWithSettings: dict, timeoutKey: str):
+        timeout = documentWithSettings.get(timeoutKey)
+        if timeout != None and timeout.strip() != '':
+            try:
+                jobInfoDict['TaskTimeoutMinutes'] = int(timeout)
+            except Exception as e:
+                logger.error(str(e))
+
     def submitInputSceneCreation(self, documentWithSettings: dict, dependentJobIds: List[str]=None):
         pass
 
@@ -52,6 +63,13 @@ class Submitter(object):
         batchName = 'Post'
         jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.baseDeadlinePriority, documentWithSettings.get(PipelineKeys.DeadlineNukePool), dependentJobIds=dependentJobIds)
 
+        for i, ext in enumerate(RenderingPipelineUtil.getPostOutputExtensions(documentWithSettings)):
+            filename = self.pipeline.namingConvention.getPostFilename(documentWithSettings, ext=ext)
+            jobInfoDict[f'OutputDirectory{i}'] = os.path.dirname(filename)
+            jobInfoDict[f'OutputFilename{i}'] = os.path.basename(filename)
+
+        self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineNukeTimeout)
+
         sceneFilename = self.pipeline.namingConvention.getRenderSceneFilename(documentWithSettings)
         scriptFilename = documentWithSettings.get(PipelineKeys.NukeScript)
 
@@ -66,9 +84,12 @@ class Submitter(object):
         batchName = 'Delivery Copy'
         jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.baseDeadlinePriority, documentWithSettings.get(PipelineKeys.DeadlineDeliveryPool), dependentJobIds=dependentJobIds)
 
-        filename = self.pipeline.namingConvention.getDeliveryFilename(documentWithSettings, ext=self.pipeline.getPreferredPreviewExtension(documentWithSettings))
-        jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)
-        jobInfoDict['OutputFilename0'] = os.path.basename(filename)
+        for i, ext in enumerate(RenderingPipelineUtil.getPostOutputExtensions(documentWithSettings)):
+            filename = self.pipeline.namingConvention.getDeliveryFilename(documentWithSettings, ext=ext)
+            jobInfoDict[f'OutputDirectory{i}'] = os.path.dirname(filename)
+            jobInfoDict[f'OutputFilename{i}'] = os.path.basename(filename)
+
+        self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineDeliveryTimeout)
 
         actionId = f'{self.pipeline.name}_CopyForDeliveryDocumentAction'
 

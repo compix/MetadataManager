@@ -22,6 +22,8 @@ class Max3dsSubmitter(Submitter):
         jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)
         jobInfoDict['OutputFilename0'] = os.path.basename(filename)
 
+        self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineInputSceneTimeout)
+
         return deadline_nodes.submit_3dsMaxPipelineJob(sceneCreationScript, pipelineInfoDict, jobInfoDict, documentWithSettings.get(PipelineKeys.Max3dsVersion))
 
     def submitRenderSceneCreation(self, documentWithSettings: dict, dependentJobIds: List[str]=None):
@@ -41,6 +43,8 @@ class Max3dsSubmitter(Submitter):
         jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)
         jobInfoDict['OutputFilename0'] = os.path.basename(filename)
 
+        self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderSceneTimeout)
+
         return deadline_nodes.submit_3dsMaxPipelineJob(sceneCreationScript, pipelineInfoDict, jobInfoDict, documentWithSettings.get(PipelineKeys.Max3dsVersion))
 
     def submitRendering(self, documentWithSettings: dict, dependentJobIds: List[str]=None):
@@ -51,6 +55,11 @@ class Max3dsSubmitter(Submitter):
         jobName = self.pipeline.namingConvention.getRenderingName(documentWithSettings)
         batchName = 'Rendering'
         jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.baseDeadlinePriority, documentWithSettings.get(PipelineKeys.DeadlineRenderingPool), dependentJobIds=dependentJobIds)
+        filename = self.pipeline.namingConvention.getRenderingFilename(documentWithSettings)
+        jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)
+        jobInfoDict['OutputFilename0'] = os.path.basename(filename)
+        
+        self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderingTimeout)
 
         sceneFilename = self.pipeline.namingConvention.getRenderSceneFilename(documentWithSettings)
         pluginInfoDict = deadline_nodes.create3dsMaxPluginInfoDictionary(sceneFilename, Version=documentWithSettings.get(PipelineKeys.Max3dsVersion))

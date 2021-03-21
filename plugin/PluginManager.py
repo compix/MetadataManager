@@ -69,6 +69,9 @@ class PluginManager(object):
             # Go through the subdirectories of the plugins folder to add the plugin info
             for root,dirs,_ in os.walk(pluginsFolder):
                 for pluginFolder in dirs:
+                    if pluginFolder == '__pycache__':
+                        continue
+                    
                     fullPluginFolderPath = os.path.join(root, pluginFolder)
                     self.pluginInfoMap[pluginFolder] = PluginInfo(fullPluginFolderPath)
 

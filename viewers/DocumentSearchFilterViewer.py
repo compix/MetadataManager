@@ -1,5 +1,5 @@
 import PySide2
-from PySide2.QtGui import QColor
+from PySide2.QtGui import QColor, QMovie
 import asset_manager
 from qt_extensions import qt_util
 from TableModel import TableModel
@@ -10,7 +10,7 @@ from AppInfo import AppInfo
 import logging
 from qt_extensions.Completer import Completer
 from PySide2 import QtCore, QtWidgets
-from PySide2.QtWidgets import QCheckBox, QListWidget, QListWidgetItem, QHBoxLayout, QLineEdit, QTableWidget, QWidget, QLayout, QAbstractItemView, QVBoxLayout
+from PySide2.QtWidgets import QCheckBox, QLabel, QListWidget, QListWidgetItem, QHBoxLayout, QLineEdit, QPushButton, QTableWidget, QWidget, QLayout, QAbstractItemView, QVBoxLayout
 from PySide2 import QtGui
 from PySide2.QtCore import QThreadPool
 import json
@@ -128,6 +128,9 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         self.widget.filterEdit.returnPressed.connect(lambda: self.viewItemsOverThreadPool(True))
         self.widget.distinctEdit.returnPressed.connect(lambda: self.viewItemsOverThreadPool(True))
 
+        self.searchingInProgressMovie = QMovie(':/icons/eclipse_loading.gif')
+        self.originalFindButtonIcon = self.widget.findPushButton.icon()
+
         self.setupFilter()
         self.updateDisplayedFilters()
 
@@ -144,6 +147,22 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         self.documentTableModel.onSort.subscribe(lambda: self.previewHighlightCache.clear())
         self.updateHighlightDocumentsWithPreviewColorFunction()
         self.mainWindow.highlightDocumentsWithPreviewCheckBox.stateChanged.connect(self.onHighlightDocumentsWithPreviewCheckBoxChanged)
+
+    def onSearchingInProgressMovieFrameChanged(self, frame):
+        self.widget.findPushButton.setIcon(self.searchingInProgressMovie.currentPixmap())
+
+    def setLoading(self, loading = True):
+        self.widget.findPushButton.setEnabled(not loading)
+        self.widget.historyButton.setEnabled(not loading)
+        self.widget.savedFiltersComboBox.setEnabled(not loading)
+
+        if loading:
+            self.searchingInProgressMovie.frameChanged.connect(self.onSearchingInProgressMovieFrameChanged)
+            self.searchingInProgressMovie.start()
+        else:
+            self.widget.findPushButton.setIcon(self.originalFindButtonIcon)
+            self.searchingInProgressMovie.frameChanged.disconnect(self.onSearchingInProgressMovieFrameChanged)
+            self.searchingInProgressMovie.stop()
 
     def getFilteredDocumentsSnapshot(self):
         return FilteredDocumentsSnapshot(self)
@@ -348,19 +367,10 @@ class DocumentSearchFilterViewer(QtCore.QObject):
 
         return num
 
-    def updateDocumentProgress(self, val):
-        qt_util.runInMainThread(self.widget.documentProgressBar.setValue, val)
-
     def getFilteredDocuments(self):
         for collectionName in self.collectionViewer.yieldSelectedCollectionNames():
             for d in self.getFilteredDocumentsOfCollection(collectionName):
                 yield d
-
-    def initDocumentProgress(self, maxVal):
-        if not isinstance(maxVal, int):
-            maxVal = 0
-            
-        qt_util.runInMainThread(self.widget.documentProgressBar.setMaximum, maxVal)
 
     # item: mongodb document
     def extractTableEntry(self, displayedKeys, item):
@@ -372,19 +382,16 @@ class DocumentSearchFilterViewer(QtCore.QObject):
 
         return entry
 
-    @timeit
     def viewItems(self, saveSearchHistoryEntry = True):
         if len(self.documentTableModel.displayedKeys) == 0:
             return
 
         self.previewHighlightCache = dict()
 
-        qt_util.runInMainThread(self.widget.findPushButton.setEnabled, False)
+        qt_util.runInMainThread(self.setLoading, True)
 
         qt_util.runInMainThread(self.documentTableModel.clear)
         qt_util.runInMainThread(lambda: self.mainWindow.itemCountLabel.setText("Item Count: Computing..."))
-
-        self.initDocumentProgress(0)
 
         entries = []
         i = 0
@@ -403,11 +410,9 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         qt_util.runInMainThread(self.documentTableModel.addEntries, entries)
 
         self.currentDocumentCount = i
-        self.initDocumentProgress(i if i > 0 else 1)
         qt_util.runInMainThread(lambda:self.mainWindow.itemCountLabel.setText("Item Count: " + str(i)))
-        self.updateDocumentProgress(0.0)
 
-        qt_util.runInMainThread(self.widget.findPushButton.setEnabled, True)
+        qt_util.runInMainThread(self.setLoading, False)
         if saveSearchHistoryEntry:
             qt_util.runInMainThread(self.addCurrentSearchHistoryEntry)
 

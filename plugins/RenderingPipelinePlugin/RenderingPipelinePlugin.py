@@ -9,19 +9,19 @@ class RenderingPipelinePlugin(Plugin):
         super().__init__()
 
     def init(self):
-        self.renderingPipelineManager = RenderingPipelineManager(self.serviceRegistry.environmentManager, self.serviceRegistry.dbManager)
+        self.renderingPipelineManager = RenderingPipelineManager(self.serviceRegistry, self.viewerRegistry, self.appInfo)
 
         if self.appInfo.mode == ApplicationMode.GUI:
             menuBar = self.viewerRegistry.mainWindowManager.menuBar
             pipelineMenu = QtWidgets.QMenu("Rendering Pipeline")
 
-            self.createAction = QtWidgets.QAction("Create")
+            self.createAction = QtWidgets.QAction("Manage Pipeline")
             self.createAction.triggered.connect(self.onCreate)
             pipelineMenu.addAction(self.createAction)
 
             menuBar.addMenu(pipelineMenu)
 
-            self.renderingPipelineViewer = RenderingPipelineViewer(self.viewerRegistry.mainWindowManager.window, self.renderingPipelineManager, self.serviceRegistry, self.viewerRegistry)
+            self.renderingPipelineViewer = RenderingPipelineViewer(self.viewerRegistry.mainWindowManager.window, self.renderingPipelineManager, self.serviceRegistry, self.viewerRegistry, self.appInfo)
 
     def onCreate(self):
         if self.appInfo.mode == ApplicationMode.GUI:

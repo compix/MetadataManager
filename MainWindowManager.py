@@ -72,7 +72,7 @@ class MainWindowManager(QtCore.QObject):
 
         self.restoreState()
 
-        self.documentSearchFilterViewer.viewItems(saveSearchHistoryEntry=False)
+        self.documentSearchFilterViewer.viewItemsOverThreadPool(saveSearchHistoryEntry=False)
 
     @property
     def menuBar(self) -> QtWidgets.QMenuBar:
@@ -262,7 +262,7 @@ class MainWindowManager(QtCore.QObject):
             palette.setColor(QtGui.QPalette.Link, QtGui.QColor(42, 130, 218))
             palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(42, 130, 218))
             palette.setColor(QtGui.QPalette.HighlightedText, QtCore.Qt.black)
-            disabledColor = QtGui.QColor(25, 25, 25)
+            disabledColor = QtGui.QColor(35, 35, 35)
             palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Window, disabledColor)
             palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, disabledColor)
             palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Base, disabledColor)

@@ -1,6 +1,9 @@
 <RCC>
   <qresource prefix="icons">
+    <file>alert.png</file>
+    <file>question.png</file>
     <file>information.png</file>
+    <file>eclipse_loading.gif</file>
     <file>refresh.png</file>
     <file>search_highlighted.png</file>
     <file>new.png</file>

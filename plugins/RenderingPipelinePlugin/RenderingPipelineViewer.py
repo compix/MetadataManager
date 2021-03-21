@@ -1,11 +1,17 @@
+from table import table_util
+from qt_extensions.InputConfirmDialog import InputConfirmDialog
+from AppInfo import AppInfo
+from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
+from RenderingPipelinePlugin.filters.MappingFilter import MappingFilter
 from ServiceRegistry import ServiceRegistry
 from MetadataManagerCore import Keys
 from typing import List
 
 from RenderingPipelinePlugin.PipelineType import PipelineType
-from RenderingPipelinePlugin.RenderingPipelineManager import RenderingPipelineManager
+from RenderingPipelinePlugin.RenderingPipelineManager import RenderingPipelineManager, RenderingPipelinesCollectionName
 import asset_manager
 from qt_extensions import qt_util
+from qt_extensions.ProgressDialog import ProgressDialog
 from PySide2 import QtWidgets
 from MetadataManagerCore.environment.Environment import Environment
 import os
@@ -59,14 +65,17 @@ class EnvironmentEntryComboBox(EnvironmentEntry):
         cb.setCurrentText(environment.settings.get(self.envKey))
 
 class RenderingPipelineViewer(object):
-    def __init__(self, parentWindow, renderingPipelineManager: RenderingPipelineManager, serviceRegistry: ServiceRegistry, viewerRegistry: ViewerRegistry):
+    def __init__(self, parentWindow, renderingPipelineManager: RenderingPipelineManager, serviceRegistry: ServiceRegistry, viewerRegistry: ViewerRegistry, appInfo: AppInfo):
         super().__init__()
+
+        Keys.hiddenCollections.add(RenderingPipelinesCollectionName)
         
-        uiFilePath = asset_manager.getPluginUIFilePath("RenderingPipelinePlugin", "renderingPipeline.ui")
+        uiFilePath = asset_manager.getPluginUIFilePath("RenderingPipelinePlugin", "assets/renderingPipeline.ui")
         self.dialog = asset_manager.loadDialogAbsolutePath(uiFilePath, fixedSize=False)
 
         self.serviceRegistry = serviceRegistry
         self.viewerRegistry = viewerRegistry
+        self.appInfo = appInfo
         self.environmentEntries: List[EnvironmentEntry] = []
         
         self.renderingPipelineManager = renderingPipelineManager
@@ -81,12 +90,15 @@ class RenderingPipelineViewer(object):
         self.setupPipelineTypeComboBox()
 
         self.dialog.createButton.clicked.connect(self.onCreateClick)
+        self.dialog.deleteButton.clicked.connect(self.onDeleteClick)
         self.dialog.cancelButton.clicked.connect(self.hide)
+
+        self.dialog.deleteButton.setVisible(False)
 
         self.refreshPipelineNameComboBox()
         self.dialog.pipelineNameComboBox.currentTextChanged.connect(self.onPipelineNameChanged)
-        self.dialog.productTableEdit.textChanged.connect(self.onProductTableEditTextChanged)
-        self.dialog.productTableSheetNameEdit.textChanged.connect(self.onProductTableEditTextChanged)
+        self.dialog.productTableEdit.textChanged.connect(self.onProductTableChanged)
+        self.dialog.productTableSheetNameComboBox.currentTextChanged.connect(self.onProductTableSheetNameChanged)
 
         self.dialog.statusLabel.setText('')
         self.dialog.statusLabel.setStyleSheet('color: red')
@@ -130,6 +142,12 @@ class RenderingPipelineViewer(object):
         self.refreshAvailablePipelineMenu()
         self.initProjectSubfolders()
         self.updateTabs()
+        self.registerFilters()
+
+        self.viewerRegistry.collectionViewer.refreshCollections()
+
+    def registerFilters(self):
+        self.serviceRegistry.documentFilterManager.addFilter(MappingFilter())
 
     def refreshPipelineNameComboBox(self):
         currentText = self.dialog.pipelineNameComboBox.currentText()
@@ -158,13 +176,21 @@ class RenderingPipelineViewer(object):
             pipelineSelectionAction.triggered.connect((lambda selectedPipeline: lambda: self.onPipelineSelected(selectedPipeline))(pipelineName))
             self.pipelineSelectionMenu.addAction(pipelineSelectionAction)
 
+        selectedPipelineName = self.appInfo.settings.value('SelectedRenderingPipeline')
+        if selectedPipelineName:
+            self.pipelineSelectionMenu.setTitle(f'Selected RP: {selectedPipelineName}')
+
     def onPipelineSelected(self, pipelineName: str):
+        self.selectPipelineFromName(pipelineName)
+
+    def selectPipelineFromName(self, pipelineName: str):
         pipeline = self.renderingPipelineManager.getPipelineFromName(pipelineName)
         if pipeline:
             self.viewerRegistry.collectionViewer.showSingleCollection(pipeline.dbCollectionName)
             self.viewerRegistry.environmentManagerViewer.setCurrentEnvironment(pipeline.environment)
             self.viewerRegistry.documentSearchFilterViewer.viewItems(saveSearchHistoryEntry=False)
-            self.pipelineSelectionMenu.setTitle(f'Selected RP: {pipelineName}')
+            self.pipelineSelectionMenu.setTitle(f'Selected RP: {pipeline.name}')
+            self.appInfo.settings.setValue('SelectedRenderingPipeline', pipeline.name)
 
     def fetchDeadlinePoolNames(self):
         poolNames = getDeadlinePoolNames(quiet=True)
@@ -203,14 +229,29 @@ class RenderingPipelineViewer(object):
                 lineEdit.setText(dirName)
         
         button.clicked.connect(onSelect)
+    
+    def onDeleteClick(self):
+        # Confirm by user:
+        pipelineName = self.dialog.pipelineNameComboBox.currentText()
+        pipeline = self.renderingPipelineManager.getPipelineFromName(pipelineName)
+        if not pipeline:
+            return
+
+        def onConfirmPipelineDeletion():
+            self.renderingPipelineManager.deletePipeline(pipelineName)
+            self.refreshPipelineNameComboBox()
+            self.dialog.pipelineNameComboBox.setCurrentText('')
+            self.refreshAvailablePipelineMenu()
+            self.viewerRegistry.collectionViewer.refreshCollections()
+            self.viewerRegistry.environmentManagerViewer.refreshEnvironmentsComboBox()
+
+        self.deleteInputConfirmDialog = InputConfirmDialog(pipelineName, onConfirmPipelineDeletion, title='Delete Confirmation', confirmButtonText='Delete')
+        self.deleteInputConfirmDialog.open()
 
     def onCreateClick(self):
         pipelineName = self.dialog.pipelineNameComboBox.currentText()
 
         envId = self.environmentManager.getIdFromEnvironmentName(pipelineName)
-        if pipelineName in self.renderingPipelineManager.pipelineNames or not self.environmentManager.isValidEnvironmentId(envId) or self.environmentManager.hasEnvironmentId(envId):
-            self.dialog.statusLabel.setText(f'The pipeline {pipelineName} already exists or is invalid. Please type in a different name.')
-            return
 
         if not self.dialog.headerConfirmationCheckBox.isChecked():
             self.dialog.statusLabel.setText(f'Please confirm the table extraction.')
@@ -228,7 +269,7 @@ class RenderingPipelineViewer(object):
         inputSceneCreationScript = self.dialog.inputSceneCreationScriptEdit.text()
         nukeScript = self.dialog.nukeScriptEdit.text()
         productTable = self.dialog.productTableEdit.text()
-        sheetName = self.dialog.productTableSheetNameEdit.text()
+        sheetName = self.dialog.productTableSheetNameComboBox.currentText()
         baseScene = self.dialog.baseSceneEdit.text()
         renderSettingsFile = self.dialog.renderSettingsEdit.text()
         replaceGermanChars = self.dialog.replaceGermanCharactersCheckBox.isChecked()
@@ -323,45 +364,64 @@ class RenderingPipelineViewer(object):
             return
 
         # Read the table:
-        # TODO: Need progress bar.
         try:
-            pipeline.readProductTable(productTablePath=productTable, productTableSheetname=sheetName, environmentSettings=environment.getEvaluatedSettings())
+            progressDialog = ProgressDialog()
+            progressDialog.open()
+            pipeline.readProductTable(productTablePath=productTable, productTableSheetname=sheetName, environmentSettings=environment.getEvaluatedSettings(), onProgressUpdate=progressDialog.updateProgress)
         except Exception as e:
+            progressDialog.close()
             self.dialog.statusLabel.setText(f'Failed reading the product table {productTable} with exception: {str(e)}')
             return
 
-        self.renderingPipelineManager.addNewPipelineInstance(pipeline)
-        self.environmentManager.addEnvironment(environment, save=True)
+        pipelineExists = self.renderingPipelineManager.getPipelineFromName(pipelineName) != None
+
+        self.renderingPipelineManager.addNewPipelineInstance(pipeline, replaceExisting=True)
+        self.environmentManager.addEnvironment(environment, save=True, replaceExisting=True)
         if projectSubfolderSaveDict != self.projectSubfolderDict:
             self.renderingPipelineManager.saveProjectSubfolders(projectSubfolderSaveDict)
 
         self.viewerRegistry.environmentManagerViewer.refreshEnvironmentsComboBox()
         self.viewerRegistry.collectionViewer.refreshCollections()
         self.refreshAvailablePipelineMenu()
-        self.hide()
+
+        if not pipelineExists:
+            self.hide()
 
     def onPipelineNameChanged(self, pipelineName: str):
         if pipelineName in self.renderingPipelineManager.pipelineNames:
             self.loadPipeline(pipelineName)
+            self.dialog.createButton.setText(' Modify')
+            self.dialog.deleteButton.setVisible(True)
+        else:
+            self.dialog.createButton.setText(' Create')
+            self.dialog.deleteButton.setVisible(False)
 
-    def onProductTableEditTextChanged(self, _: str):
-        productTable = self.dialog.productTableEdit.text()
-        sheetName = self.dialog.productTableSheetNameEdit.text()
+    def refreshProductSheetNameComboBox(self):
+        self.dialog.productTableSheetNameComboBox.clear()
+        productTablePath = self.dialog.productTableEdit.text()
+
+        sheetNames = table_util.getSheetNames(productTablePath)
+        if sheetNames:
+            for sheetName in sheetNames:
+                self.dialog.productTableSheetNameComboBox.addItem(sheetName)
+
+    def onProductTableSheetNameChanged(self, txt: str):
+        self.updateExtractedTableHeader()
+
+    def onProductTableChanged(self, productTablePath: str):
+        self.updateExtractedTableHeader()
+        self.refreshProductSheetNameComboBox()
+
+    def updateExtractedTableHeader(self):
+        productTablePath = self.dialog.productTableEdit.text()
+        sheetName = self.dialog.productTableSheetNameComboBox.currentText()
         table: QtWidgets.QTableWidget = self.dialog.extractedProductTableWidget
         table.clear()
-
-        if os.path.exists(productTable):
+        
+        if os.path.exists(productTablePath):
             try:
-                if productTable.endswith('.xlsx'):
-                    sheet = xlrd.open_workbook(filename=productTable).sheet_by_name(sheetName)
-                    header = sheet.row_values(0)
-                elif productTable.endswith('.csv'):
-                    with open(productTable) as f:
-                        for row in f:
-                            header = row.split(';')
-                            break
-                else:
-                    raise RuntimeError(f'Unsupported file format {os.path.splitext(productTable)[1]}')
+                productTable = table_util.readTable(productTablePath,excelSheetName=sheetName)
+                header = productTable.getHeader()
                 
                 table.setColumnCount(len(header))
                 table.setHorizontalHeaderLabels(header)
@@ -378,6 +438,9 @@ class RenderingPipelineViewer(object):
     def loadPipeline(self, pipelineName: str):
         pipeline = self.renderingPipelineManager.getPipelineFromName(pipelineName)
         environment = self.environmentManager.getEnvironmentFromName(pipeline.environmentName)
+        if not environment:
+            environment = Environment('')
+
         environmentSettings = environment.settings
 
         if pipeline:
@@ -388,7 +451,7 @@ class RenderingPipelineViewer(object):
             self.dialog.inputSceneCreationScriptEdit.setText(environmentSettings.get(PipelineKeys.InputSceneCreationScript, ''))
             self.dialog.nukeScriptEdit.setText(environmentSettings.get(PipelineKeys.NukeScript, ''))
             self.dialog.productTableEdit.setText(environmentSettings.get(PipelineKeys.ProductTable, ''))
-            self.dialog.productTableSheetNameEdit.setText(environmentSettings.get(PipelineKeys.ProductTableSheetName, ''))
+            self.dialog.productTableSheetNameComboBox.setCurrentText(environmentSettings.get(PipelineKeys.ProductTableSheetName, ''))
             self.dialog.baseSceneEdit.setText(environmentSettings.get(PipelineKeys.BaseScene, ''))
             self.dialog.renderSettingsEdit.setText(environmentSettings.get(PipelineKeys.RenderSettings, ''))
             self.dialog.replaceGermanCharactersCheckBox.setChecked(environmentSettings.get(PipelineKeys.ReplaceGermanCharacters, True))
@@ -412,6 +475,8 @@ class RenderingPipelineViewer(object):
             self.dialog.renderingNamingEdit.setText(environmentSettings.get(PipelineKeys.RenderingNaming, ''))
             self.dialog.postNamingEdit.setText(environmentSettings.get(PipelineKeys.PostNaming, ''))
             self.dialog.deliveryNamingEdit.setText(environmentSettings.get(PipelineKeys.DeliveryNaming, ''))
+
+            self.dialog.headerConfirmationCheckBox.setChecked(True)
 
             for envEntry in self.environmentEntries:
                 if envEntry.isApplicable():
@@ -460,6 +525,7 @@ class RenderingPipelineViewer(object):
             cb.addItem(className)
 
     def show(self):
+        self.refreshPipelineNameComboBox()
         self.dialog.show()
 
     def hide(self):

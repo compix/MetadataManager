@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>801</width>
-    <height>763</height>
+    <width>841</width>
+    <height>967</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,8 +34,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>740</width>
-            <height>1153</height>
+            <width>780</width>
+            <height>1154</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -94,7 +94,7 @@
                      <string/>
                     </property>
                     <property name="icon">
-                     <iconset resource="../../assets/resource_files/resources.qrc">
+                     <iconset resource="../../../assets/resource_files/resources.qrc">
                       <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
                     </property>
                    </widget>
@@ -151,7 +151,7 @@
                      <string/>
                     </property>
                     <property name="icon">
-                     <iconset resource="../../assets/resource_files/resources.qrc">
+                     <iconset resource="../../../assets/resource_files/resources.qrc">
                       <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
                     </property>
                    </widget>
@@ -180,7 +180,7 @@
                      <string/>
                     </property>
                     <property name="icon">
-                     <iconset resource="../../assets/resource_files/resources.qrc">
+                     <iconset resource="../../../assets/resource_files/resources.qrc">
                       <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
                     </property>
                    </widget>
@@ -209,7 +209,7 @@
                      <string/>
                     </property>
                     <property name="icon">
-                     <iconset resource="../../assets/resource_files/resources.qrc">
+                     <iconset resource="../../../assets/resource_files/resources.qrc">
                       <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
                     </property>
                    </widget>
@@ -238,7 +238,7 @@
                      <string/>
                     </property>
                     <property name="icon">
-                     <iconset resource="../../assets/resource_files/resources.qrc">
+                     <iconset resource="../../../assets/resource_files/resources.qrc">
                       <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
                     </property>
                    </widget>
@@ -267,7 +267,7 @@
                      <string/>
                     </property>
                     <property name="icon">
-                     <iconset resource="../../assets/resource_files/resources.qrc">
+                     <iconset resource="../../../assets/resource_files/resources.qrc">
                       <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
                     </property>
                    </widget>
@@ -296,7 +296,7 @@
                      <string/>
                     </property>
                     <property name="icon">
-                     <iconset resource="../../assets/resource_files/resources.qrc">
+                     <iconset resource="../../../assets/resource_files/resources.qrc">
                       <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
                     </property>
                    </widget>
@@ -327,13 +327,6 @@
                  <widget class="QLabel" name="label_20">
                   <property name="text">
                    <string>Product Table Sheet Name</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="9" column="1">
-                 <widget class="QLineEdit" name="productTableSheetNameEdit">
-                  <property name="toolTip">
-                   <string>This field is required if an excel table is provided.</string>
                   </property>
                  </widget>
                 </item>
@@ -409,7 +402,7 @@
                 <item row="7" column="1">
                  <widget class="QComboBox" name="nukeVersionComboBox">
                   <property name="currentText">
-                   <string>12.0</string>
+                   <string>10.0</string>
                   </property>
                   <item>
                    <property name="text">
@@ -490,6 +483,9 @@
                    <bool>true</bool>
                   </property>
                  </widget>
+                </item>
+                <item row="9" column="1">
+                 <widget class="QComboBox" name="productTableSheetNameComboBox"/>
                 </item>
                </layout>
               </item>
@@ -597,7 +593,7 @@
                         <string/>
                        </property>
                        <property name="icon">
-                        <iconset resource="../../assets/resource_files/resources.qrc">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
                          <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
                        </property>
                       </widget>
@@ -629,7 +625,7 @@
                         <string/>
                        </property>
                        <property name="icon">
-                        <iconset resource="../../assets/resource_files/resources.qrc">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
                          <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
                        </property>
                       </widget>
@@ -661,7 +657,7 @@
                         <string/>
                        </property>
                        <property name="icon">
-                        <iconset resource="../../assets/resource_files/resources.qrc">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
                          <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
                        </property>
                       </widget>
@@ -700,7 +696,7 @@
                         <string/>
                        </property>
                        <property name="icon">
-                        <iconset resource="../../assets/resource_files/resources.qrc">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
                          <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
                        </property>
                       </widget>
@@ -732,7 +728,7 @@
                         <string/>
                        </property>
                        <property name="icon">
-                        <iconset resource="../../assets/resource_files/resources.qrc">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
                          <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
                        </property>
                       </widget>
@@ -764,7 +760,7 @@
                         <string/>
                        </property>
                        <property name="icon">
-                        <iconset resource="../../assets/resource_files/resources.qrc">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
                          <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
                        </property>
                       </widget>
@@ -789,7 +785,7 @@
                         <string/>
                        </property>
                        <property name="icon">
-                        <iconset resource="../../assets/resource_files/resources.qrc">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
                          <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
                        </property>
                       </widget>
@@ -824,7 +820,7 @@
                       <string/>
                      </property>
                      <property name="pixmap">
-                      <pixmap resource="../../assets/resource_files/resources.qrc">:/icons/information.png</pixmap>
+                      <pixmap resource="../../../assets/resource_files/resources.qrc">:/icons/information.png</pixmap>
                      </property>
                      <property name="scaledContents">
                       <bool>true</bool>
@@ -1016,8 +1012,8 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>757</width>
-            <height>564</height>
+            <width>797</width>
+            <height>853</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -1245,8 +1241,8 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>757</width>
-            <height>564</height>
+            <width>797</width>
+            <height>853</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -1316,8 +1312,8 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>757</width>
-            <height>564</height>
+            <width>797</width>
+            <height>853</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1384,7 +1380,22 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
          <item>
           <widget class="QPushButton" name="createButton">
            <property name="text">
-            <string>Create</string>
+            <string> Create</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../../../assets/resource_files/resources.qrc">
+             <normaloff>:/icons/service.png</normaloff>:/icons/service.png</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="deleteButton">
+           <property name="text">
+            <string> Delete</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../../../assets/resource_files/resources.qrc">
+             <normaloff>:/icons/delete.png</normaloff>:/icons/delete.png</iconset>
            </property>
           </widget>
          </item>
@@ -1403,8 +1414,76 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>pipelineNameComboBox</tabstop>
+  <tabstop>baseProjectFolderEdit</tabstop>
+  <tabstop>pipelineTypeComboBox</tabstop>
+  <tabstop>pipelineClassComboBox</tabstop>
+  <tabstop>renderSceneCreationScriptEdit</tabstop>
+  <tabstop>inputSceneCreationScriptEdit</tabstop>
+  <tabstop>nukeScriptEdit</tabstop>
+  <tabstop>nukeVersionComboBox</tabstop>
+  <tabstop>productTableEdit</tabstop>
+  <tabstop>baseSceneEdit</tabstop>
+  <tabstop>renderSettingsEdit</tabstop>
+  <tabstop>replaceGermanCharactersCheckBox</tabstop>
+  <tabstop>perspectiveCodesEdit</tabstop>
+  <tabstop>renderingExtensionComboBox</tabstop>
+  <tabstop>postOutputExtensionsEdit</tabstop>
+  <tabstop>headerConfirmationCheckBox</tabstop>
+  <tabstop>renderScenesFolderEdit</tabstop>
+  <tabstop>inputScenesFolderEdit</tabstop>
+  <tabstop>environmentScenesEdit</tabstop>
+  <tabstop>nukeScenesFolderEdit</tabstop>
+  <tabstop>renderingsFolderEdit</tabstop>
+  <tabstop>postFolderEdit</tabstop>
+  <tabstop>deliveryFolderEdit</tabstop>
+  <tabstop>sidNamingEdit</tabstop>
+  <tabstop>renderSceneNamingEdit</tabstop>
+  <tabstop>inputSceneNamingEdit</tabstop>
+  <tabstop>environmentSceneNamingEdit</tabstop>
+  <tabstop>nukeSceneNamingEdit</tabstop>
+  <tabstop>renderingNamingEdit</tabstop>
+  <tabstop>postNamingEdit</tabstop>
+  <tabstop>deliveryNamingEdit</tabstop>
+  <tabstop>createButton</tabstop>
+  <tabstop>renderSettingsButton</tabstop>
+  <tabstop>environmentScenesButton</tabstop>
+  <tabstop>renderSceneCreationScriptButton</tabstop>
+  <tabstop>renderingsFolderButton</tabstop>
+  <tabstop>nukeScriptButton</tabstop>
+  <tabstop>postFolderButton</tabstop>
+  <tabstop>productTableButton</tabstop>
+  <tabstop>deliveryFolderButton</tabstop>
+  <tabstop>cancelButton</tabstop>
+  <tabstop>nukeScenesFolderButton</tabstop>
+  <tabstop>scrollArea</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>baseSceneButton</tabstop>
+  <tabstop>renderScenesFolderButton</tabstop>
+  <tabstop>inputSceneCreationScriptButton</tabstop>
+  <tabstop>inputScenesFolderButton</tabstop>
+  <tabstop>extractedProductTableWidget</tabstop>
+  <tabstop>baseProjectFolderButton</tabstop>
+  <tabstop>scrollArea_3</tabstop>
+  <tabstop>deadlinePriorityEdit</tabstop>
+  <tabstop>deadlineInputScenePoolComboBox</tabstop>
+  <tabstop>deadlineRenderScenePoolComboBox</tabstop>
+  <tabstop>deadlineRenderingPoolComboBox</tabstop>
+  <tabstop>deadlineNukePoolComboBox</tabstop>
+  <tabstop>deadlineDeliveryPoolComboBox</tabstop>
+  <tabstop>inputSceneDeadlineTimeout</tabstop>
+  <tabstop>renderSceneDeadlineTimeout</tabstop>
+  <tabstop>renderingDeadlineTimeout</tabstop>
+  <tabstop>nukeDeadlineTimeout</tabstop>
+  <tabstop>deliveryDeadlineTimeout</tabstop>
+  <tabstop>scrollArea_2</tabstop>
+  <tabstop>versionOf3dsMaxComboBox</tabstop>
+  <tabstop>scrollArea_4</tabstop>
+ </tabstops>
  <resources>
-  <include location="../../assets/resource_files/resources.qrc"/>
+  <include location="../../../assets/resource_files/resources.qrc"/>
+  <include location="../../../assets/resource_files/resources.qrc"/>
  </resources>
  <connections/>
 </ui>

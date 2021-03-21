@@ -1,3 +1,4 @@
+from qt_extensions.ProgressDialog import ProgressDialog
 from typing import Any
 from PySide2.QtWidgets import QProgressBar, QStatusBar
 from viewers.DocumentSearchFilterViewer import DocumentSearchFilterViewer
@@ -42,19 +43,23 @@ class ActionButtonTask(object):
         self.confirmationFunc = FuncWrapper(confirmationFunc, *args, **kwargs)
         
     def __call__(self):
-        if self.action.confirmationFunction:
-            confirmed = self.action.confirmationFunction()
-        elif self.action.useDefaultConfirmationFunction:
+        if self.action.confirmationEvent != None and self.action.requestConfirmationFunction != None:
+            self.action.confirmationEvent.clear()
+            self.action.confirmationEvent.subscribe(self.onConfirmation)
+            self.action.requestConfirmationFunction()
+        elif self.action.useDefaultConfirmationEvent:
             confirmed = self.confirmationFunc == None or self.confirmationFunc()
+            if confirmed:
+                self.onConfirmation()
 
+    def onConfirmation(self):
         actionArgs = self.action.retrieveArgsFunction() if self.action.retrieveArgsFunction else []
 
-        if confirmed:
-            if self.runsOnMainThread:
-                self.func(*self.args, *actionArgs, **self.kwargs)
-            else:
-                QThreadPool.globalInstance().start(qt_util.LambdaTask(self.func, *self.args, *actionArgs, **self.kwargs))
-        
+        if self.runsOnMainThread:
+            self.func(*self.args, *actionArgs, **self.kwargs)
+        else:
+            QThreadPool.globalInstance().start(qt_util.LambdaTask(self.func, *self.args, *actionArgs, **self.kwargs))
+
 def clearContainer(container):
     for i in reversed(range(container.count())): 
         container.itemAt(i).widget().setParent(None)
@@ -95,9 +100,10 @@ class ActionsViewer(DockWidget):
 
         self.actionManager.linkActionToCollectionEvent.subscribe(lambda actionId, collectionName: self.refreshActionView())
         self.actionManager.unlinkActionFromCollectionEvent.subscribe(lambda actionId, collectionName: self.refreshActionView())
+        self.actionManager.registerActionEvent.subscribe(lambda action: self.refreshActionView())
         self.visualScriptingViewer.onSaveEvent.subscribe(self.onVisualScriptingSave)
 
-        self.progressDialog = None
+        self.progressDialog: ProgressDialog = None
         self.setupProgressDialog()
 
     def onTargetChanged(self):
@@ -157,12 +163,7 @@ class ActionsViewer(DockWidget):
 
     def onActionProgressUpdate(self, action: Action, progress: float, progressMessage: str):
         if action.runsOnMainThread:
-            progressBar: QProgressBar = self.progressDialog.progressBar
-            progressBar.setMaximum(100)
-            progressBar.setValue(int(round(progress * 100)))
-            if progressMessage:
-                self.progressDialog.infoLabel.setText(progressMessage)
-            QtCore.QCoreApplication.processEvents()
+            self.progressDialog.updateProgress(progress, progressMessage)
         else:
             self.updateProgressAsync(action, progress, progressMessage)
 
@@ -181,15 +182,12 @@ class ActionsViewer(DockWidget):
             return False
 
     def setupProgressDialog(self):
-        self.progressDialog = asset_manager.loadDialog('progressDialog.ui')
-        self.progressDialog.setWindowFlags(self.progressDialog.windowFlags() & ~Qt.WindowContextHelpButtonHint & ~Qt.WindowCloseButtonHint)
+        self.progressDialog = ProgressDialog()
 
     def executeAction(self, action : Action, *actionArgs):
         if action.runsOnMainThread:
-            self.progressDialog.progressBar.setMaximum(0)
-            self.progressDialog.setWindowTitle(action.displayName)
-            self.progressDialog.show()
-            QtCore.QCoreApplication.processEvents()
+            self.progressDialog.setTitle(action.displayName)
+            self.progressDialog.open()
 
         action.execute(*actionArgs)
 

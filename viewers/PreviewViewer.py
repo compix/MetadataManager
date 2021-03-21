@@ -69,10 +69,7 @@ class PreviewViewer(DockWidget):
         #self.preview.fitInView(scene.sceneRect(), Qt.KeepAspectRatio)
 
     def showPreview(self, path):
-        if path == None:
-            #self.clearPreview()
-            #return
-
+        if path == None or not os.path.exists(path):
             path = asset_manager.getImagePath('missing_rendering.jpg')
 
         self.curFrameIdx = 0
