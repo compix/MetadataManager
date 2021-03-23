@@ -1,7 +1,7 @@
 from viewers.ViewerRegistry import ViewerRegistry
 from qt_extensions import qt_util
 from MetadataManagerCore.Event import Event
-from PySide2.QtWidgets import QDialog
+from PySide2.QtWidgets import QCheckBox, QDialog
 from ApplicationMode import ApplicationMode
 from AppInfo import AppInfo
 from ServiceRegistry import ServiceRegistry
@@ -25,6 +25,7 @@ import logging
 from RenderingPipelinePlugin.PipelineType import PipelineType
 from RenderingPipelinePlugin.PipelineActions import SelectInputSceneInExplorerAction, SelectPostImageInExplorerAction, SelectRenderSceneInExplorerAction, SelectRenderingInExplorerAction, SubmissionAction, CopyForDeliveryDocumentAction, CollectionUpdateAction
 from MetadataManagerCore.actions.Action import Action
+from qt_extensions.RegexPatternInputValidator import RegexPatternInputValidator
 
 logger = logging.getLogger(__name__)
 
@@ -61,13 +62,14 @@ class RenderingPipeline(object):
         self.serviceRegistry.actionManager.linkActionToCollection(action.id, self.dbCollectionName)
 
     def onSubmit(self):
-        submitInputScene = self.submissionDialog.submitInputSceneCheckBox.isChecked()
-        submitRenderScene = self.submissionDialog.submitRenderSceneCheckBox.isChecked()
-        submitRendering = self.submissionDialog.submitRenderingCheckBox.isChecked()
-        submitNuke = self.submissionDialog.submitNukeCheckBox.isChecked()
-        submitDelivery = self.submissionDialog.submitCopyForDeliveryCheckBox.isChecked()
+        submitInputScene = self.submissionDialog.submitInputSceneCheckBox.isEnabled() and self.submissionDialog.submitInputSceneCheckBox.isChecked()
+        submitRenderScene = self.submissionDialog.submitRenderSceneCheckBox.isEnabled() and self.submissionDialog.submitRenderSceneCheckBox.isChecked()
+        submitRendering = self.submissionDialog.submitRenderingCheckBox.isEnabled() and self.submissionDialog.submitRenderingCheckBox.isChecked()
+        submitNuke = self.submissionDialog.submitNukeCheckBox.isEnabled() and self.submissionDialog.submitNukeCheckBox.isChecked()
+        submitDelivery = self.submissionDialog.submitCopyForDeliveryCheckBox.isEnabled() and self.submissionDialog.submitCopyForDeliveryCheckBox.isChecked()
+        priority = int(self.submissionDialog.basePriorityEdit.text()) if self.submissionDialog.basePriorityEdit.text() else None
 
-        self.submissionArgs = [submitInputScene, submitRenderScene, submitRendering, submitNuke, submitDelivery]
+        self.submissionArgs = [priority, submitInputScene, submitRenderScene, submitRendering, submitNuke, submitDelivery]
         self.submissionDialog.accept()
 
     def setupAndRegisterSubmissionAction(self):
@@ -77,13 +79,31 @@ class RenderingPipeline(object):
         uiFilePath = asset_manager.getPluginUIFilePath("RenderingPipelinePlugin", "assets/submissionDialog.ui")
         self.submissionDialog = asset_manager.loadDialogAbsolutePath(uiFilePath)
 
+        self.submissionDialog.basePriorityEdit.setValidator(RegexPatternInputValidator('^\d*$'))
         self.submissionDialog.cancelButton.clicked.connect(self.submissionDialog.reject)
         self.submissionDialog.submitButton.clicked.connect(self.onSubmit)
 
         submissionAction.confirmationEvent = Event()
         self.submissionDialog.accepted.connect(lambda: submissionAction.confirmationEvent())
-        submissionAction.requestConfirmationFunction = self.submissionDialog.open
+        submissionAction.requestConfirmationFunction = self.onOpenSubmissionDialog
         submissionAction.retrieveArgsFunction = lambda: self.submissionArgs
+
+    def onOpenSubmissionDialog(self):
+        # Disable submission checkboxes if not applicable:
+        def setCheckBoxState(checkBox: QCheckBox, envKey: str, tooltip: str = ''):
+            if self.environmentSettings.get(envKey, '').strip() == '':
+                checkBox.setEnabled(False)
+                checkBox.setToolTip(tooltip)
+
+        self.submissionDialog.basePriorityEdit.setText(str(self.environmentSettings.get(PipelineKeys.DeadlinePriority, '')))
+
+        setCheckBoxState(self.submissionDialog.submitInputSceneCheckBox, PipelineKeys.InputSceneCreationScript, tooltip='An input scene creation script is not specified.')
+        setCheckBoxState(self.submissionDialog.submitRenderSceneCheckBox, PipelineKeys.InputSceneCreationScript, tooltip='A render scene creation script is not specified.')
+        setCheckBoxState(self.submissionDialog.submitRenderingCheckBox, PipelineKeys.RenderingNaming, tooltip='Rendering naming convention not specified.')
+        setCheckBoxState(self.submissionDialog.submitNukeCheckBox, PipelineKeys.NukeScript, tooltip='A nuke script is not specified.')
+        setCheckBoxState(self.submissionDialog.submitCopyForDeliveryCheckBox, PipelineKeys.DeliveryNaming, tooltip='Delivery naming convention not specified.')
+
+        self.submissionDialog.open()
 
     def onDialogUpdateCollection(self):
         if not os.path.exists(self.updateCollectionDialog.tablePathEdit.text()):
@@ -276,6 +296,8 @@ class RenderingPipeline(object):
                 documentWithSettings = self.combineDocumentWithSettings(documentDict, environmentSettings)
 
                 sid = self.getSID(documentWithSettings, row)
+                documentDict[Keys.systemIDKey] = sid
+                documentWithSettings[Keys.systemIDKey] = sid
 
                 if sid in sidSet:
                     logger.warning(f'Duplicate sid {sid} found at row {rowIdx}. This row will be skipped.')
@@ -286,7 +308,6 @@ class RenderingPipeline(object):
                     renderingName = extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.RenderingNaming), documentWithSettings)
                     mappedDocument = renderingToDocumentMap.get(renderingName)
 
-                    documentDict[Keys.systemIDKey] = sid
                     documentDict[Keys.preview] = self.namingConvention.getPostFilename(documentWithSettings, postOutputExt)
 
                     if mappedDocument:

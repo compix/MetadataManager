@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>841</width>
-    <height>967</height>
+    <width>844</width>
+    <height>964</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,7 +34,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>780</width>
+            <width>783</width>
             <height>1154</height>
            </rect>
           </property>
@@ -1012,8 +1012,8 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>797</width>
-            <height>853</height>
+            <width>800</width>
+            <height>850</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -1241,55 +1241,132 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>797</width>
-            <height>853</height>
+            <width>800</width>
+            <height>850</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_10">
+           <item alignment="Qt::AlignTop">
+            <widget class="QFrame" name="frame_9">
+             <property name="frameShape">
+              <enum>QFrame::NoFrame</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Plain</enum>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_22">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <layout class="QFormLayout" name="formLayout_4">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_33">
+                  <property name="text">
+                   <string>3dsMax Version</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QComboBox" name="versionOf3dsMaxComboBox">
+                  <item>
+                   <property name="text">
+                    <string>2017</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>2018</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>2019</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>2020</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>2021</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>2022</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
            <item>
-            <layout class="QFormLayout" name="formLayout_4">
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_33">
-               <property name="text">
-                <string>3dsMax Version</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QComboBox" name="versionOf3dsMaxComboBox">
-               <item>
-                <property name="text">
-                 <string>2017</string>
+            <widget class="QFrame" name="frame_10">
+             <property name="frameShape">
+              <enum>QFrame::NoFrame</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_24">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QGroupBox" name="groupBox_8">
+                <property name="title">
+                 <string>Source Code Template</string>
                 </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>2018</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>2019</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>2020</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>2021</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>2022</string>
-                </property>
-               </item>
-              </widget>
-             </item>
-            </layout>
+                <layout class="QVBoxLayout" name="verticalLayout_23">
+                 <item alignment="Qt::AlignHCenter">
+                  <widget class="QLabel" name="label_48">
+                   <property name="text">
+                    <string>Input Scene Creation</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QTextEdit" name="maxInputSceneSourceCodeTemplateEdit"/>
+                 </item>
+                 <item alignment="Qt::AlignHCenter">
+                  <widget class="QLabel" name="label_49">
+                   <property name="text">
+                    <string>Render Scene Creation</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QTextEdit" name="maxRenderSceneSourceCodeTemplateEdit"/>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -1312,8 +1389,8 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>797</width>
-            <height>853</height>
+            <width>800</width>
+            <height>850</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1322,6 +1399,137 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
            </item>
           </layout>
          </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab">
+      <attribute name="title">
+       <string>Nuke</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_19">
+       <item>
+        <widget class="QFrame" name="frame_6">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_20">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QGroupBox" name="groupBox_7">
+            <property name="title">
+             <string>Source Code Template</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_21">
+             <item>
+              <widget class="QTextEdit" name="nukeSourceCodeTemplateEdit"/>
+             </item>
+             <item alignment="Qt::AlignRight">
+              <widget class="QFrame" name="frame_7">
+               <property name="frameShape">
+                <enum>QFrame::NoFrame</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_26">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QPushButton" name="copyToClipboardButton">
+                  <property name="toolTip">
+                   <string>Copy to clipboard.</string>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="../../../assets/resource_files/resources.qrc">
+                    <normaloff>:/icons/copy.png</normaloff>:/icons/copy.png</iconset>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QFrame" name="frame_8">
+               <property name="frameShape">
+                <enum>QFrame::NoFrame</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_27">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QLabel" name="label_47">
+                  <property name="maximumSize">
+                   <size>
+                    <width>25</width>
+                    <height>25</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="pixmap">
+                   <pixmap resource="../../../assets/resource_files/resources.qrc">:/icons/information.png</pixmap>
+                  </property>
+                  <property name="scaledContents">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_46">
+                  <property name="text">
+                   <string>Copy and paste this code into a python file and specify the nuke script under the general settings.</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
       </layout>
@@ -1335,7 +1543,7 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
      </property>
     </widget>
    </item>
-   <item alignment="Qt::AlignBottom">
+   <item>
     <widget class="QFrame" name="frame_4">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
@@ -1477,7 +1685,6 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
   <tabstop>renderingDeadlineTimeout</tabstop>
   <tabstop>nukeDeadlineTimeout</tabstop>
   <tabstop>deliveryDeadlineTimeout</tabstop>
-  <tabstop>scrollArea_2</tabstop>
   <tabstop>versionOf3dsMaxComboBox</tabstop>
   <tabstop>scrollArea_4</tabstop>
  </tabstops>

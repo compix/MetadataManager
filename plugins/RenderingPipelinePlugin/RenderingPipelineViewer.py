@@ -1,3 +1,4 @@
+import PySide2
 from table import table_util
 from qt_extensions.InputConfirmDialog import InputConfirmDialog
 from AppInfo import AppInfo
@@ -12,7 +13,7 @@ from RenderingPipelinePlugin.RenderingPipelineManager import RenderingPipelineMa
 import asset_manager
 from qt_extensions import qt_util
 from qt_extensions.ProgressDialog import ProgressDialog
-from PySide2 import QtWidgets
+from PySide2 import QtGui, QtWidgets
 from MetadataManagerCore.environment.Environment import Environment
 import os
 import xlrd
@@ -22,8 +23,13 @@ from qt_extensions.RegexPatternInputValidator import RegexPatternInputValidator
 from VisualScriptingExtensions.third_party_extensions.deadline_nodes import getDeadlinePoolNames
 from MetadataManagerCore.threading import threading_util
 from viewers.ViewerRegistry import ViewerRegistry
+from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+class MaxSourceTemplateSceneType:
+    InputScene = 'InputScene'
+    RenderScene = 'RenderScene'
 
 class EnvironmentEntry(object):
     def __init__(self, envKey: str, widget: QtWidgets.QWidget, pipelineType: PipelineType = None, pipelineComboBox: QtWidgets.QComboBox = None) -> None:
@@ -99,6 +105,7 @@ class RenderingPipelineViewer(object):
         self.dialog.pipelineNameComboBox.currentTextChanged.connect(self.onPipelineNameChanged)
         self.dialog.productTableEdit.textChanged.connect(self.onProductTableChanged)
         self.dialog.productTableSheetNameComboBox.currentTextChanged.connect(self.onProductTableSheetNameChanged)
+        self.dialog.copyToClipboardButton.clicked.connect(lambda: QtGui.QGuiApplication.clipboard().setText(self.dialog.nukeSourceCodeTemplateEdit.toPlainText()))
 
         self.dialog.statusLabel.setText('')
         self.dialog.statusLabel.setStyleSheet('color: red')
@@ -386,6 +393,8 @@ class RenderingPipelineViewer(object):
 
         if not pipelineExists:
             self.hide()
+        else:
+            self.viewerRegistry.documentSearchFilterViewer.viewItems(saveSearchHistoryEntry=False)
 
     def onPipelineNameChanged(self, pipelineName: str):
         if pipelineName in self.renderingPipelineManager.pipelineNames:
@@ -525,8 +534,132 @@ class RenderingPipelineViewer(object):
             cb.addItem(className)
 
     def show(self):
+        self.generateNukeSourceCodeTemplate()
+        self.generateMaxSourceCodeTemplate(MaxSourceTemplateSceneType.InputScene)
+        self.generateMaxSourceCodeTemplate(MaxSourceTemplateSceneType.RenderScene)
         self.refreshPipelineNameComboBox()
         self.dialog.show()
 
     def hide(self):
         self.dialog.hide()
+
+    def addCodeLine(self, edit: QtWidgets.QTextEdit, codeLine: str, tabs=0):
+        edit.append(f'{" "*tabs*4}{codeLine}')
+
+    def generateNukeSourceCodeTemplate(self):
+        edit: QtWidgets.QTextEdit = self.dialog.nukeSourceCodeTemplateEdit
+
+        edit.clear()
+
+        self.addCodeLine(edit, 'import nuke, os\n')
+
+        self.addCodeLine(edit, 'class Environment:')
+        self.addCodeLine(edit, 'def __init__(self, infoDict):', tabs=1)
+        self.addCodeLine(edit, 'self.infoDict = infoDict\n', tabs=2)
+
+        for key in [item for item in dir(PipelineKeys) if not item.startswith("__")]:
+            value = getattr(PipelineKeys, key)
+
+            self.addCodeLine(edit, f'def {key}(self):', tabs=1)
+            self.addCodeLine(edit, f'return self.infoDict.get("{value}")', tabs=2)
+            self.addCodeLine(edit, '')
+
+        self.addCodeLine(edit, f'def getRenderingFilename(self):', tabs=1)
+        self.addCodeLine(edit, f'return self.RenderingFilename().replace("\\\\", "/")\n', tabs=2)
+
+        self.addCodeLine(edit, f'def getPostOutputExtensions(self):', tabs=1)
+        self.addCodeLine(edit, f'return [ext.strip().lower() for ext in self.PostOutputExtensions().split(",")]\n', tabs=2)
+
+        self.addCodeLine(edit, f'def getPostFilename(self, ext):', tabs=1)
+        self.addCodeLine(edit, f'return self.PostFilename().replace("\\\\", "/") + "." + ext\n', tabs=2)
+
+        self.addCodeLine(edit, '')
+        self.addCodeLine(edit, 'def process(infoDict):')
+        self.addCodeLine(edit, 'env = Environment(infoDict)\n', tabs=1)
+        
+        self.addCodeLine(edit, '# Set read node file:', tabs=1)
+        self.addCodeLine(edit, 'readNodeName = "Read"', tabs=1)
+        self.addCodeLine(edit, f'readNode = nuke.toNode(readNodeName)\n', tabs=1)
+        self.addCodeLine(edit, f'if not readNode:', tabs=1)
+        self.addCodeLine(edit, f'raise RuntimeError("Could not find " + readNodeName + " node.")\n', tabs=2)
+
+        self.addCodeLine(edit, 'renderingFilename = env.getRenderingFilename()\n', tabs=1)
+        self.addCodeLine(edit, 'if not os.path.exists(renderingFilename):', tabs=1)
+        self.addCodeLine(edit, 'raise RuntimeError("Could not find rendering " + renderingFilename)\n', tabs=2)
+
+        self.addCodeLine(edit, f'readNode["file"].setValue(renderingFilename)\n', tabs=1)
+
+        # Setup write node:
+        self.addCodeLine(edit, 'writeNodeName = "Write"', tabs=1)
+        self.addCodeLine(edit, f'writeNode = nuke.toNode(writeNodeName)\n', tabs=1)
+        self.addCodeLine(edit, f'if not writeNode:', tabs=1)
+        self.addCodeLine(edit, f'raise RuntimeError("Could not find " + writeNodeName + " node.")\n', tabs=2)
+
+        self.addCodeLine(edit, '# Set write node files:', tabs=1)
+        self.addCodeLine(edit, f'for ext in env.getPostOutputExtensions():', tabs=1)
+        self.addCodeLine(edit, f'filename = env.getPostFilename(ext)', tabs=2)
+        self.addCodeLine(edit, f'writeNode["file"].setValue(filename)\n', tabs=2)
+        self.addCodeLine(edit, f'nuke.execute(writeNode, 1, 1)', tabs=2)
+
+    def generateMaxSourceCodeTemplate(self, sceneType: MaxSourceTemplateSceneType):
+        if sceneType == MaxSourceTemplateSceneType.InputScene:
+            edit: QtWidgets.QTextEdit = self.dialog.maxInputSceneSourceCodeTemplateEdit
+        elif sceneType == MaxSourceTemplateSceneType.RenderScene:
+            edit: QtWidgets.QTextEdit = self.dialog.maxRenderSceneSourceCodeTemplateEdit
+                
+        self.addCodeLine(edit, 'global INFO_MAP = undefined')
+        self.addCodeLine(edit, '')
+        self.addCodeLine(edit, 'fn readInfoMap infoFile = (')
+        self.addCodeLine(edit, '    py_main = Python.Import "__builtin__"')
+        self.addCodeLine(edit, '    json = Python.Import "json"')
+        self.addCodeLine(edit, '    ')
+        self.addCodeLine(edit, '    f = py_main.open infoFile')
+        self.addCodeLine(edit, '    infoMap = json.load f')
+        self.addCodeLine(edit, '    f.close()')
+        self.addCodeLine(edit, '    ')
+        self.addCodeLine(edit, '    infoMap')
+        self.addCodeLine(edit, ')')
+        self.addCodeLine(edit, '')
+        self.addCodeLine(edit, 'fn saveMaxFileChecked filename = (')
+        self.addCodeLine(edit, '    if not (saveMaxFile filename) do throw ("Failed to save max file to " + filename as string)')
+        self.addCodeLine(edit, ')')
+        self.addCodeLine(edit, '')
+
+        self.addCodeLine(edit, 'fn initInfoMapGlobals = (')
+        for key in [item for item in dir(PipelineKeys) if not item.startswith("__")]:
+            value = getattr(PipelineKeys, key)
+            self.addCodeLine(edit, f'   global {key} = INFO_MAP["{value}"]')
+        self.addCodeLine(edit, ')')
+        
+        self.addCodeLine(edit, '')
+        self.addCodeLine(edit, 'fn executePipelineRequest infoFile = (')
+        self.addCodeLine(edit, '    global INFO_MAP')
+        self.addCodeLine(edit, '    ')
+        self.addCodeLine(edit, '    INFO_MAP = readInfoMap infoFile')
+        self.addCodeLine(edit, '    initInfoMapGlobals()')
+        self.addCodeLine(edit, '    ')
+        self.addCodeLine(edit, '    -- Prepare')
+        self.addCodeLine(edit, '    loadedBaseSceneFile = loadMaxFile baseFile useFileUnits:true')
+        self.addCodeLine(edit, '    if not loadedBaseSceneFile do throw ("Failed to load base scene file: " + BaseSceneFilename as string)')
+        self.addCodeLine(edit, '    ')
+
+        if sceneType == MaxSourceTemplateSceneType.RenderScene:
+            self.addCodeLine(edit, '    -- Merge environment scene file if available')
+            self.addCodeLine(edit, '    if EnvironmentSceneNaming != "" do (')
+            self.addCodeLine(edit, '        mergedEnvSceneFile = mergeMAXFile EnvironmentSceneFilename #mergeDups #useMergedMtlDups #neverReparent')
+            self.addCodeLine(edit, '        if not mergedEnvSceneFile do throw ("Failed to merge env scene file: " + EnvironmentSceneFilename as string)')
+            self.addCodeLine(edit, '    )')
+            self.addCodeLine(edit, '    ')
+
+        if sceneType == MaxSourceTemplateSceneType.RenderScene:
+            self.addCodeLine(edit, '    -- Merge input scene file')
+            self.addCodeLine(edit, '    mergedInputSceneFile = mergeMAXFile InputSceneFilename #mergeDups #useMergedMtlDups #neverReparent')
+            self.addCodeLine(edit, '    if not mergedInputSceneFile do throw ("Failed to merge input scene file: " + InputSceneFilename as string)')
+            self.addCodeLine(edit, '    ')
+
+        self.addCodeLine(edit, '    /*******************************************************')
+        self.addCodeLine(edit, '    TODO: Apply variation logic')
+        self.addCodeLine(edit, '    ********************************************************/')
+        self.addCodeLine(edit, '    ')
+        self.addCodeLine(edit, f'    saveMaxFileChecked {"InputSceneFilename" if sceneType == MaxSourceTemplateSceneType.InputScene else "RenderSceneFilename"}')
+        self.addCodeLine(edit, ')')

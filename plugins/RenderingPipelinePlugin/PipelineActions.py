@@ -55,10 +55,15 @@ class SubmissionAction(PipelineDocumentAction):
     def displayName(self):
         return 'Submit'
 
-    def execute(self, document: dict, submitInputSceneCreation: bool, submitRenderSceneCreation: bool, submitRendering: bool, submitNuke: bool, submitCopyForDelivery: bool):
+    def execute(self, document: dict, basePriority: int, submitInputSceneCreation: bool, submitRenderSceneCreation: bool, submitRendering: bool, submitNuke: bool, submitCopyForDelivery: bool):
         lastJobId = None
 
         documentWithSettings = self.pipeline.combineDocumentWithSettings(document, self.pipeline.environmentSettings)
+        self.pipeline.namingConvention.addFilenameInfo(documentWithSettings)
+        
+        if basePriority != None:
+            documentWithSettings[PipelineKeys.DeadlinePriority] = basePriority
+
         submitter = self.pipeline.submitter
 
         if submitInputSceneCreation:

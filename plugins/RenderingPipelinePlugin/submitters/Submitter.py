@@ -27,15 +27,19 @@ class Submitter(object):
         return 50
 
     def createJobInfoDictionary(self, pluginName: str, name: str, batchName: str, priority: int, pool: str, dependentJobIds: List[str]=None):
-        return {"Plugin": pluginName, 
-                "Name": replaceGermanCharacters(name),
-                "BatchName": replaceGermanCharacters(f'{self.pipeline.name} {batchName}'), 
-                "Priority": priority, 
-                "Department":"", 
-                "Pool":pool, 
-                "SecondaryPool":"",
-                "Group":"",
-                "JobDependencies":(",".join(dependentJobIds) if isinstance(dependentJobIds, list) else dependentJobIds)}
+        d = {"Plugin": pluginName, 
+             "Name": replaceGermanCharacters(name),
+             "BatchName": replaceGermanCharacters(f'{self.pipeline.name} {batchName}'), 
+             "Priority": priority, 
+             "Department":"", 
+             "Pool":pool, 
+             "SecondaryPool":"",
+             "Group":""}
+
+        if dependentJobIds:
+            d["JobDependencies"] = (",".join(dependentJobIds) if isinstance(dependentJobIds, list) else dependentJobIds)
+
+        return d
 
     def setTimeout(self, jobInfoDict: dict, documentWithSettings: dict, timeoutKey: str):
         timeout = documentWithSettings.get(timeoutKey)
@@ -44,6 +48,21 @@ class Submitter(object):
                 jobInfoDict['TaskTimeoutMinutes'] = int(timeout)
             except Exception as e:
                 logger.error(str(e))
+
+    def getInputSceneCreationPriority(self, documentWithSettings: dict):
+        return documentWithSettings.get(PipelineKeys.DeadlinePriority, self.baseDeadlinePriority) + 4
+
+    def getrenderSceneCreationPriority(self, documentWithSettings: dict):
+        return documentWithSettings.get(PipelineKeys.DeadlinePriority, self.baseDeadlinePriority) + 3
+
+    def getRenderingPriority(self, documentWithSettings: dict):
+        return documentWithSettings.get(PipelineKeys.DeadlinePriority, self.baseDeadlinePriority) + 2
+
+    def getNukePriority(self, documentWithSettings: dict):
+        return documentWithSettings.get(PipelineKeys.DeadlinePriority, self.baseDeadlinePriority) + 1
+
+    def getDeliveryPriority(self, documentWithSettings: dict):
+        return documentWithSettings.get(PipelineKeys.DeadlinePriority, self.baseDeadlinePriority)
 
     def submitInputSceneCreation(self, documentWithSettings: dict, dependentJobIds: List[str]=None):
         pass
@@ -59,9 +78,10 @@ class Submitter(object):
             return
 
         pluginName = deadline_nodes.getNukePluginName()
-        jobName = self.pipeline.namingConvention.getRenderingName(documentWithSettings)
+        jobName = self.pipeline.namingConvention.getPostName(documentWithSettings)
         batchName = 'Post'
-        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.baseDeadlinePriority, documentWithSettings.get(PipelineKeys.DeadlineNukePool), dependentJobIds=dependentJobIds)
+        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getNukePriority(documentWithSettings), 
+                                                   documentWithSettings.get(PipelineKeys.DeadlineNukePool), dependentJobIds=dependentJobIds)
 
         for i, ext in enumerate(RenderingPipelineUtil.getPostOutputExtensions(documentWithSettings)):
             filename = self.pipeline.namingConvention.getPostFilename(documentWithSettings, ext=ext)
@@ -70,7 +90,7 @@ class Submitter(object):
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineNukeTimeout)
 
-        sceneFilename = self.pipeline.namingConvention.getRenderSceneFilename(documentWithSettings)
+        sceneFilename = self.pipeline.namingConvention.getNukeSceneFilename(documentWithSettings)
         scriptFilename = documentWithSettings.get(PipelineKeys.NukeScript)
 
         pluginInfoDict = deadline_nodes.createNukePluginInfoDictionary(sceneFilename, version=documentWithSettings.get(PipelineKeys.NukeVersion))
@@ -82,7 +102,8 @@ class Submitter(object):
         pluginName = deadline_nodes.getMetadataManagerPluginName()
         jobName = self.pipeline.namingConvention.getDeliveryName(documentWithSettings)
         batchName = 'Delivery Copy'
-        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.baseDeadlinePriority, documentWithSettings.get(PipelineKeys.DeadlineDeliveryPool), dependentJobIds=dependentJobIds)
+        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getDeliveryPriority(documentWithSettings), 
+                                                   documentWithSettings.get(PipelineKeys.DeadlineDeliveryPool), dependentJobIds=dependentJobIds)
 
         for i, ext in enumerate(RenderingPipelineUtil.getPostOutputExtensions(documentWithSettings)):
             filename = self.pipeline.namingConvention.getDeliveryFilename(documentWithSettings, ext=ext)

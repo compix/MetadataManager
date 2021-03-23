@@ -131,27 +131,24 @@ def submitNukeJob(jobInfoDict: dict, pluginInfoDict: dict, scriptFilename: str, 
     scriptDirectory = os.path.dirname(scriptFilename)
     scriptModule = os.path.splitext(os.path.basename(scriptFilename))[0]
 
-    code = \
-    f"""
-    import sys, json
-
-    sys.path.append("{scriptDirectory}")
-    import {scriptModule}
-    
-    infoDict = json.load({infoFilename})
-    {scriptModule}.process(infoDict)
-    """.strip()
-
     with open(bootstrapScriptFilename, 'w+') as f:
-        f.write(code)
+        f.write('import sys, json\n\n')
+        f.write(f'sys.path.append("{scriptDirectory}")\n')
+        f.write(f'import {scriptModule}\n\n')
+
+        unixInfoFilename = infoFilename.replace("\\", "/")
+        f.write(f'with open("{unixInfoFilename}") as f:\n')
+        f.write(f'    infoDict = json.load(f)\n\n')
+        f.write(f'{scriptModule}.process(infoDict)')
 
     with open(infoFilename, 'w+') as f:
-        json.dump(scriptInfoDict, f)
+        json.dump(scriptInfoDict, f, indent=4, sort_keys=True)
 
     jobInfoDict["Plugin"] = getNukePluginName()
     pluginInfoDict["ScriptFilename"] = bootstrapScriptFilename
+    pluginInfoDict["ScriptJob"] = True
 
-    return submitJob(jobInfoDict, pluginInfoDict, jobDependencies=jobDependencies)
+    return submitJob(jobInfoDict, pluginInfoDict, jobDependencies=jobDependencies, auxiliaryFilenames=[bootstrapScriptFilename, infoFilename])
 
 @defNode("Create Nuke Plugin Info Dictionary", isExecutable=True, returnNames=["Plugin Info Dict"], identifier=DEADLINE_IDENTIFIER)
 def createNukePluginInfoDictionary(sceneFilename, scriptFilename=None, writeNode="", version="12.0", batchMode=True, 
