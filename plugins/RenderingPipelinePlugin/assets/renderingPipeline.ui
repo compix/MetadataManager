@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>844</width>
-    <height>964</height>
+    <width>909</width>
+    <height>1267</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,7 +34,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>783</width>
+            <width>848</width>
             <height>1154</height>
            </rect>
           </property>
@@ -1012,8 +1012,8 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>800</width>
-            <height>850</height>
+            <width>865</width>
+            <height>1153</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -1241,8 +1241,8 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>800</width>
-            <height>850</height>
+            <width>865</width>
+            <height>1153</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -1389,8 +1389,8 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>800</width>
-            <height>850</height>
+            <width>865</width>
+            <height>1153</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_14">

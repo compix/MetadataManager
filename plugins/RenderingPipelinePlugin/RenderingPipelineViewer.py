@@ -24,6 +24,7 @@ from VisualScriptingExtensions.third_party_extensions.deadline_nodes import getD
 from MetadataManagerCore.threading import threading_util
 from viewers.ViewerRegistry import ViewerRegistry
 from enum import Enum
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -255,6 +256,15 @@ class RenderingPipelineViewer(object):
         self.deleteInputConfirmDialog = InputConfirmDialog(pipelineName, onConfirmPipelineDeletion, title='Delete Confirmation', confirmButtonText='Delete')
         self.deleteInputConfirmDialog.open()
 
+    def verifyNamingConvention(self, namingConvention: str, namingConventionName: str):
+        namingRegexPattern = '^([\w\d]*(\[[\w\d]*\])*)*$'
+        valid = re.search(namingRegexPattern, namingConvention) != None
+
+        if not valid:
+            self.dialog.statusLabel.setText(f'The naming convetion for {namingConventionName} is not valid.')
+
+        return valid
+
     def onCreateClick(self):
         pipelineName = self.dialog.pipelineNameComboBox.currentText()
 
@@ -301,6 +311,10 @@ class RenderingPipelineViewer(object):
         postNaming = self.dialog.postNamingEdit.text()
         deliveryNaming = self.dialog.deliveryNamingEdit.text()
 
+        if not sidNaming:
+            self.dialog.statusLabel.setText(f'SID naming convention must be specified.')
+            return
+
         if not baseProjectFolder or not os.path.isabs(baseProjectFolder) or not os.path.exists(baseProjectFolder):
             self.dialog.statusLabel.setText(f'Please specify an existing base project folder.')
             return
@@ -311,6 +325,13 @@ class RenderingPipelineViewer(object):
 
         if not RenderingPipelineUtil.validatePostOutputExtensions(RenderingPipelineUtil.extractPostOutputExtensionsFromString(postOutputExtensionsStr)):
             self.dialog.statusLabel.setText(f'The specified post output extensions are not valid. Known extensions: {", ".join(RenderingPipelineUtil.KnownPostOutputExtensions)}')
+            return
+
+        # Verify naming:
+        namings = [(sidNaming, 'SID'), (renderSceneNaming, 'Render Scene'), (inputSceneNaming, 'Input Scene'), (environmentSceneNaming, 'Environment Scene'),
+                   (nukeSceneNaming, 'Nuke Scene'), (renderingNaming, 'Rendering'), (postNaming, 'Post'), (deliveryNaming, 'Delivery')]
+
+        if not all([self.verifyNamingConvention(nc, ncn) for nc, ncn in namings]):
             return
 
         environment = Environment(envId)
@@ -352,7 +373,8 @@ class RenderingPipelineViewer(object):
             fullpath = folder
             if not os.path.isabs(folder):
                 fullpath = os.path.join(baseProjectFolder, folder)
-                environment.settings[key] = os.path.normpath(fullpath).replace(os.path.normpath(baseProjectFolder), '${base_folder}').replace('\\', '/')
+                base = '${' + PipelineKeys.BaseFolder + '}'
+                environment.settings[key] = os.path.normpath(fullpath).replace(os.path.normpath(baseProjectFolder), base).replace('\\', '/')
 
                 projectSubfolderSaveDict[key] = folder
 
@@ -392,6 +414,7 @@ class RenderingPipelineViewer(object):
         self.refreshAvailablePipelineMenu()
 
         if not pipelineExists:
+            self.selectPipelineFromName(pipelineName)
             self.hide()
         else:
             self.viewerRegistry.documentSearchFilterViewer.viewItems(saveSearchHistoryEntry=False)
@@ -439,8 +462,9 @@ class RenderingPipelineViewer(object):
                 pass
 
     def stripBaseFolder(self, v: str):
-        if v.startswith('${base_folder}'):
-            return v.lstrip('${base_folder}').lstrip('/').lstrip('\\')
+        base = '${' + PipelineKeys.BaseFolder + '}'
+        if v.startswith(base):
+            return v.lstrip(base).lstrip('/').lstrip('\\')
 
         return v
 

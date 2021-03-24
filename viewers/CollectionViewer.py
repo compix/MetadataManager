@@ -15,6 +15,7 @@ class CollectionViewer(DockWidget):
         super().__init__("Collection Viewer", parentWindow, asset_manager.getUIFilePath("collectionManager.ui"))
         self.dbManager = dbManager
         self.collectionCheckBoxMap: Dict[str,QCheckBox] = dict()
+        self.headerUpdatedEvent = Event()
 
         self.collectionsLayout.setAlignment(QtCore.Qt.AlignTop)
         self.widget.collectionPropertiesVBox.setAlignment(QtCore.Qt.AlignTop)
@@ -25,8 +26,6 @@ class CollectionViewer(DockWidget):
 
         self.collectionTableWidget : QTableWidget = self.widget.collectionPropertiesTableWidget
         self.updateCollections()
-
-        self.headerUpdatedEvent = Event()
 
         self.widget.refreshCollectionsButton.clicked.connect(self.refreshCollections)
 
