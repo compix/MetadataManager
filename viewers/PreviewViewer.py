@@ -1,3 +1,4 @@
+from animation import anim_util
 from MetadataManagerCore.mongodb_manager import MongoDBManager
 from PySide2 import QtWidgets, QtCore, QtUiTools, QtGui
 from MetadataManagerCore import Keys
@@ -49,17 +50,6 @@ class PreviewViewer(DockWidget):
     def onPreviousFrame(self):
         self.showPreviousFrame()
 
-    def idxToFrameString(self, idx, maxDigits):
-        s = str(idx)
-
-        if len(s) > maxDigits:
-            raise f"Invalid input: The index {idx} exceeds the max digit count {maxDigits}"
-
-        for _ in range(len(s), maxDigits):
-            s = "0" + s
-        
-        return s
-
     def displayPreview(self, path, resetZoom=True):
         scene = QtWidgets.QGraphicsScene()
         pixmap = QtGui.QPixmap(path)
@@ -71,29 +61,12 @@ class PreviewViewer(DockWidget):
     def showPreview(self, path):
         if path == None or not os.path.exists(path):
             path = asset_manager.getImagePath('missing_rendering.jpg')
-
-        self.curFrameIdx = 0
-        self.frames = []
-
-        # Check for animation frame pattern:
-        idxStart = path.find("#")
-        idxEnd = path.rfind("#")
         
-        if idxStart >= 0:
-            maxDigits = (idxEnd + 1) - idxStart
+        self.curFrameIdx = 0
+        self.frames = anim_util.extractExistingFrameFilenames(path)
 
-            for i in range(0,10**maxDigits):
-                frameStr = self.idxToFrameString(i, maxDigits)
-                framePath = frameStr.join([path[:idxStart],path[idxEnd+1:]])
-
-                if os.path.exists(framePath):
-                    self.frames.append(framePath)
-                elif i > 0: # Support frames starting at 1
-                    break
-            
-            if self.curFrameIdx < len(self.frames):
-                self.displayPreview(self.frames[self.curFrameIdx])
-
+        if len(self.frames) > 0:
+            self.displayPreview(self.frames[self.curFrameIdx])
             self.animationTimer.start()
         else:
             self.displayPreview(path)

@@ -23,7 +23,7 @@ from MetadataManagerCore import Keys
 import shutil
 import logging
 from RenderingPipelinePlugin.PipelineType import PipelineType
-from RenderingPipelinePlugin.PipelineActions import SelectInputSceneInExplorerAction, SelectPostImageInExplorerAction, SelectRenderSceneInExplorerAction, SelectRenderingInExplorerAction, SubmissionAction, CopyForDeliveryDocumentAction, CollectionUpdateAction
+from RenderingPipelinePlugin.PipelineActions import RefreshPreviewFilenameAction, SelectInputSceneInExplorerAction, SelectPostImageInExplorerAction, SelectRenderSceneInExplorerAction, SelectRenderingInExplorerAction, SubmissionAction, CopyForDeliveryDocumentAction, CollectionUpdateAction
 from MetadataManagerCore.actions.Action import Action
 from qt_extensions.RegexPatternInputValidator import RegexPatternInputValidator
 
@@ -56,6 +56,7 @@ class RenderingPipeline(object):
         self.registerAndLinkAction(SelectRenderSceneInExplorerAction(self))
         self.registerAndLinkAction(SelectRenderingInExplorerAction(self))
         self.registerAndLinkAction(SelectPostImageInExplorerAction(self))
+        #self.registerAndLinkAction(RefreshPreviewFilenameAction(self))
 
     def registerAndLinkAction(self, action: Action):
         self.serviceRegistry.actionManager.registerAction(action)
@@ -94,11 +95,14 @@ class RenderingPipeline(object):
             if self.environmentSettings.get(envKey, '').strip() == '':
                 checkBox.setEnabled(False)
                 checkBox.setToolTip(tooltip)
+            else:
+                checkBox.setEnabled(True)
+                checkBox.setToolTip("")
 
         self.submissionDialog.basePriorityEdit.setText(str(self.environmentSettings.get(PipelineKeys.DeadlinePriority, '')))
 
         setCheckBoxState(self.submissionDialog.submitInputSceneCheckBox, PipelineKeys.InputSceneCreationScript, tooltip='An input scene creation script is not specified.')
-        setCheckBoxState(self.submissionDialog.submitRenderSceneCheckBox, PipelineKeys.InputSceneCreationScript, tooltip='A render scene creation script is not specified.')
+        setCheckBoxState(self.submissionDialog.submitRenderSceneCheckBox, PipelineKeys.RenderSceneCreationScript, tooltip='A render scene creation script is not specified.')
         setCheckBoxState(self.submissionDialog.submitRenderingCheckBox, PipelineKeys.RenderingNaming, tooltip='Rendering naming convention not specified.')
         setCheckBoxState(self.submissionDialog.submitNukeCheckBox, PipelineKeys.NukeScript, tooltip='A nuke script is not specified.')
         setCheckBoxState(self.submissionDialog.submitCopyForDeliveryCheckBox, PipelineKeys.DeliveryNaming, tooltip='Delivery naming convention not specified.')
@@ -219,7 +223,7 @@ class RenderingPipeline(object):
         sid = extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.SidNaming), documentWithSettings)
         if not sid:
             # Concat all entries into one string:
-            rowStr = ''.join([v for v in tableRow if v])
+            rowStr = ''.join([v for v in tableRow if v]) + documentWithSettings.get(PipelineKeys.Perspective, "")
             sid = hashlib.md5(rowStr.encode('utf-8')).hexdigest()
 
         return sid
@@ -246,7 +250,8 @@ class RenderingPipeline(object):
 
         return None
         
-    def readProductTable(self, productTablePath: str = None, productTableSheetname: str = None, environmentSettings: dict = None, onProgressUpdate: Callable[[float, str],None] = None):
+    def readProductTable(self, productTablePath: str = None, productTableSheetname: str = None, environmentSettings: dict = None, 
+                         onProgressUpdate: Callable[[float, str],None] = None, replaceExistingCollection=False):
         """Generates a database collection with rendering entries from the given table.
 
         Args:
@@ -274,6 +279,8 @@ class RenderingPipeline(object):
 
         if onProgressUpdate:
             onProgressUpdate(0, 'Reading product table...')
+
+        collectionName = self.dbCollectionName + ('_TEMP' if replaceExistingCollection else '')
 
         for row in table.getRowsWithoutHeader():
             # Convert values to string for consistency
@@ -316,9 +323,14 @@ class RenderingPipeline(object):
                         renderingToDocumentMap[renderingName] = documentDict
                         documentDict[PipelineKeys.Mapping] = None
 
-                    self.dbManager.insertOrModifyDocument(self.dbCollectionName, sid, documentDict, checkForModifications=False)
+                    self.dbManager.insertOrModifyDocument(collectionName, sid, documentDict, checkForModifications=False)
 
             rowIdx += 1
 
             if onProgressUpdate:
                 onProgressUpdate(float(rowIdx) / rowCount)
+
+        if replaceExistingCollection:
+            self.dbManager.dropCollection(self.dbCollectionName + Keys.OLD_VERSIONS_COLLECTION_SUFFIX)
+            self.dbManager.dropCollection(self.dbCollectionName)
+            self.dbManager.db[collectionName].rename(self.dbCollectionName)

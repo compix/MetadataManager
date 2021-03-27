@@ -4,7 +4,7 @@ from RenderingPipelinePlugin import PipelineKeys
 KnownPostOutputExtensions = ['jpg', 'jpeg', 'exr', 'tif', 'png', 'bmp', 'webp', 'gif']
 
 def getPerspectiveCodes(settings: dict):
-    return  [p.strip() for p in settings.get(PipelineKeys.PerspectiveCodes).split(',')]
+    return  [p.strip() for p in settings.get(PipelineKeys.PerspectiveCodes, '').split(',')]
 
 def getPostOutputExtensions(settings: dict):
     return extractPostOutputExtensionsFromString(settings.get(PipelineKeys.PostOutputExtensions))

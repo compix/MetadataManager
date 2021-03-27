@@ -148,11 +148,13 @@ class EnvironmentManagerViewer(DockWidget):
         fileName,_ = QFileDialog.getOpenFileName(self, "Open", "", "Any File (*.*)")
         if fileName != None and fileName != "":
             self.widget.valueLineEdit.setText(fileName)
+            self.onAddKeyValue()
 
     def onChooseDir(self):
         dirName = QFileDialog.getExistingDirectory(self, "Open", "")
         if dirName != None and dirName != "":
             self.widget.valueLineEdit.setText(dirName)
+            self.onAddKeyValue()
 
     def onArchiveEnvironment(self):
         if self.currentEnvironment != None and self.environmentManager.hasEnvironmentId(self.currentEnvironment.uniqueEnvironmentId):
@@ -215,7 +217,9 @@ class EnvironmentManagerViewer(DockWidget):
             self.exportSettingsAsJson(self.currentEnvironment.autoExportPath)
 
     def setCurrentEnvironment(self, env : Environment):
-        self.environmentsComboBox.setCurrentText(env.displayName)
+        if env.displayName != self.environmentsComboBox.currentText():
+            self.environmentsComboBox.setCurrentText(env.displayName)
+            
         self.currentEnvironment = env
         
         self.updateSettingsTable()

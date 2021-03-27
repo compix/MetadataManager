@@ -114,10 +114,10 @@ class PluginManager(object):
             logger.error(pluginInfo.pluginLoadingError)
             return
 
-        pluginModule = importlib.import_module(f'{pluginName}.{pluginName}')
-        importlib.reload(pluginModule)
-
         try:
+            pluginModule = importlib.import_module(f'{pluginName}.{pluginName}')
+            importlib.reload(pluginModule)
+
             pluginClass = getattr(pluginModule, pluginName, None)
             if pluginClass == None:
                 raise RuntimeError(f'The plugin python file must contain a class with the same name {pluginName}')

@@ -1,4 +1,4 @@
-from RenderingPipelinePlugin import PipelineKeys
+from RenderingPipelinePlugin import PipelineKeys, RenderingPipelineUtil
 import os
 from MetadataManagerCore import Keys
 
@@ -29,8 +29,8 @@ def extractNameFromNamingConvention(namingConvention: str, documentWithSettings:
             name += c
     
     if documentWithSettings.get(PipelineKeys.ReplaceGermanCharacters, ''):
-        return replaceGermanCharacters(name)
-        
+        name = replaceGermanCharacters(name)
+
     return name
 
 class NamingConvention(object):
@@ -55,6 +55,9 @@ class NamingConvention(object):
     # Names without extension
 
     def getRenderSceneName(self, documentWithSettings: dict):
+        return os.path.basename(extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.BaseSceneNaming, ''), documentWithSettings))
+        
+    def getRenderSceneName(self, documentWithSettings: dict):
         return os.path.basename(extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.RenderSceneNaming, ''), documentWithSettings))
 
     def getInputSceneName(self, documentWithSettings: dict):
@@ -76,6 +79,9 @@ class NamingConvention(object):
         return os.path.basename(extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.DeliveryNaming, ''), documentWithSettings))
 
     # Relative filenames without extension
+
+    def getBaseSceneRelPath(self, documentWithSettings: dict):
+        return extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.BaseSceneNaming, ''), documentWithSettings)
 
     def getRenderSceneRelPath(self, documentWithSettings: dict):
         return extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.RenderSceneNaming, ''), documentWithSettings)
@@ -119,7 +125,7 @@ class NamingConvention(object):
         return os.path.join(documentWithSettings.get(PipelineKeys.PostFolder, ''), self.getPostRelPath(documentWithSettings)) + (f'.{ext}' if ext else '')
 
     def getDeliveryFilename(self, documentWithSettings: dict, ext: str = None):
-        return os.path.join(documentWithSettings.get(PipelineKeys.PostFolder, ''), self.getDeliveryRelPath(documentWithSettings)) + (f'.{ext}' if ext else '')
+        return os.path.join(documentWithSettings.get(PipelineKeys.DeliveryFolder, ''), self.getDeliveryRelPath(documentWithSettings)) + (f'.{ext}' if ext else '')
 
     def getBaseSceneFilename(self, documentWithSettings: dict):
-        return documentWithSettings.get(PipelineKeys.BaseScene, '')
+        return os.path.join(documentWithSettings.get(PipelineKeys.BaseScenesFolder, ''), self.getBaseSceneRelPath(documentWithSettings)) + f'.{documentWithSettings.get(PipelineKeys.SceneExtension, "")}'

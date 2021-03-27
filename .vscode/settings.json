@@ -9,10 +9,12 @@
     ],
     "python.autoComplete.extraPaths": [
         "${workspaceFolder}\\plugins",
-        "${workspaceFolder}\\VisualScripting"
+        "${workspaceFolder}\\VisualScripting",
+        "C:\\blender_autocomplete\\2.90"
     ],
     "python.analysis.extraPaths": [
         "${workspaceFolder}\\plugins",
-        "${workspaceFolder}\\VisualScripting"
+        "${workspaceFolder}\\VisualScripting",
+        "C:\\blender_autocomplete\\2.90"
     ]
 }

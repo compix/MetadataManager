@@ -1,3 +1,5 @@
+from qt_extensions import qt_util
+from MetadataManagerCore import Keys
 from os import pipe
 from plugins.RenderingPipelinePlugin import PipelineKeys
 from MetadataManagerCore.actions.Action import Action
@@ -6,6 +8,7 @@ from typing import List
 import os
 import typing
 from RenderingPipelinePlugin.PipelineType import PipelineType
+from animation import anim_util
 
 if typing.TYPE_CHECKING:
     from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
@@ -127,6 +130,16 @@ class SelectRenderingInExplorerAction(PipelineDocumentAction):
     def execute(self, document):
         documentWithSettings = self.pipeline.combineDocumentWithSettings(document, self.pipeline.environmentSettings)
         filename = self.pipeline.namingConvention.getRenderingFilename(documentWithSettings)
+
+        if '#' in filename:
+            frames = anim_util.extractFrameFilenames(filename, 1, startsAtZero=True)
+            filename = frames[0]
+            if not os.path.exists(filename):
+                filename = anim_util.extractFrameFilenames(filename, 1, startsAtZero=False)[0]
+        elif self.pipeline.pipelineType == PipelineType.Blender:
+            base, ext = os.path.splitext(filename)
+            filename = base + "0000" + ext
+
         windows_nodes.selectInExplorer(filename)
 
 class SelectPostImageInExplorerAction(PipelineDocumentAction):
@@ -138,3 +151,25 @@ class SelectPostImageInExplorerAction(PipelineDocumentAction):
         documentWithSettings = self.pipeline.combineDocumentWithSettings(document, self.pipeline.environmentSettings)
         filename = self.pipeline.namingConvention.getPostFilename(documentWithSettings, ext=self.pipeline.getPreferredPreviewExtension(documentWithSettings))
         windows_nodes.selectInExplorer(filename)
+
+class RefreshPreviewFilenameAction(PipelineAction):
+    @property
+    def displayName(self):
+        return 'Refresh Preview Filenames'
+
+    @property
+    def runsOnMainThread(self):
+        return True
+
+    def execute(self):
+        ext = self.pipeline.getPreferredPreviewExtension(self.pipeline.environmentSettings)
+        collection = self.pipeline.dbManager.db[self.pipeline.dbCollectionName]
+
+        for document in collection.find({}):
+            documentWithSettings = self.pipeline.combineDocumentWithSettings(document, self.pipeline.environmentSettings)
+            filename = self.pipeline.namingConvention.getPostFilename(documentWithSettings, ext=ext)
+            document[Keys.preview] = filename
+
+            collection.replace_one({'_id': document['_id']}, document)
+        
+        qt_util.runInMainThread(lambda: self.pipeline.viewerRegistry.documentSearchFilterViewer.viewItems(saveSearchHistoryEntry=False))

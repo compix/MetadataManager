@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>909</width>
-    <height>1267</height>
+    <width>926</width>
+    <height>599</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,8 +34,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>848</width>
-            <height>1154</height>
+            <width>865</width>
+            <height>1200</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -234,35 +234,6 @@
                   </item>
                   <item>
                    <widget class="QPushButton" name="productTableButton">
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="icon">
-                     <iconset resource="../../../assets/resource_files/resources.qrc">
-                      <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </item>
-                <item row="10" column="0">
-                 <widget class="QLabel" name="label_9">
-                  <property name="text">
-                   <string>Base Scene</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="10" column="1">
-                 <layout class="QHBoxLayout" name="horizontalLayout_6">
-                  <item>
-                   <widget class="QLineEdit" name="baseSceneEdit">
-                    <property name="toolTip">
-                     <string>The base scene will be loaded first and may contain environment and lighting which are shared in all variations. This scene may also define render settings.</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QPushButton" name="baseSceneButton">
                     <property name="text">
                      <string/>
                     </property>
@@ -568,14 +539,14 @@
                  </property>
                  <item>
                   <layout class="QFormLayout" name="formLayout_3">
-                   <item row="0" column="0">
+                   <item row="2" column="0">
                     <widget class="QLabel" name="label_21">
                      <property name="text">
                       <string>Render Scenes</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="0" column="1">
+                   <item row="2" column="1">
                     <layout class="QHBoxLayout" name="horizontalLayout_18">
                      <item>
                       <widget class="QLineEdit" name="renderScenesFolderEdit">
@@ -589,6 +560,198 @@
                      </item>
                      <item>
                       <widget class="QPushButton" name="renderScenesFolderButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="label_28">
+                     <property name="text">
+                      <string>Environment Scenes</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_23">
+                     <item>
+                      <widget class="QLineEdit" name="environmentScenesEdit">
+                       <property name="toolTip">
+                        <string>Optional scenes that will be loaded after the base scene for scene (lighting, props...) variations based on product information.</string>
+                       </property>
+                       <property name="text">
+                        <string>scenes/environment</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="environmentScenesButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="5" column="0">
+                    <widget class="QLabel" name="label_32">
+                     <property name="text">
+                      <string>Nuke Scenes</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="6" column="0">
+                    <widget class="QLabel" name="label_23">
+                     <property name="text">
+                      <string>Renderings</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="6" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_20">
+                     <item>
+                      <widget class="QLineEdit" name="renderingsFolderEdit">
+                       <property name="toolTip">
+                        <string>The folder where renderings will be stored.</string>
+                       </property>
+                       <property name="text">
+                        <string>renderings/autogen</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="renderingsFolderButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="7" column="0">
+                    <widget class="QLabel" name="label_24">
+                     <property name="text">
+                      <string>Post</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="7" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_21">
+                     <item>
+                      <widget class="QLineEdit" name="postFolderEdit">
+                       <property name="toolTip">
+                        <string>The folder where post processed rendering results will be stored.</string>
+                       </property>
+                       <property name="text">
+                        <string>post/autogen</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="postFolderButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="9" column="0">
+                    <widget class="QLabel" name="label_25">
+                     <property name="text">
+                      <string>Delivery</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="9" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_22">
+                     <item>
+                      <widget class="QLineEdit" name="deliveryFolderEdit">
+                       <property name="toolTip">
+                        <string>The folder where final images will be stored for delivery to the customer. Note that this is only useful if the naminig convention is different from the images in post.</string>
+                       </property>
+                       <property name="text">
+                        <string>delivery</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="deliveryFolderButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="5" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_25">
+                     <item>
+                      <widget class="QLineEdit" name="nukeScenesFolderEdit">
+                       <property name="toolTip">
+                        <string>The folder where nuke scenes are stored.</string>
+                       </property>
+                       <property name="text">
+                        <string>scenes/nuke</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="nukeScenesFolderButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_53">
+                     <property name="text">
+                      <string>Base Scenes</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_29">
+                     <item>
+                      <widget class="QLineEdit" name="baseScenesFolderEdit">
+                       <property name="toolTip">
+                        <string>The base scenes are loaded first and may contain render settings and a base environment.</string>
+                       </property>
+                       <property name="text">
+                        <string>scenes/base</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="baseScenesFolderButton">
                        <property name="text">
                         <string/>
                        </property>
@@ -621,166 +784,6 @@
                      </item>
                      <item>
                       <widget class="QPushButton" name="inputScenesFolderButton">
-                       <property name="text">
-                        <string/>
-                       </property>
-                       <property name="icon">
-                        <iconset resource="../../../assets/resource_files/resources.qrc">
-                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item row="2" column="0">
-                    <widget class="QLabel" name="label_28">
-                     <property name="text">
-                      <string>Environment Scenes</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="2" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_23">
-                     <item>
-                      <widget class="QLineEdit" name="environmentScenesEdit">
-                       <property name="toolTip">
-                        <string>Optional scenes that will be loaded after the base scene for scene (lighting, props...) variations based on product information.</string>
-                       </property>
-                       <property name="text">
-                        <string>scenes/environment</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QPushButton" name="environmentScenesButton">
-                       <property name="text">
-                        <string/>
-                       </property>
-                       <property name="icon">
-                        <iconset resource="../../../assets/resource_files/resources.qrc">
-                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item row="3" column="0">
-                    <widget class="QLabel" name="label_32">
-                     <property name="text">
-                      <string>Nuke Scenes</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="4" column="0">
-                    <widget class="QLabel" name="label_23">
-                     <property name="text">
-                      <string>Renderings</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="4" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_20">
-                     <item>
-                      <widget class="QLineEdit" name="renderingsFolderEdit">
-                       <property name="toolTip">
-                        <string>The folder where renderings will be stored.</string>
-                       </property>
-                       <property name="text">
-                        <string>renderings/autogen</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QPushButton" name="renderingsFolderButton">
-                       <property name="text">
-                        <string/>
-                       </property>
-                       <property name="icon">
-                        <iconset resource="../../../assets/resource_files/resources.qrc">
-                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item row="5" column="0">
-                    <widget class="QLabel" name="label_24">
-                     <property name="text">
-                      <string>Post</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="5" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_21">
-                     <item>
-                      <widget class="QLineEdit" name="postFolderEdit">
-                       <property name="toolTip">
-                        <string>The folder where post processed rendering results will be stored.</string>
-                       </property>
-                       <property name="text">
-                        <string>post/autogen</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QPushButton" name="postFolderButton">
-                       <property name="text">
-                        <string/>
-                       </property>
-                       <property name="icon">
-                        <iconset resource="../../../assets/resource_files/resources.qrc">
-                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item row="7" column="0">
-                    <widget class="QLabel" name="label_25">
-                     <property name="text">
-                      <string>Delivery</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="7" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_22">
-                     <item>
-                      <widget class="QLineEdit" name="deliveryFolderEdit">
-                       <property name="toolTip">
-                        <string>The folder where final images will be stored for delivery to the customer. Note that this is only useful if the naminig convention is different from the images in post.</string>
-                       </property>
-                       <property name="text">
-                        <string>delivery</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QPushButton" name="deliveryFolderButton">
-                       <property name="text">
-                        <string/>
-                       </property>
-                       <property name="icon">
-                        <iconset resource="../../../assets/resource_files/resources.qrc">
-                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item row="3" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_25">
-                     <item>
-                      <widget class="QLineEdit" name="nukeScenesFolderEdit">
-                       <property name="toolTip">
-                        <string>The folder where nuke scenes are stored.</string>
-                       </property>
-                       <property name="text">
-                        <string>scenes/nuke</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QPushButton" name="nukeScenesFolderButton">
                        <property name="text">
                         <string/>
                        </property>
@@ -830,8 +833,10 @@
                    <item>
                     <widget class="QLabel" name="label_18">
                      <property name="text">
-                      <string>Naming conventions should contain table header columns as keys enclosed by [], e.g. [Key0]_[Key1].
-The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key0]/[Key0]_[Key1].</string>
+                      <string>Naming conventions should contain table header columns as keys enclosed by [], e.g. [Key0]_[Key1]. The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key0]/[Key0]_[Key1]. Use [rp_perspective] to include the perspective code in the naming convention.</string>
+                     </property>
+                     <property name="wordWrap">
+                      <bool>true</bool>
                      </property>
                     </widget>
                    </item>
@@ -839,14 +844,14 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
                  </item>
                  <item>
                   <layout class="QFormLayout" name="formLayout_2">
-                   <item row="1" column="0">
+                   <item row="3" column="0">
                     <widget class="QLabel" name="label_16">
                      <property name="text">
                       <string>Render Scene Relative File Naming Convention</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="1">
+                   <item row="3" column="1">
                     <layout class="QHBoxLayout" name="horizontalLayout_13">
                      <item>
                       <widget class="QLineEdit" name="renderSceneNamingEdit">
@@ -857,32 +862,14 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
                      </item>
                     </layout>
                    </item>
-                   <item row="2" column="0">
-                    <widget class="QLabel" name="label_17">
-                     <property name="text">
-                      <string>Input Scene Relative File Naming Convention</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="2" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_14">
-                     <item>
-                      <widget class="QLineEdit" name="inputSceneNamingEdit">
-                       <property name="toolTip">
-                        <string>The naming convention for input scenes which are used to create variation scenes.</string>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item row="5" column="0">
+                   <item row="7" column="0">
                     <widget class="QLabel" name="label_13">
                      <property name="text">
                       <string>Rendering Relative File Naming Convention</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="5" column="1">
+                   <item row="7" column="1">
                     <layout class="QHBoxLayout" name="horizontalLayout_12">
                      <item>
                       <widget class="QLineEdit" name="renderingNamingEdit">
@@ -893,14 +880,14 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
                      </item>
                     </layout>
                    </item>
-                   <item row="6" column="0">
+                   <item row="8" column="0">
                     <widget class="QLabel" name="label_14">
                      <property name="text">
                       <string>Post Relative File Naming Convention</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="6" column="1">
+                   <item row="8" column="1">
                     <layout class="QHBoxLayout" name="horizontalLayout_15">
                      <item>
                       <widget class="QLineEdit" name="postNamingEdit">
@@ -911,14 +898,14 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
                      </item>
                     </layout>
                    </item>
-                   <item row="8" column="0">
+                   <item row="10" column="0">
                     <widget class="QLabel" name="label_15">
                      <property name="text">
                       <string>Delivery Relative File Naming Convention</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="8" column="1">
+                   <item row="10" column="1">
                     <layout class="QHBoxLayout" name="horizontalLayout_16">
                      <item>
                       <widget class="QLineEdit" name="deliveryNamingEdit">
@@ -947,14 +934,14 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
                      </item>
                     </layout>
                    </item>
-                   <item row="3" column="0">
+                   <item row="5" column="0">
                     <widget class="QLabel" name="label_29">
                      <property name="text">
                       <string>Environment Scene Relative File Naming Convention</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="1">
+                   <item row="5" column="1">
                     <layout class="QHBoxLayout" name="horizontalLayout_24">
                      <item>
                       <widget class="QLineEdit" name="environmentSceneNamingEdit">
@@ -965,19 +952,55 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
                      </item>
                     </layout>
                    </item>
-                   <item row="4" column="0">
+                   <item row="6" column="0">
                     <widget class="QLabel" name="label_31">
                      <property name="text">
                       <string>Nuke Scene Relative File Naming Convention</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="1">
+                   <item row="6" column="1">
                     <layout class="QHBoxLayout" name="horizontalLayout_8">
                      <item>
                       <widget class="QLineEdit" name="nukeSceneNamingEdit">
                        <property name="toolTip">
                         <string>The naming convention for nuke scenes.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_9">
+                     <property name="text">
+                      <string>Base Scene Relative File Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_6">
+                     <item>
+                      <widget class="QLineEdit" name="baseSceneNamingEdit">
+                       <property name="toolTip">
+                        <string>The base scene will be loaded first and may contain environment and lighting which are shared in all variations. This scene may also define render settings.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_17">
+                     <property name="text">
+                      <string>Input Scene Relative File Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_14">
+                     <item>
+                      <widget class="QLineEdit" name="inputSceneNamingEdit">
+                       <property name="toolTip">
+                        <string>The naming convention for input scenes which are used to create variation scenes.</string>
                        </property>
                       </widget>
                      </item>
@@ -997,7 +1020,7 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="commonDeadlineTab">
+     <widget class="QWidget" name="deadlineTab">
       <attribute name="title">
        <string>Deadline</string>
       </attribute>
@@ -1012,8 +1035,8 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>865</width>
-            <height>1153</height>
+            <width>882</width>
+            <height>1129</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -1056,7 +1079,7 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
                    <item row="0" column="1">
                     <widget class="QLineEdit" name="deadlinePriorityEdit">
                      <property name="text">
-                      <string>50</string>
+                      <string>30</string>
                      </property>
                     </widget>
                    </item>
@@ -1241,8 +1264,8 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>865</width>
-            <height>1153</height>
+            <width>882</width>
+            <height>1129</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -1389,13 +1412,112 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>865</width>
-            <height>1153</height>
+            <width>882</width>
+            <height>1129</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_14">
            <item>
-            <layout class="QFormLayout" name="formLayout_6"/>
+            <layout class="QFormLayout" name="formLayout_6">
+             <item row="0" column="0">
+              <widget class="QFrame" name="frame_11">
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <layout class="QFormLayout" name="formLayout_5">
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_50">
+                 <property name="text">
+                  <string>Blender Version</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QComboBox" name="blenderVersionComboBox">
+                 <item>
+                  <property name="text">
+                   <string>Default</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>2.8</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>2.9</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>3.0</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="1" column="1">
+              <widget class="QFrame" name="frame_12">
+               <property name="frameShape">
+                <enum>QFrame::NoFrame</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_25">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QGroupBox" name="groupBox_9">
+                  <property name="title">
+                   <string>Source Code Template</string>
+                  </property>
+                  <layout class="QVBoxLayout" name="verticalLayout_26">
+                   <item alignment="Qt::AlignHCenter">
+                    <widget class="QLabel" name="label_51">
+                     <property name="text">
+                      <string>Input Scene Creation</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QTextEdit" name="blenderInputSceneSourceCodeTemplateEdit"/>
+                   </item>
+                   <item alignment="Qt::AlignHCenter">
+                    <widget class="QLabel" name="label_52">
+                     <property name="text">
+                      <string>Render Scene Creation</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QTextEdit" name="blenderRenderSceneSourceCodeTemplateEdit"/>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
            </item>
           </layout>
          </widget>
@@ -1403,7 +1525,7 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab">
+     <widget class="QWidget" name="nukeTab">
       <attribute name="title">
        <string>Nuke</string>
       </attribute>
@@ -1564,6 +1686,40 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
       <property name="bottomMargin">
        <number>0</number>
       </property>
+      <item alignment="Qt::AlignLeft">
+       <widget class="QFrame" name="frame_13">
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_28">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QCheckBox" name="replaceExistingCollectionCheckBox">
+           <property name="text">
+            <string>Replace Existing Collection</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
       <item alignment="Qt::AlignRight">
        <widget class="QFrame" name="frame_5">
         <property name="frameShape">
@@ -1632,7 +1788,7 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
   <tabstop>nukeScriptEdit</tabstop>
   <tabstop>nukeVersionComboBox</tabstop>
   <tabstop>productTableEdit</tabstop>
-  <tabstop>baseSceneEdit</tabstop>
+  <tabstop>baseSceneNamingEdit</tabstop>
   <tabstop>renderSettingsEdit</tabstop>
   <tabstop>replaceGermanCharactersCheckBox</tabstop>
   <tabstop>perspectiveCodesEdit</tabstop>
@@ -1667,7 +1823,6 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
   <tabstop>nukeScenesFolderButton</tabstop>
   <tabstop>scrollArea</tabstop>
   <tabstop>tabWidget</tabstop>
-  <tabstop>baseSceneButton</tabstop>
   <tabstop>renderScenesFolderButton</tabstop>
   <tabstop>inputSceneCreationScriptButton</tabstop>
   <tabstop>inputScenesFolderButton</tabstop>
@@ -1689,7 +1844,6 @@ The relative files may also contain subfolders, e.g. SubFolder/SubFolderWith[Key
   <tabstop>scrollArea_4</tabstop>
  </tabstops>
  <resources>
-  <include location="../../../assets/resource_files/resources.qrc"/>
   <include location="../../../assets/resource_files/resources.qrc"/>
  </resources>
  <connections/>

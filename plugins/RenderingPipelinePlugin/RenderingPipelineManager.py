@@ -109,33 +109,6 @@ class RenderingPipelineManager(object):
             self.pipelines.append(pipeline)
             self.save(pipeline)
 
-    def saveProjectSubfolders(self, subfolderDict: dict):
-        renderingPipelineState = self.dbManager.db[Keys.STATE_COLLECTION].find_one({'_id': 'rendering_pipeline'})
-        if not renderingPipelineState:
-            renderingPipelineState = dict()
-
-        renderingPipelineState['project_subolders'] = subfolderDict
-        self.dbManager.db[Keys.STATE_COLLECTION].replace_one({'_id': 'rendering_pipeline'}, renderingPipelineState, upsert=True)
-
-    def loadProjectSubfolderDict(self):
-        renderingPipelineState = self.dbManager.db[Keys.STATE_COLLECTION].find_one({'_id': 'rendering_pipeline'})
-        projectSubfolderDict = None
-        if renderingPipelineState:
-            projectSubfolderDict = renderingPipelineState.get('project_subolders')
-
-        if not projectSubfolderDict:
-            projectSubfolderDict = {
-                PipelineKeys.RenderScenesFolder: 'scenes/render',
-                PipelineKeys.InputScenesFolder: 'scenes/input',
-                PipelineKeys.EnvironmentScenesFolder: 'scenes/environment',
-                PipelineKeys.NukeScenesFolder: 'scenes/nuke',
-                PipelineKeys.RenderingsFolder: 'renderings/autogen',
-                PipelineKeys.PostFolder: 'post/autogen',
-                PipelineKeys.DeliveryFolder: 'delivery'
-            }
-
-        return projectSubfolderDict
-
     def save(self, pipeline: RenderingPipeline):
         collection = self.dbManager.db[RenderingPipelinesCollectionName]
         collection.replace_one({'_id': pipeline.name}, self.pipelineDict(pipeline), upsert=True)

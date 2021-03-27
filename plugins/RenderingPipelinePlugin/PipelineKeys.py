@@ -6,13 +6,13 @@ InputSceneCreationScript = 'rp_input_scene_creation_script'
 NukeScript = 'rp_nuke_script'
 ProductTable = 'rp_product_table'
 ProductTableSheetName = 'rp_product_table_sheet_name'
-BaseScene = 'rp_base_scene'
 RenderSettings = 'rp_render_settings'
 ReplaceGermanCharacters = 'rp_replace_german_characters'
 PerspectiveCodes = 'rp_perspective_codes'
 RenderingExtension = 'rp_rendering_extension'
 PostOutputExtensions = 'rp_post_output_extensions'
 
+BaseScenesFolder = 'rp_base_scenes_folder'
 RenderScenesFolder = 'rp_render_scenes_folder'
 InputScenesFolder = 'rp_input_scenes_folder'
 EnvironmentScenesFolder = 'rp_environment_scenes_folder'
@@ -22,6 +22,7 @@ PostFolder = 'rp_post_folder'
 DeliveryFolder = 'rp_delivery_folder'
 
 SidNaming = 'rp_sid_naming'
+BaseSceneNaming = 'rp_base_scene_naming'
 RenderSceneNaming = 'rp_render_scene_naming'
 InputSceneNaming = 'rp_input_scene_naming'
 EnvironmentSceneNaming = 'rp_environment_scene_naming'
@@ -61,3 +62,6 @@ Max3dsVersion = 'rp_3dsmax_version'
 
 # Nuke
 NukeVersion = 'rp_nuke_version'
+
+# Blender
+BlenderVersion = 'rp_blender_version'

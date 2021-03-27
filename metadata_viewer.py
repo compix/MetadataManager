@@ -1,3 +1,4 @@
+import hook
 from ApplicationMode import ApplicationMode
 import argparse
 import sys
