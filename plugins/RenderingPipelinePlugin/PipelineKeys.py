@@ -44,6 +44,10 @@ RenderingFilename = 'rp_rendering_filename'
 PostFilename = 'rp_post_filename'
 DeliveryFilename = 'rp_delivery_filename'
 
+SaveRenderScene = 'rp_save_render_scene'
+RenderInSceneCreationScript = 'rp_render_in_scene_creation_script'
+ApplyCameraFraming = 'rp_apply_camera_framing'
+
 # Deadline
 DeadlinePriority = 'rp_deadline_priority'
 DeadlineInputScenePool = 'rp_deadline_input_scene_pool'

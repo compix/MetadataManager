@@ -73,7 +73,7 @@ class EnvironmentEntry(object):
     def verify(self):
         pass
 
-class EnvironmentEntryLineEdit(EnvironmentEntry):
+class LineEditEnvironmentEntry(EnvironmentEntry):
     def saveValue(self, environment: Environment):
         edit: QtWidgets.QLineEdit = self.widget
         environment.settings[self.envKey] = edit.text()
@@ -82,7 +82,16 @@ class EnvironmentEntryLineEdit(EnvironmentEntry):
         edit: QtWidgets.QLineEdit = self.widget
         edit.setText(environment.settings.get(self.envKey))
 
-class EnvironmentEntryComboBox(EnvironmentEntry):
+class CheckBoxEnvironmentEntry(EnvironmentEntry):
+    def saveValue(self, environment: Environment):
+        checkbox: QtWidgets.QCheckBox = self.widget
+        environment.settings[self.envKey] = checkbox.isChecked()
+
+    def loadValue(self, environment: Environment):
+        checkbox: QtWidgets.QCheckBox = self.widget
+        checkbox.setChecked(environment.settings.get(self.envKey))
+
+class ComboBoxEnvironmentEntry(EnvironmentEntry):
     def saveValue(self, environment: Environment):
         cb: QtWidgets.QComboBox = self.widget
         environment.settings[self.envKey] = cb.currentText()
@@ -91,7 +100,7 @@ class EnvironmentEntryComboBox(EnvironmentEntry):
         cb: QtWidgets.QComboBox = self.widget
         cb.setCurrentText(environment.settings.get(self.envKey))
 
-class NamingEnvironmentEntry(EnvironmentEntryLineEdit):
+class NamingEnvironmentEntry(LineEditEnvironmentEntry):
     def saveValue(self, environment: Environment):
         edit: QtWidgets.QLineEdit = self.widget
         environment.settings[self.envKey] = edit.text()
@@ -108,7 +117,7 @@ class NamingEnvironmentEntry(EnvironmentEntryLineEdit):
         if not valid:
             raise RuntimeError(f'The naming convetion for {self.envKey} is not valid.')
 
-class ProjectSubFolderEnvironmentEntry(EnvironmentEntryLineEdit):
+class ProjectSubFolderEnvironmentEntry(LineEditEnvironmentEntry):
     def __init__(self, envKey: str, lineEdit: QtWidgets.QLineEdit, renderingPipelineViewer, 
                  folderSelectButton: QtWidgets.QPushButton, pipelineType: PipelineType = None, pipelineComboBox: QtWidgets.QComboBox = None) -> None:
         super().__init__(envKey, lineEdit, pipelineType=pipelineType, pipelineComboBox=pipelineComboBox)
@@ -199,16 +208,16 @@ class RenderingPipelineViewer(object):
         qt_util.connectFileSelection(self.dialog, self.dialog.productTableEdit, self.dialog.productTableButton, filter='Table File (*.xlsx;*.csv)')
         qt_util.connectFileSelection(self.dialog, self.dialog.renderSettingsEdit, self.dialog.renderSettingsButton)
 
-        self.environmentEntries.append(EnvironmentEntryLineEdit(PipelineKeys.DeadlinePriority, self.dialog.deadlinePriorityEdit))
-        self.environmentEntries.append(EnvironmentEntryComboBox(PipelineKeys.Max3dsVersion, self.dialog.versionOf3dsMaxComboBox, PipelineType.Max3ds, self.dialog.pipelineTypeComboBox))
-        self.environmentEntries.append(EnvironmentEntryComboBox(PipelineKeys.BlenderVersion, self.dialog.blenderVersionComboBox, PipelineType.Blender, self.dialog.pipelineTypeComboBox))
-        self.environmentEntries.append(EnvironmentEntryComboBox(PipelineKeys.NukeVersion, self.dialog.nukeVersionComboBox))
+        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlinePriority, self.dialog.deadlinePriorityEdit))
+        self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.Max3dsVersion, self.dialog.versionOf3dsMaxComboBox, PipelineType.Max3ds, self.dialog.pipelineTypeComboBox))
+        self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.BlenderVersion, self.dialog.blenderVersionComboBox, PipelineType.Blender, self.dialog.pipelineTypeComboBox))
+        self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.NukeVersion, self.dialog.nukeVersionComboBox))
 
-        self.environmentEntries.append(EnvironmentEntryLineEdit(PipelineKeys.DeadlineInputSceneTimeout, self.dialog.inputSceneDeadlineTimeout))
-        self.environmentEntries.append(EnvironmentEntryLineEdit(PipelineKeys.DeadlineRenderSceneTimeout, self.dialog.renderSceneDeadlineTimeout))
-        self.environmentEntries.append(EnvironmentEntryLineEdit(PipelineKeys.DeadlineRenderingTimeout, self.dialog.renderingDeadlineTimeout))
-        self.environmentEntries.append(EnvironmentEntryLineEdit(PipelineKeys.DeadlineNukeTimeout, self.dialog.nukeDeadlineTimeout))
-        self.environmentEntries.append(EnvironmentEntryLineEdit(PipelineKeys.DeadlineDeliveryTimeout, self.dialog.deliveryDeadlineTimeout))
+        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineInputSceneTimeout, self.dialog.inputSceneDeadlineTimeout))
+        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineRenderSceneTimeout, self.dialog.renderSceneDeadlineTimeout))
+        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineRenderingTimeout, self.dialog.renderingDeadlineTimeout))
+        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineNukeTimeout, self.dialog.nukeDeadlineTimeout))
+        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineDeliveryTimeout, self.dialog.deliveryDeadlineTimeout))
 
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.BaseScenesFolder, self.dialog.baseScenesFolderEdit, self, self.dialog.baseScenesFolderButton))
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.InputScenesFolder, self.dialog.inputScenesFolderEdit, self, self.dialog.inputScenesFolderButton))
@@ -228,6 +237,10 @@ class RenderingPipelineViewer(object):
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.RenderingNaming, self.dialog.renderingNamingEdit))
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.PostNaming, self.dialog.postNamingEdit))
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.DeliveryNaming, self.dialog.deliveryNamingEdit))
+
+        self.environmentEntries.append(CheckBoxEnvironmentEntry(PipelineKeys.SaveRenderScene, self.dialog.saveRenderSceneCheckBox, PipelineType.Blender))
+        self.environmentEntries.append(CheckBoxEnvironmentEntry(PipelineKeys.RenderInSceneCreationScript, self.dialog.renderInSceneCreationScriptCheckBox, PipelineType.Blender))
+        self.environmentEntries.append(CheckBoxEnvironmentEntry(PipelineKeys.ApplyCameraFraming, self.dialog.applyCameraFramingCheckBox, PipelineType.Blender))
 
         threading_util.runInThread(self.fetchDeadlinePoolNames)
 
@@ -317,7 +330,7 @@ class RenderingPipelineViewer(object):
         self.setupDeadlinePoolComboBox(self.dialog.deadlineDeliveryPoolComboBox, poolNames, PipelineKeys.DeadlineDeliveryPool)
 
     def setupDeadlinePoolComboBox(self, comboBox: QtWidgets.QComboBox, poolNames: List[str], envKey: str):
-        self.environmentEntries.append(EnvironmentEntryComboBox(envKey, comboBox))
+        self.environmentEntries.append(ComboBoxEnvironmentEntry(envKey, comboBox))
 
         if poolNames:
             for poolName in poolNames:

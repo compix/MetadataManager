@@ -56,7 +56,7 @@ class RenderingPipeline(object):
         self.registerAndLinkAction(SelectRenderSceneInExplorerAction(self))
         self.registerAndLinkAction(SelectRenderingInExplorerAction(self))
         self.registerAndLinkAction(SelectPostImageInExplorerAction(self))
-        #self.registerAndLinkAction(RefreshPreviewFilenameAction(self))
+        self.registerAndLinkAction(RefreshPreviewFilenameAction(self))
 
     def registerAndLinkAction(self, action: Action):
         self.serviceRegistry.actionManager.registerAction(action)
@@ -212,7 +212,7 @@ class RenderingPipeline(object):
     def getPreferredPreviewExtension(self, settings: dict):
         postOutputExtensions = RenderingPipelineUtil.getPostOutputExtensions(settings)
         postOutputExt = postOutputExtensions[0]
-        for ext in ['jpg', 'png', 'tif']:
+        for ext in ['png', 'jpg', 'tif']:
             if ext in postOutputExtensions:
                 postOutputExt = ext
                 break
