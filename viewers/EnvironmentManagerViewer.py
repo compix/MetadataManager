@@ -174,7 +174,8 @@ class EnvironmentManagerViewer(DockWidget):
         self.updateValueWidget(entry[1])
 
         value = self.currentEnvironment.evaluateSettingsValue(entry[1])
-        self.widget.selectValueFileInExplorerButton.setEnabled(os.path.exists(value))
+
+        self.widget.selectValueFileInExplorerButton.setEnabled(isinstance(value, str) and os.path.exists(value))
 
         self.widget.deleteEntryButton.setEnabled(True)
 
@@ -298,7 +299,12 @@ class EnvironmentManagerViewer(DockWidget):
 
     def onAddKeyValue(self):
         key = self.widget.keyLineEdit.text()
-        value = self.inspectorWidget.value if self.inspectorWidget else ''
+        try:
+            value = self.inspectorWidget.value if self.inspectorWidget else ''
+        except Exception as e:
+            QMessageBox.warning(self, "Failed Adding Value", f"An error occurred: {str(e)}")
+            return
+
         self.addEntry(key, value)
 
     def refreshEnvironmentsComboBox(self):

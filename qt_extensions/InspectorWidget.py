@@ -3,12 +3,15 @@ from typing import Any
 from PySide2 import QtWidgets
 from PySide2.QtCore import Qt
 from enum import Enum
+import json
 
 class InspectorWidgetType(Enum):
     String = 'String'
     Integer = 'Integer'
     Float = 'Float'
     Boolean = 'Boolean'
+    Dictionary = 'Dictionary'
+    List = 'List'
 
 class InspectorWidget(object):
     def __init__(self, value: Any = None, editable = True) -> None:
@@ -81,6 +84,20 @@ class InspectorWidget(object):
             self._setValueFunction = self._setFloatValue
             self._widgetType = InspectorWidgetType.Float
 
+        elif isinstance(value, dict):
+            self.widget = QtWidgets.QTextEdit()
+            self._setWidgetEditableFunction = self._setLineEditEditable
+            self._getValueFunction = self._getDictValue
+            self._setValueFunction = self._setDictValue
+            self._widgetType = InspectorWidgetType.Dictionary
+
+        elif isinstance(value, list):
+            self.widget = QtWidgets.QTextEdit()
+            self._setWidgetEditableFunction = self._setLineEditEditable
+            self._getValueFunction = self._getDictValue
+            self._setValueFunction = self._setDictValue
+            self._widgetType = InspectorWidgetType.List
+
         else:
             raise RuntimeError('Unsupported value type: ' + str(type(value)))
 
@@ -98,6 +115,10 @@ class InspectorWidget(object):
             self.constructWidgetFromValue(False)
         elif widgetType == InspectorWidgetType.Float:
             self.constructWidgetFromValue(0.0)
+        elif widgetType == InspectorWidgetType.Dictionary:
+            self.constructWidgetFromValue(dict())
+        elif widgetType == InspectorWidgetType.List:
+            self.constructWidgetFromValue([])
         else:
             raise RuntimeError('Unsupported widget type: ' + widgetType.value)
 
@@ -131,3 +152,9 @@ class InspectorWidget(object):
     
     def _setBoolValue(self, value: bool):
         self.widget.setCheckState(Qt.CheckState.Checked if value else Qt.CheckState.Unchecked)
+
+    def _getDictValue(self):
+        return json.loads(self.widget.toPlainText())
+
+    def _setDictValue(self, value: dict):
+        self.widget.setPlainText(json.dumps(value, sort_keys=True, indent=4))
