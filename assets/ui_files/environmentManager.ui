@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>636</width>
-    <height>402</height>
+    <width>746</width>
+    <height>442</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -217,17 +217,31 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="valueLineEdit">
-         <property name="toolTip">
-          <string>Use ${EXISTING_KEY} to reference existing values mapped to an existing key.</string>
+        <widget class="QFrame" name="valueFrame">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
          </property>
-         <property name="placeholderText">
-          <string>Value</string>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
          </property>
-         <property name="clearButtonEnabled">
-          <bool>false</bool>
-         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+         </layout>
         </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="valueTypeComboBox"/>
        </item>
        <item>
         <widget class="QPushButton" name="selectValueFileInExplorerButton">
@@ -319,7 +333,6 @@
  <tabstops>
   <tabstop>environmentsComboBox</tabstop>
   <tabstop>keyLineEdit</tabstop>
-  <tabstop>valueLineEdit</tabstop>
   <tabstop>searchButton</tabstop>
   <tabstop>deleteEntryButton</tabstop>
   <tabstop>targetComboBox</tabstop>
@@ -346,22 +359,6 @@
     </hint>
     <hint type="destinationlabel">
      <x>483</x>
-     <y>85</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>valueLineEdit</sender>
-   <signal>returnPressed()</signal>
-   <receiver>addButton</receiver>
-   <slot>click()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>203</x>
-     <y>78</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>473</x>
      <y>85</y>
     </hint>
    </hints>

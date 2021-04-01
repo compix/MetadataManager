@@ -1,3 +1,5 @@
+from qt_extensions.InspectorWidget import InspectorWidget, InspectorWidgetType
+from typing import Any
 from qt_extensions.DockWidget import DockWidget
 from MetadataManagerCore.mongodb_manager import MongoDBManager
 import asset_manager
@@ -5,7 +7,7 @@ from qt_extensions import qt_util
 from PySide2 import QtWidgets, QtCore
 from PySide2.QtCore import Qt, QRegExp
 from PySide2.QtGui import QValidator, QRegExpValidator
-from PySide2.QtWidgets import QLineEdit, QMessageBox, QFileDialog, QPushButton
+from PySide2.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QFileDialog, QPushButton
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
 from MetadataManagerCore.environment.Environment import Environment
 from qt_extensions.SimpleTableModel import SimpleTableModel
@@ -13,6 +15,7 @@ import json, os
 import subprocess
 import logging
 import re
+from enum import Enum
 
 class EnvironmentManagerViewer(DockWidget):
     def __init__(self, parentWindow, environmentManager: EnvironmentManager, dbManager : MongoDBManager, settings):
@@ -24,6 +27,7 @@ class EnvironmentManagerViewer(DockWidget):
 
         self.logger = logging.getLogger(__name__)
 
+        self.inspectorWidget = None
         self.widget.addButton.clicked.connect(self.onAddKeyValue)
 
         self.environmentsComboBox : QtWidgets.QComboBox = self.widget.environmentsComboBox
@@ -56,6 +60,12 @@ class EnvironmentManagerViewer(DockWidget):
         self.setupTargetComboBox()
 
         self.environmentManager.onStateChanged.subscribe(self.onEnvironmentManagerStateChanged)
+
+        for v in InspectorWidgetType:
+            self.widget.valueTypeComboBox.addItem(v.value)
+
+        self.widget.valueTypeComboBox.currentTextChanged.connect(self.onValueTypeComboBoxSelectionChanged)
+        self.onValueTypeComboBoxSelectionChanged()
 
     def onEnvironmentManagerStateChanged(self):
         qt_util.runInMainThread(self.updateSettingsTable)
@@ -105,8 +115,8 @@ class EnvironmentManagerViewer(DockWidget):
     def onSelectValueFileInExplorerButton(self):
         if os.name == 'nt':
             try:
-                value = self.currentEnvironment.evaluateSettingsValue(self.widget.valueLineEdit.text())
-                if os.path.exists(value):
+                value = self.currentEnvironment.evaluateSettingsValue(self.inspectorWidget.value)
+                if isinstance(value, str) and os.path.exists(value):
                     subprocess.Popen(f'explorer /select,"{os.path.normpath(value)}"')
             except Exception as e:
                 print(e)
@@ -134,12 +144,36 @@ class EnvironmentManagerViewer(DockWidget):
 
         self.widget.layout().insertWidget(0, menuBar)
 
+    def onValueTypeComboBoxSelectionChanged(self):
+        valueType = InspectorWidgetType(self.widget.valueTypeComboBox.currentText())
+
+        self.inspectorWidget = InspectorWidget(editable=True)
+        self.inspectorWidget.constructFromInspectorWidgetType(valueType)
+        self.onUpdateValueWidget()
+
+    def updateValueWidget(self, value: Any):
+        self.inspectorWidget = InspectorWidget(value=value, editable=True)
+        self.onUpdateValueWidget()
+
+    def onUpdateValueWidget(self):
+        qt_util.clearContainer(self.widget.valueFrame.layout())
+        self.widget.valueFrame.layout().addWidget(self.inspectorWidget.widget)
+
+        valueType = self.inspectorWidget.type
+        self.widget.chooseFileButton.setEnabled(valueType == InspectorWidgetType.String)
+        self.widget.chooseDirButton.setEnabled(valueType == InspectorWidgetType.String)
+        self.widget.selectValueFileInExplorerButton.setEnabled(valueType == InspectorWidgetType.String)
+
+        self.widget.valueTypeComboBox.currentTextChanged.disconnect()
+        self.widget.valueTypeComboBox.setCurrentText(valueType.value)
+        self.widget.valueTypeComboBox.currentTextChanged.connect(self.onValueTypeComboBoxSelectionChanged)
+
     def onTableViewDoubleClicked(self, idx):
         entry = self.settingsTable.entries[idx.row()]
         self.widget.keyLineEdit.setText(entry[0])
-        self.widget.valueLineEdit.setText(entry[1])
+        self.updateValueWidget(entry[1])
 
-        value = self.currentEnvironment.evaluateSettingsValue(self.widget.valueLineEdit.text())
+        value = self.currentEnvironment.evaluateSettingsValue(entry[1])
         self.widget.selectValueFileInExplorerButton.setEnabled(os.path.exists(value))
 
         self.widget.deleteEntryButton.setEnabled(True)
@@ -147,13 +181,13 @@ class EnvironmentManagerViewer(DockWidget):
     def onChooseFile(self):
         fileName,_ = QFileDialog.getOpenFileName(self, "Open", "", "Any File (*.*)")
         if fileName != None and fileName != "":
-            self.widget.valueLineEdit.setText(fileName)
+            self.inspectorWidget.value = fileName
             self.onAddKeyValue()
 
     def onChooseDir(self):
         dirName = QFileDialog.getExistingDirectory(self, "Open", "")
         if dirName != None and dirName != "":
-            self.widget.valueLineEdit.setText(dirName)
+            self.inspectorWidget.value = dirName
             self.onAddKeyValue()
 
     def onArchiveEnvironment(self):
@@ -264,7 +298,7 @@ class EnvironmentManagerViewer(DockWidget):
 
     def onAddKeyValue(self):
         key = self.widget.keyLineEdit.text()
-        value = self.widget.valueLineEdit.text()
+        value = self.inspectorWidget.value if self.inspectorWidget else ''
         self.addEntry(key, value)
 
     def refreshEnvironmentsComboBox(self):
