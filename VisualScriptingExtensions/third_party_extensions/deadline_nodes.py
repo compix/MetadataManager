@@ -107,6 +107,7 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
         f.write(") catch (\n")
         f.write(f"  (dotNetClass \"System.Console\").Error.WriteLine (\"ERROR: \" + (getCurrentException()))\n")
         f.write(")\n")
+        f.write('(dotNetClass "System.Console").WriteLine ("JOB FINISHED")\n')
         f.write("\nquitMAX #noPrompt\n")
 
     os.close(maxScriptFileHandle)
