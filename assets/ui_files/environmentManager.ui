@@ -203,7 +203,7 @@
        <property name="bottomMargin">
         <number>0</number>
        </property>
-       <item>
+       <item alignment="Qt::AlignTop">
         <widget class="QLabel" name="label_2">
          <property name="minimumSize">
           <size>
@@ -216,7 +216,7 @@
          </property>
         </widget>
        </item>
-       <item>
+       <item alignment="Qt::AlignTop">
         <widget class="QFrame" name="valueFrame">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
@@ -240,10 +240,10 @@
          </layout>
         </widget>
        </item>
-       <item>
+       <item alignment="Qt::AlignTop">
         <widget class="QComboBox" name="valueTypeComboBox"/>
        </item>
-       <item>
+       <item alignment="Qt::AlignTop">
         <widget class="QPushButton" name="selectValueFileInExplorerButton">
          <property name="maximumSize">
           <size>
@@ -260,7 +260,7 @@
          </property>
         </widget>
        </item>
-       <item>
+       <item alignment="Qt::AlignTop">
         <widget class="QPushButton" name="chooseFileButton">
          <property name="maximumSize">
           <size>
@@ -277,7 +277,7 @@
          </property>
         </widget>
        </item>
-       <item>
+       <item alignment="Qt::AlignTop">
         <widget class="QPushButton" name="chooseDirButton">
          <property name="maximumSize">
           <size>
@@ -294,7 +294,7 @@
          </property>
         </widget>
        </item>
-       <item>
+       <item alignment="Qt::AlignTop">
         <widget class="QPushButton" name="addButton">
          <property name="maximumSize">
           <size>
