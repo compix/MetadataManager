@@ -39,7 +39,12 @@ class LambdaTask(QRunnable):
         
 def clearContainer(container):
     for i in reversed(range(container.count())): 
-        container.itemAt(i).widget().setParent(None)
+        item = container.takeAt(i)
+        
+        if item.widget():
+            item.widget().setParent(None)
+        elif item.layout():
+            clearContainer(item.layout())
 
 def connectFileSelection(parentWidget, lineEdit : QLineEdit, button: QPushButton, filter="Any File (*.*)"):
     def onSelect():
