@@ -15,3 +15,7 @@ class Plugin(object):
 
     def init(self):
         pass
+
+    @staticmethod
+    def dependentPluginNames():
+        return []
