@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 dirname = os.path.dirname(PySide2.__file__)
 plugin_path = os.path.join(dirname, 'plugins', 'platforms')
 os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = plugin_path
+os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
 def main():
     parser = argparse.ArgumentParser(description="Metadata manager and automation tool.")

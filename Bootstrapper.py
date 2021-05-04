@@ -72,6 +72,7 @@ class Bootstrapper(object):
         dbInitTimeout = None
         if self.mode == ApplicationMode.GUI:
             self.app = QApplication([])
+            self.app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
             self.loaderWindow = LoaderWindow(self.app, self.appInfo, self.logger, self)
         elif self.mode == ApplicationMode.Console:
             dbInitTimeout = 60.0
