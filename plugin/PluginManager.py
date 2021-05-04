@@ -81,6 +81,9 @@ class PluginManager(object):
 
             break
 
+    def getPluginInstanceByName(self, name: str):
+        return self.pluginInfoMap.get(name, PluginInfo(None)).pluginInstance
+
     def refreshPluginState(self):
         for pluginName in self.availablePluginNames:
             active = self.pluginActiveStatus.get(pluginName, True)
