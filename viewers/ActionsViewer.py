@@ -43,13 +43,16 @@ class ActionButtonTask(object):
         self.confirmationFunc = FuncWrapper(confirmationFunc, *args, **kwargs)
         
     def __call__(self):
-        if self.action.confirmationEvent != None and self.action.requestConfirmationFunction != None:
-            self.action.confirmationEvent.clear()
-            self.action.confirmationEvent.subscribe(self.onConfirmation)
-            self.action.requestConfirmationFunction()
-        elif self.action.useDefaultConfirmationEvent:
+        confirmed = True
+        if self.action.useDefaultConfirmationEvent:
             confirmed = self.confirmationFunc == None or self.confirmationFunc()
-            if confirmed:
+
+        if confirmed:            
+            if self.action.confirmationEvent != None and self.action.requestConfirmationFunction != None:
+                self.action.confirmationEvent.clear()
+                self.action.confirmationEvent.subscribe(self.onConfirmation)
+                self.action.requestConfirmationFunction()
+            else:
                 self.onConfirmation()
 
     def onConfirmation(self):
