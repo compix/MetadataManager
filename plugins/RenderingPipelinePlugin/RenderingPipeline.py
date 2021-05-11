@@ -91,8 +91,15 @@ class RenderingPipeline(object):
 
     def onOpenSubmissionDialog(self):
         # Disable submission checkboxes if not applicable:
-        def setCheckBoxState(checkBox: QCheckBox, envKey: str, tooltip: str = ''):
-            if self.environmentSettings.get(envKey, '').strip() == '':
+        def setCheckBoxState(checkBox: QCheckBox, envKey: str, tooltip: str = '', perspectiveDependent=False):
+            if perspectiveDependent:
+                value = PipelineKeys.getKeyWithPerspective(envKey, self.environmentSettings.get(PipelineKeys.Perspective, ''))
+                if not value:
+                    value = self.environmentSettings.get(envKey, '')    
+            else:
+                value = self.environmentSettings.get(envKey, '')
+                
+            if value.strip() == '':
                 checkBox.setEnabled(False)
                 checkBox.setToolTip(tooltip)
             else:
@@ -103,9 +110,9 @@ class RenderingPipeline(object):
 
         setCheckBoxState(self.submissionDialog.submitInputSceneCheckBox, PipelineKeys.InputSceneCreationScript, tooltip='An input scene creation script is not specified.')
         setCheckBoxState(self.submissionDialog.submitRenderSceneCheckBox, PipelineKeys.RenderSceneCreationScript, tooltip='A render scene creation script is not specified.')
-        setCheckBoxState(self.submissionDialog.submitRenderingCheckBox, PipelineKeys.RenderingNaming, tooltip='Rendering naming convention not specified.')
+        setCheckBoxState(self.submissionDialog.submitRenderingCheckBox, PipelineKeys.RenderingNaming, tooltip='Rendering naming convention not specified.', perspectiveDependent=True)
         setCheckBoxState(self.submissionDialog.submitNukeCheckBox, PipelineKeys.NukeScript, tooltip='A nuke script is not specified.')
-        setCheckBoxState(self.submissionDialog.submitCopyForDeliveryCheckBox, PipelineKeys.DeliveryNaming, tooltip='Delivery naming convention not specified.')
+        setCheckBoxState(self.submissionDialog.submitCopyForDeliveryCheckBox, PipelineKeys.DeliveryNaming, tooltip='Delivery naming convention not specified.', perspectiveDependent=True)
 
         self.submissionDialog.open()
 

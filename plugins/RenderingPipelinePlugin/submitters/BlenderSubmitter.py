@@ -14,7 +14,7 @@ class BlenderSubmitter(Submitter):
         pipelineInfoDict = documentWithSettings
 
         pluginName = deadline_nodes.getBlenderPipelinePluginName()
-        jobName = self.pipeline.namingConvention.getRenderingName(documentWithSettings)
+        jobName = self.pipeline.namingConvention.getInputSceneName(documentWithSettings)
         batchName = 'Input Scene'
         jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getInputSceneCreationPriority(documentWithSettings),
                                                    documentWithSettings.get(PipelineKeys.DeadlineInputScenePool), dependentJobIds=dependentJobIds)
@@ -40,7 +40,7 @@ class BlenderSubmitter(Submitter):
         pipelineInfoDict = documentWithSettings
 
         pluginName = deadline_nodes.getBlenderPipelinePluginName()
-        jobName = self.pipeline.namingConvention.getRenderingName(documentWithSettings)
+        jobName = self.pipeline.namingConvention.getRenderSceneName(documentWithSettings)
         batchName = 'Render Scene'
         jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getrenderSceneCreationPriority(documentWithSettings), 
                                                    documentWithSettings.get(PipelineKeys.DeadlineRenderScenePool), dependentJobIds=dependentJobIds)
@@ -48,6 +48,9 @@ class BlenderSubmitter(Submitter):
         filename = self.pipeline.namingConvention.getRenderSceneFilename(documentWithSettings)
         jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)
         jobInfoDict['OutputFilename0'] = os.path.basename(filename)
+
+        frames = documentWithSettings.get(PipelineKeys.getKeyWithPerspective(PipelineKeys.Frames, documentWithSettings.get(PipelineKeys.Perspective, '')), '')
+        pipelineInfoDict[PipelineKeys.Frames] = frames
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderSceneTimeout)
 
@@ -66,13 +69,16 @@ class BlenderSubmitter(Submitter):
         jobName = self.pipeline.namingConvention.getRenderingName(documentWithSettings)
         batchName = 'Rendering'
         jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getRenderingPriority(documentWithSettings), 
-
                                                    documentWithSettings.get(PipelineKeys.DeadlineRenderingPool), dependentJobIds=dependentJobIds)
 
+        frames = documentWithSettings.get(PipelineKeys.getKeyWithPerspective(PipelineKeys.Frames, documentWithSettings.get(PipelineKeys.Perspective, '')), '')
+        if frames:
+            jobInfoDict['Frames'] = frames
+        
         filename = self.pipeline.namingConvention.getRenderingFilename(documentWithSettings)
         jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)
         jobInfoDict['OutputFilename0'] = os.path.basename(filename)
-        
+
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderingTimeout)
 
         sceneFilename = self.pipeline.namingConvention.getRenderSceneFilename(documentWithSettings)

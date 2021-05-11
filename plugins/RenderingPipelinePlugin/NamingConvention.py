@@ -69,14 +69,22 @@ class NamingConvention(object):
     def getNukeSceneName(self, documentWithSettings: dict):
         return os.path.basename(extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.NukeSceneNaming, ''), documentWithSettings))
 
+    def getPerspectiveDependentNaming(self, documentWithSettings: dict, namingKey: str):
+        key = PipelineKeys.getKeyWithPerspective(namingKey, documentWithSettings.get(PipelineKeys.Perspective, ''))
+        renderingName = documentWithSettings.get(key, '')
+        if not renderingName:
+            renderingName = documentWithSettings.get(namingKey, '')
+
+        return renderingName
+
     def getRenderingName(self, documentWithSettings: dict):
-        return os.path.basename(extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.RenderingNaming, ''), documentWithSettings))
+        return os.path.basename(extractNameFromNamingConvention(self.getPerspectiveDependentNaming(documentWithSettings, PipelineKeys.RenderingNaming), documentWithSettings))
 
     def getPostName(self, documentWithSettings: dict):
-        return os.path.basename(extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.PostNaming, ''), documentWithSettings))
+        return os.path.basename(extractNameFromNamingConvention(self.getPerspectiveDependentNaming(documentWithSettings, PipelineKeys.PostNaming), documentWithSettings))
 
     def getDeliveryName(self, documentWithSettings: dict):
-        return os.path.basename(extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.DeliveryNaming, ''), documentWithSettings))
+        return os.path.basename(extractNameFromNamingConvention(self.getPerspectiveDependentNaming(documentWithSettings, PipelineKeys.DeliveryNaming), documentWithSettings))
 
     # Relative filenames without extension
 
@@ -96,13 +104,13 @@ class NamingConvention(object):
         return extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.NukeSceneNaming, ''), documentWithSettings)
 
     def getRenderingRelPath(self, documentWithSettings: dict):
-        return extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.RenderingNaming, ''), documentWithSettings)
+        return extractNameFromNamingConvention(self.getPerspectiveDependentNaming(documentWithSettings, PipelineKeys.RenderingNaming), documentWithSettings)
 
     def getPostRelPath(self, documentWithSettings: dict):
-        return extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.PostNaming, ''), documentWithSettings)
+        return extractNameFromNamingConvention(self.getPerspectiveDependentNaming(documentWithSettings, PipelineKeys.PostNaming), documentWithSettings)
 
     def getDeliveryRelPath(self, documentWithSettings: dict):
-        return extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.DeliveryNaming, ''), documentWithSettings)
+        return extractNameFromNamingConvention(self.getPerspectiveDependentNaming(documentWithSettings, PipelineKeys.DeliveryNaming), documentWithSettings)
 
     # Absolute filenames with extension
 

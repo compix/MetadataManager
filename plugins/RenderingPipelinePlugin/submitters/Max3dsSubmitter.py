@@ -13,7 +13,7 @@ class Max3dsSubmitter(Submitter):
         pipelineInfoDict = documentWithSettings
 
         pluginName = deadline_nodes.get3dsMaxPipelinePluginName()
-        jobName = self.pipeline.namingConvention.getRenderingName(documentWithSettings)
+        jobName = self.pipeline.namingConvention.getInputSceneName(documentWithSettings)
         batchName = 'Input Scene'
         jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getInputSceneCreationPriority(documentWithSettings),
                                                    documentWithSettings.get(PipelineKeys.DeadlineInputScenePool), dependentJobIds=dependentJobIds)
@@ -34,7 +34,7 @@ class Max3dsSubmitter(Submitter):
         pipelineInfoDict = documentWithSettings
 
         pluginName = deadline_nodes.get3dsMaxPipelinePluginName()
-        jobName = self.pipeline.namingConvention.getRenderingName(documentWithSettings)
+        jobName = self.pipeline.namingConvention.getRenderSceneName(documentWithSettings)
         batchName = 'Render Scene'
         jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getrenderSceneCreationPriority(documentWithSettings), 
                                                    documentWithSettings.get(PipelineKeys.DeadlineRenderScenePool), dependentJobIds=dependentJobIds)
@@ -56,6 +56,10 @@ class Max3dsSubmitter(Submitter):
         batchName = 'Rendering'
         jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getRenderingPriority(documentWithSettings), 
                                                    documentWithSettings.get(PipelineKeys.DeadlineRenderingPool), dependentJobIds=dependentJobIds)
+                                                   
+        frames = documentWithSettings.get(PipelineKeys.getKeyWithPerspective(PipelineKeys.Frames, documentWithSettings.get(PipelineKeys.Perspective, '')), '')                                                   
+        if frames:
+            jobInfoDict['Frames'] = frames
 
         filename = self.pipeline.namingConvention.getRenderingFilename(documentWithSettings)
         jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)

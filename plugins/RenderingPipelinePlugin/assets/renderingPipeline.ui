@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>926</width>
-    <height>599</height>
+    <height>1053</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,7 +35,7 @@
             <x>0</x>
             <y>0</y>
             <width>865</width>
-            <height>1199</height>
+            <height>1283</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -1014,6 +1014,33 @@
              </layout>
             </widget>
            </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_10">
+             <property name="title">
+              <string>Perspective Dependent Information</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_27">
+              <item>
+               <widget class="QTabWidget" name="perspectiveTabWidget">
+                <property name="currentIndex">
+                 <number>0</number>
+                </property>
+                <widget class="QWidget" name="tab">
+                 <attribute name="title">
+                  <string>Tab 1</string>
+                 </attribute>
+                 <layout class="QVBoxLayout" name="verticalLayout_28"/>
+                </widget>
+                <widget class="QWidget" name="tab_2">
+                 <attribute name="title">
+                  <string>Tab 2</string>
+                 </attribute>
+                </widget>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
           </layout>
          </widget>
         </widget>
@@ -1036,7 +1063,7 @@
             <x>0</x>
             <y>0</y>
             <width>882</width>
-            <height>485</height>
+            <height>939</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -1265,7 +1292,7 @@
             <x>0</x>
             <y>0</y>
             <width>882</width>
-            <height>485</height>
+            <height>939</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -1413,7 +1440,7 @@
             <x>0</x>
             <y>0</y>
             <width>882</width>
-            <height>485</height>
+            <height>939</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_14">

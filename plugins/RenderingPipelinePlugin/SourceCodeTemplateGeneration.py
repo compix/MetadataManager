@@ -141,6 +141,8 @@ def generateBlenderSourceCodeTemplate(edit: QtWidgets.QTextEdit, sceneType: Sour
 
     for key in [item for item in dir(PipelineKeys) if not item.startswith("__")]:
         value = getattr(PipelineKeys, key)
+        if not isinstance(value, str):
+            continue
         
         addCodeLine(edit, f'@property', tabs=1)
         addCodeLine(edit, f'def {key}(self):', tabs=1)
@@ -242,6 +244,22 @@ def generateBlenderSourceCodeTemplate(edit: QtWidgets.QTextEdit, sceneType: Sour
         addCodeLine(edit, '')
         addCodeLine(edit, '                if os.path.exists(src):')
         addCodeLine(edit, '                    os.replace(src, dst)')
+        addCodeLine(edit, '')
+        addCodeLine(edit, 'def getFrames(env: Environment):')
+        addCodeLine(edit, '    if not env.Frames:')
+        addCodeLine(edit, '        return []')
+        addCodeLine(edit, '')
+        addCodeLine(edit, '    frameStrings = [f.strip() for f in env.Frames.split(",")]')
+        addCodeLine(edit, '    frames = []')
+        addCodeLine(edit, '    for f in frameStrings:')
+        addCodeLine(edit, '        frameRange = f.split("-")')
+        addCodeLine(edit, '        if len(frameRange) > 0:')
+        addCodeLine(edit, '            start = int(frameRange[0].strip())')
+        addCodeLine(edit, '            end = int(frameRange[1].strip())')
+        addCodeLine(edit, '            frames += [i for i in range(start,end+1)]')
+        addCodeLine(edit, '        else:')
+        addCodeLine(edit, '            frames.append(int(f))')
+        addCodeLine(edit, '    return frames')
 
     addCodeLine(edit, '')
     addCodeLine(edit, 'def process(infoDict: dict):')
@@ -287,7 +305,14 @@ def generateBlenderSourceCodeTemplate(edit: QtWidgets.QTextEdit, sceneType: Sour
         addCodeLine(edit, '')
         addCodeLine(edit, '    if env.RenderInSceneCreationScript:')
         addCodeLine(edit, '        print("Rendering...")')
-        addCodeLine(edit, '        bpy.ops.render.render(write_still=True)')
+        addCodeLine(edit, '        frames = getFrames(env)')
+        addCodeLine(edit, '        if len(frames) > 0:')
+        addCodeLine(edit, '            for frame in frames:')
+        addCodeLine(edit, '                print(f"Rendering frame {frame}...")')
+        addCodeLine(edit, '                bpy.context.scene.frame_set(frame)')
+        addCodeLine(edit, '                bpy.ops.render.render(write_still=True)')
+        addCodeLine(edit, '        else:')
+        addCodeLine(edit, '            bpy.ops.render.render(write_still=True)')
         addCodeLine(edit, '')
         addCodeLine(edit, '        if not "#" in env.RenderingFilename:')
         addCodeLine(edit, '            print("Renaming output files...")')

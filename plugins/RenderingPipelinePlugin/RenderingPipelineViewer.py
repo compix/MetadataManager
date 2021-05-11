@@ -6,7 +6,7 @@ from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
 from RenderingPipelinePlugin.filters.MappingFilter import MappingFilter
 from ServiceRegistry import ServiceRegistry
 from MetadataManagerCore import Keys
-from typing import List
+from typing import Dict, List
 
 from RenderingPipelinePlugin.PipelineType import PipelineType
 from RenderingPipelinePlugin.RenderingPipelineManager import RenderingPipelineManager, RenderingPipelinesCollectionName
@@ -89,7 +89,7 @@ class CheckBoxEnvironmentEntry(EnvironmentEntry):
 
     def loadValue(self, environment: Environment):
         checkbox: QtWidgets.QCheckBox = self.widget
-        checkbox.setChecked(environment.settings.get(self.envKey))
+        checkbox.setChecked(environment.settings.get(self.envKey, False))
 
 class ComboBoxEnvironmentEntry(EnvironmentEntry):
     def saveValue(self, environment: Environment):
@@ -110,7 +110,7 @@ class NamingEnvironmentEntry(LineEditEnvironmentEntry):
         edit.setText(environment.settings.get(self.envKey))
 
     def verify(self):
-        namingRegexPattern = '^([\w\d]*(\[[\w\d]*\])*)*$'
+        namingRegexPattern = '^([\w\d# ]*(\[[\w\d# ]*\])*)*$'
         namingConvention = self.widget.text()
         valid = re.search(namingRegexPattern, namingConvention) != None
 
@@ -234,13 +234,14 @@ class RenderingPipelineViewer(object):
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.InputSceneNaming, self.dialog.inputSceneNamingEdit))
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.NukeSceneNaming, self.dialog.nukeSceneNamingEdit))
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.EnvironmentSceneNaming, self.dialog.environmentSceneNamingEdit))
-        self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.RenderingNaming, self.dialog.renderingNamingEdit))
-        self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.PostNaming, self.dialog.postNamingEdit))
-        self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.DeliveryNaming, self.dialog.deliveryNamingEdit))
 
         self.environmentEntries.append(CheckBoxEnvironmentEntry(PipelineKeys.SaveRenderScene, self.dialog.saveRenderSceneCheckBox, PipelineType.Blender))
         self.environmentEntries.append(CheckBoxEnvironmentEntry(PipelineKeys.RenderInSceneCreationScript, self.dialog.renderInSceneCreationScriptCheckBox, PipelineType.Blender))
         self.environmentEntries.append(CheckBoxEnvironmentEntry(PipelineKeys.ApplyCameraFraming, self.dialog.applyCameraFramingCheckBox, PipelineType.Blender))
+
+        self.perspectiveToNamingConventionEnvEntries: Dict[str,List[EnvironmentEntry]] = dict()
+
+        self.dialog.perspectiveCodesEdit.editingFinished.connect(self.perspectiveCodesEditingFinished)
 
         threading_util.runInThread(self.fetchDeadlinePoolNames)
 
@@ -249,6 +250,58 @@ class RenderingPipelineViewer(object):
         self.registerFilters()
 
         self.viewerRegistry.collectionViewer.refreshCollections()
+
+    def perspectiveCodesEditingFinished(self):
+        self.refreshPerspectiveTabWidget()
+
+    def refreshPerspectiveTabWidget(self):
+        perspectiveCodes = [code.strip() for code in self.dialog.perspectiveCodesEdit.text().split(',')]
+
+        tabWidget : QtWidgets.QTabWidget = self.dialog.perspectiveTabWidget
+        tabWidget.clear()
+
+        # Remove tabs with missing perspectives:
+
+        for tabIdx in range(tabWidget.count() - 1, -1, -1):
+            tab = tabWidget.widget(tabIdx)
+            if not tabWidget.tabText(tabIdx) in perspectiveCodes:
+                perspectiveCode = tabWidget.tabText(tabIdx)
+                tabWidget.removeTab(tabIdx)
+
+                # Remove the naming convention entries
+                for entry in self.perspectiveToNamingConventionEnvEntries[perspectiveCode]:
+                    self.environmentEntries.remove(entry)
+
+                del self.perspectiveToNamingConventionEnvEntries[perspectiveCode]
+
+        perspectiveToTabMap = {tabWidget.tabText(tabIdx):tabWidget.widget(tabIdx) for tabIdx in range(tabWidget.count())}
+
+        # Add missing tabs:
+        for perspectiveCode in perspectiveCodes:
+            if not perspectiveCode in perspectiveToTabMap:
+                tab = QtWidgets.QWidget()
+                tabWidget.addTab(tab, perspectiveCode)
+                formLayout = QtWidgets.QFormLayout()
+                tab.setLayout(formLayout)
+
+                # Add the naming convention entries
+                entries = [
+                    (PipelineKeys.getKeyWithPerspective(PipelineKeys.RenderingNaming, perspectiveCode), 'Rendering Relative File Naming Convention'),
+                    (PipelineKeys.getKeyWithPerspective(PipelineKeys.PostNaming, perspectiveCode), 'Post Relative File Naming Convention'),
+                    (PipelineKeys.getKeyWithPerspective(PipelineKeys.DeliveryNaming, perspectiveCode), 'Delivery Relative File Naming Convention'),
+                    (PipelineKeys.getKeyWithPerspective(PipelineKeys.Frames, perspectiveCode), 'Frames')]
+
+                self.perspectiveToNamingConventionEnvEntries[perspectiveCode] = entries
+
+                for envKey, labelText in entries:
+                    edit = QtWidgets.QLineEdit()
+                    formLayout.addRow(labelText, edit)
+
+                    if labelText == 'Frames':
+                        envEntry = LineEditEnvironmentEntry(envKey, edit)
+                    else:
+                        envEntry = NamingEnvironmentEntry(envKey, edit)
+                    self.environmentEntries.append(envEntry)
 
     def initIconMap(self):
         deadlineRepoFolder = self.serviceRegistry.deadlineService.info.deadlineRepositoryLocation
@@ -524,7 +577,9 @@ class RenderingPipelineViewer(object):
             self.dialog.postOutputExtensionsEdit.setText(environmentSettings.get(PipelineKeys.PostOutputExtensions, ''))
 
             self.dialog.headerConfirmationCheckBox.setChecked(True)
-
+            
+            self.refreshPerspectiveTabWidget()
+            
             for envEntry in self.environmentEntries:
                 if envEntry.isApplicable():
                     envEntry.loadValue(environment)

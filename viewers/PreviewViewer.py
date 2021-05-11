@@ -51,23 +51,31 @@ class PreviewViewer(DockWidget):
         self.showPreviousFrame()
 
     def displayPreview(self, path, resetZoom=True):
+        validPath = True
+        if not os.path.exists(path):
+            path = asset_manager.getImagePath('missing_rendering.jpg')
+            validPath = False
+
         scene = QtWidgets.QGraphicsScene()
         pixmap = QtGui.QPixmap(path)
         scene.addPixmap(pixmap)
-        #self.preview.setScene(scene)
         self.preview.setPhoto(pixmap, resetZoom=resetZoom)
-        #self.preview.fitInView(scene.sceneRect(), Qt.KeepAspectRatio)
+
+        return validPath
 
     def showPreview(self, path):
-        if path == None or not os.path.exists(path):
-            path = asset_manager.getImagePath('missing_rendering.jpg')
-        
-        self.curFrameIdx = 0
-        self.frames = anim_util.extractExistingFrameFilenames(path)
+        self.animationTimer.stop()
+        if path == None:
+            self.displayPreview('')
+            return
 
-        if len(self.frames) > 0:
-            self.displayPreview(self.frames[self.curFrameIdx])
-            self.animationTimer.start()
+        if '#' in path:
+            self.curFrameIdx = 0
+            self.frames = anim_util.extractExistingFrameFilenames(path)
+
+            if len(self.frames) > 0:
+                if self.displayPreview(self.frames[self.curFrameIdx]):
+                    self.animationTimer.start()
         else:
             self.displayPreview(path)
 

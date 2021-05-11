@@ -47,6 +47,7 @@ DeliveryFilename = 'rp_delivery_filename'
 SaveRenderScene = 'rp_save_render_scene'
 RenderInSceneCreationScript = 'rp_render_in_scene_creation_script'
 ApplyCameraFraming = 'rp_apply_camera_framing'
+Frames = 'rp_frames'
 
 # Deadline
 DeadlinePriority = 'rp_deadline_priority'
@@ -69,3 +70,6 @@ NukeVersion = 'rp_nuke_version'
 
 # Blender
 BlenderVersion = 'rp_blender_version'
+
+def getKeyWithPerspective(key: str, perspective: str):
+    return f'{key}_{perspective}'
