@@ -422,6 +422,10 @@ class RenderingPipelineViewer(object):
     def onCreateClick(self):
         pipelineName = self.dialog.pipelineNameComboBox.currentText()
 
+        if not pipelineName:
+            self.dialog.statusLabel.setText(f'Please specify a pipeline name.')
+            return
+
         envId = self.environmentManager.getIdFromEnvironmentName(pipelineName)
 
         if self.dialog.updateCollectionCheckBox.isChecked() and not self.dialog.headerConfirmationCheckBox.isChecked():

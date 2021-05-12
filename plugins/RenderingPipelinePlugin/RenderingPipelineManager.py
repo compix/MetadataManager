@@ -128,7 +128,12 @@ class RenderingPipelineManager(object):
         if pipeline:
             if pipeline.environment:
                 self.environmentManager.archive(self.dbManager, pipeline.environment)
-            self.serviceRegistry.dbManager.dropCollection(pipeline.dbCollectionName)
-            self.serviceRegistry.dbManager.dropCollection(pipeline.dbCollectionName + Keys.OLD_VERSIONS_COLLECTION_SUFFIX)
+
+            # Collections may not exist:
+            try:
+                self.serviceRegistry.dbManager.dropCollection(pipeline.dbCollectionName)
+                self.serviceRegistry.dbManager.dropCollection(pipeline.dbCollectionName + Keys.OLD_VERSIONS_COLLECTION_SUFFIX)
+            except:
+                pass
             self.pipelines.remove(pipeline)
             self.dbManager.db[RenderingPipelinesCollectionName].delete_one({'_id': pipelineName})
