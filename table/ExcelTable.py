@@ -66,8 +66,13 @@ class XlsTable(ExcelTable):
         return self.sheet.nrows if self.sheet != None else 0
 
 class XlsxTable(ExcelTable):
+    def __init__(self, sheet):
+        super().__init__(sheet)
+
+        self.rows = list(self.sheet.rows)
+
     def getRowValues(self, rowIndex):
-        return [cell.value if cell else None for row in self.sheet.iter_rows(min_row=rowIndex+1, max_row=rowIndex+1) for cell in row] if self.sheet != None else []
+        return [cell.value if cell else None for cell in self.rows[rowIndex]] if self.sheet != None else []
 
     def getColumnValues(self, colIndex):
         return [cell.value if cell else None for col in self.sheet.iter_cols(min_col=colIndex+1, max_col=colIndex+1) for cell in col] if self.sheet != None else []
