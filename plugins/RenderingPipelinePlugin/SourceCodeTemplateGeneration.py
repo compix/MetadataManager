@@ -94,7 +94,7 @@ def generateMaxSourceCodeTemplate(edit: QtWidgets.QTextEdit, sceneType: SourceCo
     addCodeLine(edit, 'fn initInfoMapGlobals = (')
     for key in [item for item in dir(PipelineKeys) if not item.startswith("__")]:
         value = getattr(PipelineKeys, key)
-        addCodeLine(edit, f'   global {key} = INFO_MAP["{value}"]')
+        addCodeLine(edit, f'   global g_{key} = INFO_MAP["{value}"]')
     addCodeLine(edit, ')')
     
     addCodeLine(edit, '')
