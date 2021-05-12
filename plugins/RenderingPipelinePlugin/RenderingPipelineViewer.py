@@ -205,7 +205,7 @@ class RenderingPipelineViewer(object):
         qt_util.connectFileSelection(self.dialog, self.dialog.renderSceneCreationScriptEdit, self.dialog.renderSceneCreationScriptButton)
         qt_util.connectFileSelection(self.dialog, self.dialog.inputSceneCreationScriptEdit, self.dialog.inputSceneCreationScriptButton)
         qt_util.connectFileSelection(self.dialog, self.dialog.nukeScriptEdit, self.dialog.nukeScriptButton)
-        qt_util.connectFileSelection(self.dialog, self.dialog.productTableEdit, self.dialog.productTableButton, filter='Table File (*.xlsx;*.csv)')
+        qt_util.connectFileSelection(self.dialog, self.dialog.productTableEdit, self.dialog.productTableButton, filter='Table File (*.xlsx;*.xls;*.csv)')
         qt_util.connectFileSelection(self.dialog, self.dialog.renderSettingsEdit, self.dialog.renderSettingsButton)
 
         self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlinePriority, self.dialog.deadlinePriorityEdit))
