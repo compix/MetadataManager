@@ -33,9 +33,9 @@
           <property name="geometry">
            <rect>
             <x>0</x>
-            <y>0</y>
+            <y>-263</y>
             <width>865</width>
-            <height>1283</height>
+            <height>1202</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -844,78 +844,6 @@
                  </item>
                  <item>
                   <layout class="QFormLayout" name="formLayout_2">
-                   <item row="3" column="0">
-                    <widget class="QLabel" name="label_16">
-                     <property name="text">
-                      <string>Render Scene Relative File Naming Convention</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_13">
-                     <item>
-                      <widget class="QLineEdit" name="renderSceneNamingEdit">
-                       <property name="toolTip">
-                        <string>The naming convention for render scenes (aka variation scenes).</string>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item row="7" column="0">
-                    <widget class="QLabel" name="label_13">
-                     <property name="text">
-                      <string>Rendering Relative File Naming Convention</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="7" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_12">
-                     <item>
-                      <widget class="QLineEdit" name="renderingNamingEdit">
-                       <property name="toolTip">
-                        <string>The naming convention for rendering results. Note that renderings are usually an intermediary result and may need post processing, e.g. in nuke.</string>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item row="8" column="0">
-                    <widget class="QLabel" name="label_14">
-                     <property name="text">
-                      <string>Post Relative File Naming Convention</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="8" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_15">
-                     <item>
-                      <widget class="QLineEdit" name="postNamingEdit">
-                       <property name="toolTip">
-                        <string>The naming convention for post processed (final) images.</string>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item row="10" column="0">
-                    <widget class="QLabel" name="label_15">
-                     <property name="text">
-                      <string>Delivery Relative File Naming Convention</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="10" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_16">
-                     <item>
-                      <widget class="QLineEdit" name="deliveryNamingEdit">
-                       <property name="toolTip">
-                        <string>This is often identical to the post naming convention, however the customer might define naming conventions that are suboptimal for internal usage.</string>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
                    <item row="0" column="0">
                     <widget class="QLabel" name="label_26">
                      <property name="text">
@@ -929,42 +857,6 @@
                       <widget class="QLineEdit" name="sidNamingEdit">
                        <property name="toolTip">
                         <string>The SID is used for document identification. If there are no rendering duplicates, the sid can be identical to the rendering name.</string>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item row="5" column="0">
-                    <widget class="QLabel" name="label_29">
-                     <property name="text">
-                      <string>Environment Scene Relative File Naming Convention</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="5" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_24">
-                     <item>
-                      <widget class="QLineEdit" name="environmentSceneNamingEdit">
-                       <property name="toolTip">
-                        <string>The naming convention for the environment scenes.</string>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item row="6" column="0">
-                    <widget class="QLabel" name="label_31">
-                     <property name="text">
-                      <string>Nuke Scene Relative File Naming Convention</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="6" column="1">
-                    <layout class="QHBoxLayout" name="horizontalLayout_8">
-                     <item>
-                      <widget class="QLineEdit" name="nukeSceneNamingEdit">
-                       <property name="toolTip">
-                        <string>The naming convention for nuke scenes.</string>
                        </property>
                       </widget>
                      </item>
@@ -1001,6 +893,60 @@
                       <widget class="QLineEdit" name="inputSceneNamingEdit">
                        <property name="toolTip">
                         <string>The naming convention for input scenes which are used to create variation scenes.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_16">
+                     <property name="text">
+                      <string>Render Scene Relative File Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_13">
+                     <item>
+                      <widget class="QLineEdit" name="renderSceneNamingEdit">
+                       <property name="toolTip">
+                        <string>The naming convention for render scenes (aka variation scenes).</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="5" column="0">
+                    <widget class="QLabel" name="label_29">
+                     <property name="text">
+                      <string>Environment Scene Relative File Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_24">
+                     <item>
+                      <widget class="QLineEdit" name="environmentSceneNamingEdit">
+                       <property name="toolTip">
+                        <string>The naming convention for the environment scenes.</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="6" column="0">
+                    <widget class="QLabel" name="label_31">
+                     <property name="text">
+                      <string>Nuke Scene Relative File Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="6" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_8">
+                     <item>
+                      <widget class="QLineEdit" name="nukeSceneNamingEdit">
+                       <property name="toolTip">
+                        <string>The naming convention for nuke scenes.</string>
                        </property>
                       </widget>
                      </item>
@@ -1777,9 +1723,19 @@
           <number>0</number>
          </property>
          <item>
+          <widget class="QCheckBox" name="updateCollectionCheckBox">
+           <property name="text">
+            <string>Update Table</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QCheckBox" name="replaceExistingCollectionCheckBox">
            <property name="text">
-            <string>Replace Existing Collection</string>
+            <string>Replace Existing Table</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -1876,9 +1832,6 @@
   <tabstop>inputSceneNamingEdit</tabstop>
   <tabstop>environmentSceneNamingEdit</tabstop>
   <tabstop>nukeSceneNamingEdit</tabstop>
-  <tabstop>renderingNamingEdit</tabstop>
-  <tabstop>postNamingEdit</tabstop>
-  <tabstop>deliveryNamingEdit</tabstop>
   <tabstop>createButton</tabstop>
   <tabstop>renderSettingsButton</tabstop>
   <tabstop>environmentScenesButton</tabstop>

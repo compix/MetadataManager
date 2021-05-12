@@ -74,6 +74,11 @@ class EnvironmentEntry(object):
         pass
 
 class LineEditEnvironmentEntry(EnvironmentEntry):
+    def __init__(self, envKey: str, widget: QtWidgets.QWidget, pipelineType: PipelineType = None, pipelineComboBox: QtWidgets.QComboBox = None, regexPattern = None) -> None:
+        super().__init__(envKey, widget, pipelineType=pipelineType, pipelineComboBox=pipelineComboBox)
+
+        self.regexPattern = regexPattern
+
     def saveValue(self, environment: Environment):
         edit: QtWidgets.QLineEdit = self.widget
         environment.settings[self.envKey] = edit.text()
@@ -81,6 +86,13 @@ class LineEditEnvironmentEntry(EnvironmentEntry):
     def loadValue(self, environment: Environment):
         edit: QtWidgets.QLineEdit = self.widget
         edit.setText(environment.settings.get(self.envKey))
+
+    def verify(self):
+        if self.regexPattern:
+            valid = re.search(self.regexPattern, self.widget.text()) != None
+
+            if not valid:
+                raise RuntimeError(f'The text of {self.envKey} is not valid. The supported format is: {self.regexPattern}')
 
 class CheckBoxEnvironmentEntry(EnvironmentEntry):
     def saveValue(self, environment: Environment):
@@ -110,7 +122,7 @@ class NamingEnvironmentEntry(LineEditEnvironmentEntry):
         edit.setText(environment.settings.get(self.envKey))
 
     def verify(self):
-        namingRegexPattern = '^([\w\d# ]*(\[[\w\d# ]*\])*)*$'
+        namingRegexPattern = '^([\w\d# /\-]*(\[[\w\d# /\-]*\])*)*$'
         namingConvention = self.widget.text()
         valid = re.search(namingRegexPattern, namingConvention) != None
 
@@ -197,7 +209,7 @@ class RenderingPipelineViewer(object):
 
         self.dialog.pipelineNameComboBox.setValidator(RegexPatternInputValidator('^[a-zA-Z0-9_ ]*$'))
         self.dialog.perspectiveCodesEdit.setValidator(RegexPatternInputValidator('^[a-zA-Z0-9_ ,]*$'))
-        self.dialog.sidNamingEdit.setValidator(RegexPatternInputValidator('^[a-zA-Z0-9_\]\[]*$'))
+        self.dialog.sidNamingEdit.setValidator(RegexPatternInputValidator('^[a-zA-Z0-9_\-/ \]\[]*$'))
         
         self.currentHeader = []
         
@@ -412,7 +424,7 @@ class RenderingPipelineViewer(object):
 
         envId = self.environmentManager.getIdFromEnvironmentName(pipelineName)
 
-        if not self.dialog.headerConfirmationCheckBox.isChecked():
+        if self.dialog.updateCollectionCheckBox.isChecked() and not self.dialog.headerConfirmationCheckBox.isChecked():
             self.dialog.statusLabel.setText(f'Please confirm the table extraction.')
             return
 
@@ -453,6 +465,10 @@ class RenderingPipelineViewer(object):
             self.dialog.statusLabel.setText(f'The specified post output extensions are not valid. Known extensions: {", ".join(RenderingPipelineUtil.KnownPostOutputExtensions)}')
             return
 
+        if not perspectiveCodesStr:
+            self.dialog.statusLabel.setText(f'At least one perspective code must be defined.')
+            return
+
         environment = Environment(envId)
         pipeline = self.renderingPipelineManager.constructPipeline(pipelineName, pipelineClassName)
 
@@ -482,17 +498,18 @@ class RenderingPipelineViewer(object):
             return
 
         # Read the table:
-        try:
-            pipelineExists = pipelineName in self.renderingPipelineManager.pipelineNames
-            replaceExistingCollection = pipelineExists and self.dialog.replaceExistingCollectionCheckBox.isChecked()
-            progressDialog = ProgressDialog()
-            progressDialog.open()
-            pipeline.readProductTable(productTablePath=productTable, productTableSheetname=sheetName, environmentSettings=environment.getEvaluatedSettings(), 
-                                      onProgressUpdate=progressDialog.updateProgress, replaceExistingCollection=replaceExistingCollection)
-        except Exception as e:
-            progressDialog.close()
-            self.dialog.statusLabel.setText(f'Failed reading the product table {productTable} with exception: {str(e)}')
-            return
+        if self.dialog.updateCollectionCheckBox.isChecked():
+            try:
+                pipelineExists = pipelineName in self.renderingPipelineManager.pipelineNames
+                replaceExistingCollection = pipelineExists and self.dialog.replaceExistingCollectionCheckBox.isChecked()
+                progressDialog = ProgressDialog()
+                progressDialog.open()
+                pipeline.readProductTable(productTablePath=productTable, productTableSheetname=sheetName, environmentSettings=environment.getEvaluatedSettings(), 
+                                        onProgressUpdate=progressDialog.updateProgress, replaceExistingCollection=replaceExistingCollection)
+            except Exception as e:
+                progressDialog.close()
+                self.dialog.statusLabel.setText(f'Failed reading the product table {productTable} with exception: {str(e)}')
+                return
 
         pipelineExists = self.renderingPipelineManager.getPipelineFromName(pipelineName) != None
 
@@ -513,10 +530,12 @@ class RenderingPipelineViewer(object):
         if pipelineName in self.renderingPipelineManager.pipelineNames:
             self.loadPipeline(pipelineName)
             self.dialog.createButton.setText(' Modify')
+            self.dialog.updateCollectionCheckBox.setText('Update Table')
             self.dialog.deleteButton.setVisible(True)
             self.dialog.replaceExistingCollectionCheckBox.setVisible(True)
         else:
             self.dialog.createButton.setText(' Create')
+            self.dialog.updateCollectionCheckBox.setText('Create Table')
             self.dialog.deleteButton.setVisible(False)
             self.dialog.replaceExistingCollectionCheckBox.setVisible(False)
 
@@ -552,6 +571,8 @@ class RenderingPipelineViewer(object):
                 self.currentHeader = header
             except:
                 pass
+        else:
+            self.currentHeader = []
 
     def loadPipeline(self, pipelineName: str):
         pipeline = self.renderingPipelineManager.getPipelineFromName(pipelineName)
