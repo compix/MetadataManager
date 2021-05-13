@@ -89,7 +89,7 @@ class MainWindowManager(QtCore.QObject):
         self.visualScriptingViewer = VisualScriptingViewer(self.serviceRegistry.visualScripting)
         self.visualScriptingViewer.updateNodeRegistration()
 
-        self.settingsViewer = SettingsViewer(self.window)
+        self.settingsViewer = SettingsViewer(self.window, self.serviceRegistry)
         self.collectionViewer = CollectionViewer(self.window, self.serviceRegistry.dbManager)
         self.collectionViewer.connectCollectionSelectionUpdateHandler(self.updateTableModelHeader)
         self.collectionViewer.headerUpdatedEvent.subscribe(self.updateTableModelHeader)
