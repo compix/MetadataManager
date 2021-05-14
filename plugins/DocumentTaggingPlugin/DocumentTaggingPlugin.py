@@ -1,10 +1,7 @@
 from DocumentTaggingPlugin.DocumentTagsFilter import DocumentTagsFilter
 from MetadataManagerCore.Event import Event
 from ApplicationMode import ApplicationMode
-from PySide2 import QtWidgets
 from DocumentTaggingPlugin.DocumentTaggingAction import DocumentTaggingAction
-from RenderingPipelinePlugin.RenderingPipelineManager import RenderingPipelineManager
-from RenderingPipelinePlugin.RenderingPipelineViewer import RenderingPipelineViewer
 from plugin.Plugin import Plugin
 import asset_manager
 
@@ -13,8 +10,6 @@ class DocumentTaggingPlugin(Plugin):
         super().__init__()
 
     def init(self):
-        self.renderingPipelineManager = RenderingPipelineManager(self.serviceRegistry, self.viewerRegistry, self.appInfo)
-
         if self.appInfo.mode == ApplicationMode.GUI:
             taggingAction = DocumentTaggingAction(self.serviceRegistry.dbManager)
 
