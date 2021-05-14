@@ -10,8 +10,14 @@ class DocumentTaggingPlugin(Plugin):
         super().__init__()
 
     def init(self):
+        self.serviceRegistry.documentFilterManager.addFilter(DocumentTagsFilter())
+        
         if self.appInfo.mode == ApplicationMode.GUI:
             taggingAction = DocumentTaggingAction(self.serviceRegistry.dbManager)
+            self.serviceRegistry.actionManager.registerAction(taggingAction)
+
+            for collectionName in self.serviceRegistry.dbManager.getVisibleCollectionNames():
+                self.serviceRegistry.actionManager.linkActionToCollection(taggingAction.id, collectionName)
 
             uiFilePath = asset_manager.getPluginUIFilePath("DocumentTaggingPlugin", "assets/inputDialog.ui")
             self.taggingDialog = asset_manager.loadDialogAbsolutePath(uiFilePath)
@@ -23,13 +29,6 @@ class DocumentTaggingPlugin(Plugin):
             self.taggingDialog.accepted.connect(lambda: taggingAction.confirmationEvent())
             taggingAction.requestConfirmationFunction = self.onOpenTaggingDialog
             taggingAction.retrieveArgsFunction = lambda: self.taggingActionArgs
-
-            self.serviceRegistry.actionManager.registerAction(taggingAction)
-
-            for collectionName in self.serviceRegistry.dbManager.getVisibleCollectionNames():
-                self.serviceRegistry.actionManager.linkActionToCollection(taggingAction.id, collectionName)
-
-            self.serviceRegistry.documentFilterManager.addFilter(DocumentTagsFilter())
 
     def onOpenTaggingDialog(self):
         self.taggingDialog.show()
