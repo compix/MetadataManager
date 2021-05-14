@@ -1,3 +1,4 @@
+from DocumentTaggingPlugin.DocumentTagsFilter import DocumentTagsFilter
 from MetadataManagerCore.Event import Event
 from ApplicationMode import ApplicationMode
 from PySide2 import QtWidgets
@@ -32,6 +33,8 @@ class DocumentTaggingPlugin(Plugin):
 
             for collectionName in self.serviceRegistry.dbManager.getVisibleCollectionNames():
                 self.serviceRegistry.actionManager.linkActionToCollection(taggingAction.id, collectionName)
+
+            self.serviceRegistry.documentFilterManager.addFilter(DocumentTagsFilter())
 
     def onOpenTaggingDialog(self):
         self.taggingDialog.show()
