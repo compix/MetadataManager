@@ -1,3 +1,4 @@
+from MetadataManagerCore import Keys
 from AppInfo import AppInfo
 from MetadataManagerCore.Event import Event
 from MetadataManagerCore.mongodb_manager import MongoDBManager
@@ -54,6 +55,7 @@ class PluginManager(object):
         self.settings = None
         self.dbManager: MongoDBManager = None
         self.pluginActiveStatus = dict()
+        self.pluginAutoActivateStatus = dict()
 
         for pluginsFolder in pluginsFolders:
             self.addPluginsFolder(pluginsFolder)
@@ -87,9 +89,10 @@ class PluginManager(object):
     def refreshPluginState(self):
         for pluginName in self.availablePluginNames:
             active = self.pluginActiveStatus.get(pluginName, True)
-            if active:
+            autoactivate = self.pluginAutoActivateStatus.get(pluginName, True)
+            if active or autoactivate:
                 try:
-                    self.setPluginActive(pluginName, active)
+                    self.setPluginActive(pluginName, active or autoactivate)
                 except Exception as e:
                     logger.error(str(e))
 
@@ -194,9 +197,15 @@ class PluginManager(object):
         self.dbManager = dbManager
 
         infoDict = settings.value("plugin_manager")
+        dbInfoDict = self.dbManager.stateCollection.find_one({'_id': "plugin_manager"})
 
         if infoDict == None:
             infoDict = dict()
 
         self.pluginActiveStatus = infoDict.get('plugin_active_status', dict())
+        if dbInfoDict:
+            self.pluginAutoActivateStatus = dbInfoDict.get('plugin_autoactivate_status')
+        else:
+            self.pluginAutoActivateStatus = dict()
+
         self.refreshPluginState()
