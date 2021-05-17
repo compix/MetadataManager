@@ -501,10 +501,11 @@ class RenderingPipelineViewer(object):
             self.dialog.statusLabel.setText(str(e))
             return
 
+        pipelineExists = self.renderingPipelineManager.getPipelineFromName(pipelineName) != None
+
         # Read the table:
         if self.dialog.updateCollectionCheckBox.isChecked():
             try:
-                pipelineExists = pipelineName in self.renderingPipelineManager.pipelineNames
                 replaceExistingCollection = pipelineExists and self.dialog.replaceExistingCollectionCheckBox.isChecked()
                 progressDialog = ProgressDialog()
                 progressDialog.open()
@@ -515,10 +516,8 @@ class RenderingPipelineViewer(object):
                 self.dialog.statusLabel.setText(f'Failed reading the product table {productTable} with exception: {str(e)}')
                 return
 
-        pipelineExists = self.renderingPipelineManager.getPipelineFromName(pipelineName) != None
-
         self.renderingPipelineManager.addNewPipelineInstance(pipeline, replaceExisting=True)
-        self.environmentManager.addEnvironment(environment, save=True, replaceExisting=True)
+        self.environmentManager.addEnvironment(environment, save=True, replaceExisting=False)
 
         self.viewerRegistry.environmentManagerViewer.refreshEnvironmentsComboBox()
         self.viewerRegistry.collectionViewer.refreshCollections()
