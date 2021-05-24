@@ -132,10 +132,12 @@ class SelectRenderingInExplorerAction(PipelineDocumentAction):
         filename = self.pipeline.namingConvention.getRenderingFilename(documentWithSettings)
 
         if '#' in filename:
-            frames = anim_util.extractFrameFilenames(filename, 1, startsAtZero=True)
-            filename = frames[0]
-            if not os.path.exists(filename):
-                filename = anim_util.extractFrameFilenames(filename, 1, startsAtZero=False)[0]
+            frames = anim_util.extractExistingFrameFilenames(filename)
+
+            if len(frames) > 0:
+                filename = frames[0]
+            else:
+                return
         elif self.pipeline.pipelineType == PipelineType.Blender:
             base, ext = os.path.splitext(filename)
             filename = base + "0000" + ext
@@ -150,7 +152,12 @@ class SelectPostImageInExplorerAction(PipelineDocumentAction):
     def execute(self, document):
         documentWithSettings = self.pipeline.combineDocumentWithSettings(document, self.pipeline.environmentSettings)
         filename = self.pipeline.namingConvention.getPostFilename(documentWithSettings, ext=self.pipeline.getPreferredPreviewExtension(documentWithSettings))
-        windows_nodes.selectInExplorer(filename)
+        if '#' in filename:
+            frames = anim_util.extractExistingFrameFilenames(filename)
+            if len(frames) > 0:
+                windows_nodes.selectInExplorer(frames[0])        
+        else:
+            windows_nodes.selectInExplorer(filename)
 
 class RefreshPreviewFilenameAction(PipelineAction):
     @property

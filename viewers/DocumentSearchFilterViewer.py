@@ -1,3 +1,4 @@
+from animation import anim_util
 import PySide2
 from PySide2.QtGui import QColor, QMovie
 import asset_manager
@@ -427,7 +428,10 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         
         if doc:
             preview = doc.get(Keys.preview)
-            hasPreview = preview and os.path.exists(preview)
+            if '#' in preview:
+                hasPreview = len(anim_util.extractExistingFrameFilenames(preview)) > 0
+            else:
+                hasPreview = preview and os.path.exists(preview)
             self.previewHighlightCache[rowIdx] = hasPreview
             if hasPreview:
                 return QColor.fromRgb(10,52,22)
