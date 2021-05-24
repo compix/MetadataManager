@@ -9,59 +9,76 @@ class PluginManagerViewer(DockWidget):
         super().__init__("Plugin Manager", parentWindow, asset_manager.getUIFilePath("pluginManager.ui"))
         
         self.pluginManager = pluginManager
-        self.pluginListWidget: QtWidgets.QListWidget = self.widget.pluginListWidget
+        self.pluginTableWidget: QtWidgets.QTableWidget = self.widget.pluginTableWidget
         self.widget.statusLabel.setText('')
 
         self.requestRestartFunction = requestRestartFunction
         self.widget.restartApplicationButton.setVisible(False)
         self.widget.restartApplicationButton.clicked.connect(self.onApplicationRestartRequest)
-
+        
         self.setupPluginList()
 
     def onApplicationRestartRequest(self):
         self.requestRestartFunction()
 
+    def onPluginAutoactivateStatusChanged(self, pluginName: str, autoactivate: bool):
+        checkbox = self.autoactivatePluginCheckBoxDict.get(pluginName)
+        if checkbox:
+            checkbox.setChecked(autoactivate)
+
+    def wrapInHBox(self, widget: QtWidgets.QWidget):
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(widget)
+        layoutWidget = QtWidgets.QWidget()
+        layoutWidget.setLayout(layout)
+        return layoutWidget
+        
     def setupPluginList(self):
-        for pluginName in self.pluginManager.availablePluginNames:
+        header = ['Name', 'Active', 'Auto Activate', 'Info']
+        self.pluginTableWidget.setColumnCount(len(header))
+        self.pluginTableWidget.setHorizontalHeaderLabels(header)
+        self.autoactivatePluginCheckBoxDict = dict()
+        rowCount = len(self.pluginManager.availablePluginNames)
+        self.pluginTableWidget.setRowCount(rowCount)
+
+        for rowIdx, pluginName in enumerate(self.pluginManager.availablePluginNames):
             pluginInfo = self.pluginManager.pluginInfoMap.get(pluginName)
-
-            layout = QtWidgets.QHBoxLayout()
-
-            widget = QtWidgets.QWidget()
-            widget.setLayout(layout)
 
             activeCheckbox = QtWidgets.QCheckBox()
             onActiveStatusChanged = lambda checkbox: lambda pluginActive: checkbox.setChecked(pluginActive)
             pluginInfo.onActiveStatusChanged.subscribe(onActiveStatusChanged(activeCheckbox))
 
-            activeCheckbox.setText(pluginName)
-
-            layout.addWidget(activeCheckbox)
+            autoActivateCheckbox = QtWidgets.QCheckBox()
+            autoActivateCheckbox.setChecked(self.pluginManager.getPluginAutoactivateState(pluginName))
+            self.autoactivatePluginCheckBoxDict[pluginName] = autoActivateCheckbox
 
             infoLabel = QtWidgets.QLabel()
             infoLabel.setText('')
             infoLabel.setStyleSheet("color: red") 
-            layout.addWidget(infoLabel)
-            layout.setAlignment(Qt.AlignLeft)
             
-            item = QtWidgets.QListWidgetItem()
-            item.setSizeHint(widget.sizeHint())
-            self.pluginListWidget.addItem(item)
-            self.pluginListWidget.setItemWidget(item, widget)
+            self.pluginTableWidget.setCellWidget(rowIdx, 0, self.wrapInHBox(QtWidgets.QLabel(pluginName)))
+            self.pluginTableWidget.setCellWidget(rowIdx, 1, self.wrapInHBox(activeCheckbox))
+            self.pluginTableWidget.setCellWidget(rowIdx, 2, self.wrapInHBox(autoActivateCheckbox))
+            self.pluginTableWidget.setCellWidget(rowIdx, 3, self.wrapInHBox(infoLabel))
 
-            activeCheckbox.stateChanged.connect(PluginCheckboxStateChangeHandler(self, activeCheckbox, infoLabel))
+            activeCheckbox.stateChanged.connect(PluginCheckboxStateChangeHandler(pluginName, self, activeCheckbox, infoLabel))
+            autoActivateCheckboxChanged = lambda pluginName, checkbox: lambda: self.pluginManager.setPluginAutoactivateState(pluginName, checkbox.isChecked())
+            autoActivateCheckbox.stateChanged.connect(autoActivateCheckboxChanged(pluginName, autoActivateCheckbox))
+
+        self.pluginManager.onPluginAutoactivateStatusChanged.subscribe(self.onPluginAutoactivateStatusChanged)
 
 class PluginCheckboxStateChangeHandler(object):
-    def __init__(self, pluginManagerViewer: PluginManagerViewer, pluginCheckBox: QtWidgets.QCheckBox, infoLabel: QtWidgets.QLabel) -> None:
+    def __init__(self, pluginName: str, pluginManagerViewer: PluginManagerViewer, pluginCheckBox: QtWidgets.QCheckBox, infoLabel: QtWidgets.QLabel) -> None:
         super().__init__()
 
         self.pluginManagerViewer = pluginManagerViewer
         self.pluginManager = self.pluginManagerViewer.pluginManager
         self.checkBox = pluginCheckBox
         self.infoLabel = infoLabel
+        self.pluginName = pluginName
 
     def __call__(self, changed):
-        pluginName = self.checkBox.text()
+        pluginName = self.pluginName
         pluginInfo = self.pluginManager.pluginInfoMap.get(pluginName)
 
         if not self.checkBox.isChecked() and pluginInfo and pluginInfo.pluginLoadingError:

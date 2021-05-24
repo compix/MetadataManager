@@ -24,7 +24,11 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QListWidget" name="pluginListWidget"/>
+       <widget class="QTableWidget" name="pluginTableWidget">
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QFrame" name="frame_2">

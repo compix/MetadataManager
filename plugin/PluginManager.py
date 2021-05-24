@@ -56,9 +56,19 @@ class PluginManager(object):
         self.dbManager: MongoDBManager = None
         self.pluginActiveStatus = dict()
         self.pluginAutoActivateStatus = dict()
+        self.onPluginAutoactivateStatusChanged = Event()
 
         for pluginsFolder in pluginsFolders:
             self.addPluginsFolder(pluginsFolder)
+
+    def setPluginAutoactivateState(self, pluginName: str, autoactivate: bool):
+        curAutoactivate = self.getPluginAutoactivateState(pluginName)
+        if curAutoactivate != autoactivate:
+            self.pluginAutoActivateStatus[pluginName] = autoactivate
+            self.onPluginAutoactivateStatusChanged(pluginName, autoactivate)
+
+    def getPluginAutoactivateState(self, pluginName: str):
+        return self.pluginAutoActivateStatus.get(pluginName, True)
 
     def addPluginsFolder(self, pluginsFolder: str):
         if not os.path.exists(pluginsFolder):
@@ -89,7 +99,7 @@ class PluginManager(object):
     def refreshPluginState(self):
         for pluginName in self.availablePluginNames:
             active = self.pluginActiveStatus.get(pluginName, True)
-            autoactivate = self.pluginAutoActivateStatus.get(pluginName, True)
+            autoactivate = self.getPluginAutoactivateState(pluginName)
             if active or autoactivate:
                 try:
                     self.setPluginActive(pluginName, active or autoactivate)
@@ -122,7 +132,6 @@ class PluginManager(object):
 
         # Save the state:
         self.save(self.settings, self.dbManager)
-        return
 
     def addPlugin(self, pluginInfo: PluginInfo, loadingPluginNames: List[str] = None):
         pluginName = pluginInfo.pluginName
@@ -185,6 +194,9 @@ class PluginManager(object):
             'plugin_active_status': {pluginInfo.pluginName:pluginInfo.pluginActive for pluginInfo in self.pluginInfoMap.values()}
         })
 
+        dbState = {'plugin_autoactivate_status': self.pluginAutoActivateStatus}
+        dbManager.stateCollection.update_one({'_id': "plugin_manager"}, {'$set': dbState}, upsert=True)
+
     def load(self, settings, dbManager: MongoDBManager):
         """
         Loads the state from settings and/or the database.
@@ -204,7 +216,8 @@ class PluginManager(object):
 
         self.pluginActiveStatus = infoDict.get('plugin_active_status', dict())
         if dbInfoDict:
-            self.pluginAutoActivateStatus = dbInfoDict.get('plugin_autoactivate_status')
+            for pluginName, autoactivate in dbInfoDict.get('plugin_autoactivate_status').items():
+                self.setPluginAutoactivateState(pluginName, autoactivate)
         else:
             self.pluginAutoActivateStatus = dict()
 
