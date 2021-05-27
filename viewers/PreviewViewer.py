@@ -28,6 +28,7 @@ class PreviewViewer(DockWidget):
 
         self.curFrameIdx = 0
         self.frames = []
+        self.pixmapCacheDict = dict()
 
         self.widget.animationSpeedSlider.valueChanged.connect(self.onAnimationSpeedSliderChanged)
 
@@ -56,14 +57,21 @@ class PreviewViewer(DockWidget):
             path = asset_manager.getImagePath('missing_rendering.jpg')
             validPath = False
 
+        if path in self.pixmapCacheDict:
+            self.preview.setPhoto(self.pixmapCacheDict[path], resetZoom=resetZoom)
+            return True
+
         scene = QtWidgets.QGraphicsScene()
         pixmap = QtGui.QPixmap(path)
         scene.addPixmap(pixmap)
         self.preview.setPhoto(pixmap, resetZoom=resetZoom)
+        self.pixmapCacheDict[path] = pixmap
 
         return validPath
 
     def showPreview(self, path):
+        self.pixmapCacheDict = dict()
+
         self.animationTimer.stop()
         if path == None:
             self.displayPreview('')
