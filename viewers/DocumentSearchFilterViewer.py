@@ -1,4 +1,4 @@
-from animation import anim_util
+from MetadataManagerCore.animation import anim_util
 import PySide2
 from PySide2.QtGui import QColor, QMovie
 import asset_manager

@@ -1,4 +1,4 @@
-from animation import anim_util
+from MetadataManagerCore.animation import anim_util
 from MetadataManagerCore.mongodb_manager import MongoDBManager
 from PySide2 import QtWidgets, QtCore, QtUiTools, QtGui
 from MetadataManagerCore import Keys

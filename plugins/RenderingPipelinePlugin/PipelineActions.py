@@ -8,7 +8,7 @@ from typing import List
 import os
 import typing
 from RenderingPipelinePlugin.PipelineType import PipelineType
-from animation import anim_util
+from MetadataManagerCore.animation import anim_util
 
 if typing.TYPE_CHECKING:
     from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline

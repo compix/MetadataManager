@@ -1,4 +1,4 @@
-from animation import anim_util
+from MetadataManagerCore.animation import anim_util
 from typing import List
 from MetadataManagerCore.actions.DocumentAction import DocumentAction
 from MetadataManagerCore import Keys
