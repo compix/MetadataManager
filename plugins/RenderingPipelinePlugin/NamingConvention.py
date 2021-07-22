@@ -2,6 +2,8 @@ from RenderingPipelinePlugin import PipelineKeys, RenderingPipelineUtil
 import os
 from MetadataManagerCore import Keys
 
+INVALID_FILENAME_CHARS = '<>:"|?*'
+
 def replaceGermanCharacters(input: str):
     return input.replace('ö', 'oe').replace('ü', 'ue').replace('ä', 'ae').replace('Ä', 'AE').replace('Ü', 'UE').replace('Ö', 'OE').replace('ß', 'ss').replace('ẞ', 'SS')
 
@@ -30,6 +32,9 @@ def extractNameFromNamingConvention(namingConvention: str, documentWithSettings:
     
     if documentWithSettings.get(PipelineKeys.ReplaceGermanCharacters, ''):
         name = replaceGermanCharacters(name)
+
+    for c in INVALID_FILENAME_CHARS:
+        name = name.replace(c, '')
 
     return name
 
