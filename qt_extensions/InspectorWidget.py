@@ -1,3 +1,4 @@
+from MetadataManagerCore.Event import Event
 from qt_extensions.RegexPatternInputValidator import RegexPatternInputValidator
 from typing import Any
 from PySide2 import QtWidgets
@@ -24,6 +25,7 @@ class InspectorWidget(object):
         self._setWidgetEditableFunction = None
         self._isEditable = editable
         self._widgetType = None
+        self.onReturnPressedEvent = Event()
 
         if value != None:
             self.constructWidgetFromValue(value)
@@ -59,6 +61,7 @@ class InspectorWidget(object):
             self._getValueFunction = self._getStringValue
             self._setValueFunction = self._setStringValue
             self._widgetType = InspectorWidgetType.String
+            self.widget.returnPressed.connect(lambda: self.onReturnPressedEvent())
 
         elif isinstance(value, bool):
             self.widget = QtWidgets.QCheckBox('')
@@ -75,6 +78,7 @@ class InspectorWidget(object):
             self._getValueFunction = self._getIntValue
             self._setValueFunction = self._setIntValue
             self._widgetType = InspectorWidgetType.Integer
+            self.widget.returnPressed.connect(lambda: self.onReturnPressedEvent())
 
         elif isinstance(value, float):
             self.widget = QtWidgets.QLineEdit()
@@ -83,6 +87,7 @@ class InspectorWidget(object):
             self._getValueFunction = self._getFloatValue
             self._setValueFunction = self._setFloatValue
             self._widgetType = InspectorWidgetType.Float
+            self.widget.returnPressed.connect(lambda: self.onReturnPressedEvent())
 
         elif isinstance(value, dict):
             self.widget = QtWidgets.QTextEdit()

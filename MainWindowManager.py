@@ -97,7 +97,7 @@ class MainWindowManager(QtCore.QObject):
         self.previewViewer = PreviewViewer(self.window)
         settings = QtCore.QSettings(self.appInfo.company, self.appInfo.appName)
         self.environmentManagerViewer = EnvironmentManagerViewer(self.window, self.serviceRegistry.environmentManager, 
-                                                                 self.serviceRegistry.dbManager, settings)
+                                                                 self.serviceRegistry.dbManager)
         self.inspector = Inspector(self.window, self.serviceRegistry.dbManager)
         self.actionsViewer = ActionsViewer(self.window, self.serviceRegistry.dbManager, self.serviceRegistry.actionManager, 
                                            self, self.collectionViewer, self.visualScriptingViewer)
