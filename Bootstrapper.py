@@ -1,3 +1,4 @@
+from MetadataManagerCore import config
 from plugin.PluginManager import PluginManager
 from ApplicationMode import ApplicationMode
 from updater.Updater import Updater
@@ -54,6 +55,10 @@ class Bootstrapper(object):
         self.logger.info(f"Initializing application with mode: {mode} and launcher: {launcherFilename}")
 
         SETTINGS = QtCore.QSettings(asset_manager.getMainSettingsPath(), QtCore.QSettings.IniFormat)
+        
+        config.RABBIT_MQ_HOST = SETTINGS.value("rabbit_mq_host")
+        config.RABBIT_MQ_USERNAME = SETTINGS.value("rabbit_mq_username")
+        config.RABBIT_MQ_PASSWORD = SETTINGS.value("rabbit_mq_password")
 
         self.appInfo = AppInfo()
         self.appInfo.company = SETTINGS.value("company")
