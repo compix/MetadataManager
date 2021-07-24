@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+    rabbitmq:
+      image: rabbitmq:3.8.19-management
+      ports:
+        - "5672:5672"
+        - "15672:15672"
+      restart: unless-stopped
+      environment:
+      - "RABBITMQ_DEFAULT_USER=mdmanager"
+      - "RABBITMQ_DEFAULT_PASS=rabbitmq"
