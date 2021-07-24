@@ -16,6 +16,7 @@ pyzipper = "*"
 pyinstaller = "*"
 requests = "*"
 openpyxl = "*"
+pika = "*"
 
 [requires]
 python_version = "3.7"
