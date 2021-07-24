@@ -12,6 +12,13 @@
     Set-ExecutionPolicy Unrestricted -Force
     ```
 
+## Installing new Packages
+* > pipenv install <package>
+* If version conflict errors occur the following may help:
+    * > pipenv lock --clear
+    * There may also be an importlib-metadata version conflict error. It may be resolvable with
+      > pip install -U pipenv
+
 ## Deploy
 Use pyinstaller inside .env:
 ```powershell
