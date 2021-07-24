@@ -33,9 +33,9 @@
           <property name="geometry">
            <rect>
             <x>0</x>
-            <y>-263</y>
+            <y>-298</y>
             <width>865</width>
-            <height>1202</height>
+            <height>1237</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -987,6 +987,18 @@
              </layout>
             </widget>
            </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_11">
+             <property name="title">
+              <string>Custom Environment Variables</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_29">
+              <item>
+               <layout class="QVBoxLayout" name="environmentViewerLayout"/>
+              </item>
+             </layout>
+            </widget>
+           </item>
           </layout>
          </widget>
         </widget>
@@ -1008,8 +1020,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>882</width>
-            <height>939</height>
+            <width>250</width>
+            <height>392</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -1237,8 +1249,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>882</width>
-            <height>939</height>
+            <width>151</width>
+            <height>218</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -1385,8 +1397,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>882</width>
-            <height>939</height>
+            <width>250</width>
+            <height>280</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_14">

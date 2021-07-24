@@ -1,3 +1,4 @@
+from viewers.EnvironmentViewer import EnvironmentViewer
 import PySide2
 from table import table_util
 from qt_extensions.InputConfirmDialog import InputConfirmDialog
@@ -263,6 +264,13 @@ class RenderingPipelineViewer(object):
 
         self.viewerRegistry.collectionViewer.refreshCollections()
 
+        self.environmentViewer = EnvironmentViewer(self.dialog, self.environmentManager, self.dbManager)
+        self.dialog.environmentViewerLayout.addWidget(self.environmentViewer.widget)
+        self.environment = Environment()
+        self.environmentViewer.setEnvironment(self.environment)
+        self.environmentViewer.setKeyDisplayIgnoreFilter('^rp_.*')
+        self.environmentViewer.allowSave = False
+
     def perspectiveCodesEditingFinished(self):
         self.refreshPerspectiveTabWidget()
 
@@ -473,30 +481,30 @@ class RenderingPipelineViewer(object):
             self.dialog.statusLabel.setText(f'At least one perspective code must be defined.')
             return
 
-        environment = Environment(envId)
+        self.environment.setUID(envId)
         pipeline = self.renderingPipelineManager.constructPipeline(pipelineName, pipelineClassName)
 
-        environment.settings[PipelineKeys.BaseFolder] = baseProjectFolder
-        environment.settings[PipelineKeys.PipelineType] = pipelineType
-        environment.settings[PipelineKeys.PipelineClass] = pipelineClassName
-        environment.settings[PipelineKeys.RenderSceneCreationScript] = renderSceneCreationScript
-        environment.settings[PipelineKeys.InputSceneCreationScript] = inputSceneCreationScript
-        environment.settings[PipelineKeys.NukeScript] = nukeScript
-        environment.settings[PipelineKeys.ProductTable] = productTable
-        environment.settings[PipelineKeys.ProductTableSheetName] = sheetName
-        environment.settings[PipelineKeys.RenderSettings] = renderSettingsFile
-        environment.settings[PipelineKeys.ReplaceGermanCharacters] = replaceGermanChars
-        environment.settings[PipelineKeys.RenderingExtension] = renderingExtension
-        environment.settings[PipelineKeys.PostOutputExtensions] = postOutputExtensionsStr
-        environment.settings[PipelineKeys.PerspectiveCodes] = perspectiveCodesStr
+        self.environment.settings[PipelineKeys.BaseFolder] = baseProjectFolder
+        self.environment.settings[PipelineKeys.PipelineType] = pipelineType
+        self.environment.settings[PipelineKeys.PipelineClass] = pipelineClassName
+        self.environment.settings[PipelineKeys.RenderSceneCreationScript] = renderSceneCreationScript
+        self.environment.settings[PipelineKeys.InputSceneCreationScript] = inputSceneCreationScript
+        self.environment.settings[PipelineKeys.NukeScript] = nukeScript
+        self.environment.settings[PipelineKeys.ProductTable] = productTable
+        self.environment.settings[PipelineKeys.ProductTableSheetName] = sheetName
+        self.environment.settings[PipelineKeys.RenderSettings] = renderSettingsFile
+        self.environment.settings[PipelineKeys.ReplaceGermanCharacters] = replaceGermanChars
+        self.environment.settings[PipelineKeys.RenderingExtension] = renderingExtension
+        self.environment.settings[PipelineKeys.PostOutputExtensions] = postOutputExtensionsStr
+        self.environment.settings[PipelineKeys.PerspectiveCodes] = perspectiveCodesStr
 
-        environment.settings[PipelineKeys.SceneExtension] = self.getSceneExtensionFromPipelineType(pipelineType)
+        self.environment.settings[PipelineKeys.SceneExtension] = self.getSceneExtensionFromPipelineType(pipelineType)
 
         try:
             for envEntry in self.environmentEntries:
                 if envEntry.isApplicable():
                     envEntry.verify()
-                    envEntry.saveValue(environment)
+                    envEntry.saveValue(self.environment)
         except Exception as e:
             self.dialog.statusLabel.setText(str(e))
             return
@@ -509,7 +517,7 @@ class RenderingPipelineViewer(object):
                 replaceExistingCollection = pipelineExists and self.dialog.replaceExistingCollectionCheckBox.isChecked()
                 progressDialog = ProgressDialog()
                 progressDialog.open()
-                pipeline.readProductTable(productTablePath=productTable, productTableSheetname=sheetName, environmentSettings=environment.getEvaluatedSettings(), 
+                pipeline.readProductTable(productTablePath=productTable, productTableSheetname=sheetName, environmentSettings=self.environment.getEvaluatedSettings(), 
                                         onProgressUpdate=progressDialog.updateProgress, replaceExistingCollection=replaceExistingCollection)
             except Exception as e:
                 progressDialog.close()
@@ -517,7 +525,7 @@ class RenderingPipelineViewer(object):
                 return
 
         self.renderingPipelineManager.addNewPipelineInstance(pipeline, replaceExisting=True)
-        self.environmentManager.addEnvironment(environment, save=True, replaceExisting=False)
+        self.environmentManager.addEnvironment(self.environment, save=True, replaceExisting=False)
 
         self.viewerRegistry.environmentManagerViewer.refreshEnvironmentsComboBox()
         self.viewerRegistry.collectionViewer.refreshCollections()
@@ -579,11 +587,11 @@ class RenderingPipelineViewer(object):
 
     def loadPipeline(self, pipelineName: str):
         pipeline = self.renderingPipelineManager.getPipelineFromName(pipelineName)
-        environment = self.environmentManager.getEnvironmentFromName(pipeline.environmentName)
-        if not environment:
-            environment = Environment('')
+        self.environment = self.environmentManager.getEnvironmentFromName(pipeline.environmentName)
+        if not self.environment:
+            self.environment = Environment('')
 
-        environmentSettings = environment.settings
+        environmentSettings = self.environment.settings
 
         if pipeline:
             self.dialog.baseProjectFolderEdit.setText(environmentSettings.get(PipelineKeys.BaseFolder, ''))
@@ -606,7 +614,9 @@ class RenderingPipelineViewer(object):
             
             for envEntry in self.environmentEntries:
                 if envEntry.isApplicable():
-                    envEntry.loadValue(environment)
+                    envEntry.loadValue(self.environment)
+
+        self.environmentViewer.setEnvironment(self.environment)
 
     @property
     def knownPipelineTypes(self) -> List[str]:
