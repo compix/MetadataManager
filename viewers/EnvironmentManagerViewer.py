@@ -39,13 +39,12 @@ class EnvironmentManagerViewer(DockWidget):
         qt_util.runInMainThread(self.refreshEnvironmentsComboBox)
 
     def addMenuBar(self):
-        menuBar = QtWidgets.QMenuBar()
+        self.menuBar = QtWidgets.QMenuBar()
         fileMenu = QtWidgets.QMenu("File")
         settingsMenu = QtWidgets.QMenu("Settings")
 
-        menuBar.addMenu(fileMenu)
-        menuBar.addMenu(settingsMenu)
-        menuBar.setMaximumHeight(20)
+        self.menuBar.addMenu(fileMenu)
+        self.menuBar.addMenu(settingsMenu)
 
         self.selectAutoExportPathAction = QtWidgets.QAction("Set Auto Export Path")
         self.selectAutoExportPathAction.triggered.connect(self.environmentViewer.openSelectAutoExportPathFileDialog)
@@ -59,7 +58,7 @@ class EnvironmentManagerViewer(DockWidget):
         self.exportAsJsonAction.triggered.connect(self.environmentViewer.openExportAsJsonFileDialog)
         fileMenu.addAction(self.exportAsJsonAction)
 
-        self.widget.layout().insertWidget(0, menuBar)
+        self.widget.layout().insertWidget(0, self.menuBar)
 
     def onArchiveEnvironment(self):
         if self.environmentViewer.environment != None and self.environmentManager.hasEnvironmentId(self.environmentViewer.environment.uniqueEnvironmentId):
