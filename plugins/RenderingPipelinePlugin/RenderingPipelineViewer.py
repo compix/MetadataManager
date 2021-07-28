@@ -545,6 +545,8 @@ class RenderingPipelineViewer(object):
             self.dialog.deleteButton.setVisible(True)
             self.dialog.replaceExistingCollectionCheckBox.setVisible(True)
         else:
+            self.environment = Environment()
+            self.environmentViewer.setEnvironment(self.environment)
             self.dialog.createButton.setText(' Create')
             self.dialog.updateCollectionCheckBox.setText('Create Table')
             self.dialog.deleteButton.setVisible(False)
