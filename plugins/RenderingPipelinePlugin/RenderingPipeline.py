@@ -275,7 +275,7 @@ class RenderingPipeline(object):
         if not table:
             raise RuntimeError(f'Could not read table {productTablePath}' + (f' with sheet name {productTableSheetname}.' if productTableSheetname else '.'))
 
-        header = table.getHeader()
+        header = [h if h != None else '' for h in table.getHeader()]
 
         # In case of rendering name duplicates, create mappings/links to the document with the first-assigned rendering.
         renderingToDocumentMap: Dict[str,dict] = dict()
@@ -287,57 +287,68 @@ class RenderingPipeline(object):
         if onProgressUpdate:
             onProgressUpdate(0, 'Reading product table...')
 
-        collectionName = self.dbCollectionName + ('_TEMP' if replaceExistingCollection else '')
-
-        for row in table.getRowsWithoutHeader():
-            # Convert values to string for consistency
-            row = [str(v) if v != None else v for v in row]
-            documentDict = table.getRowAsDict(header, row)
-            
-            if PipelineKeys.Perspective in documentDict:
-                perspectiveCodes = [documentDict[PipelineKeys.Perspective]]
-            else:
-                perspectiveCodes = RenderingPipelineUtil.getPerspectiveCodes(environmentSettings)
-
-                if len(perspectiveCodes) == 0:
-                    perspectiveCodes.append('')
-
-            postOutputExt = self.getPreferredPreviewExtension(environmentSettings)
-
-            for perspectiveCode in perspectiveCodes:
-                documentDict[PipelineKeys.Perspective] = perspectiveCode
-
-                documentWithSettings = self.combineDocumentWithSettings(documentDict, environmentSettings)
-
-                sid = self.getSID(documentWithSettings, row)
-                documentDict[Keys.systemIDKey] = sid
-                documentWithSettings[Keys.systemIDKey] = sid
-
-                if sid in sidSet:
-                    logger.warning(f'Duplicate sid {sid} found at row {rowIdx}. This row will be skipped.')
-                    continue
-                else:
-                    sidSet.add(sid)
-
-                    renderingName = extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.RenderingNaming), documentWithSettings)
-                    mappedDocument = renderingToDocumentMap.get(renderingName)
-
-                    documentDict[Keys.preview] = self.namingConvention.getPostFilename(documentWithSettings, postOutputExt)
-
-                    if mappedDocument:
-                        documentDict[PipelineKeys.Mapping] = mappedDocument.get(Keys.systemIDKey)
-                    else:
-                        renderingToDocumentMap[renderingName] = documentDict
-                        documentDict[PipelineKeys.Mapping] = None
-
-                    self.dbManager.insertOrModifyDocument(collectionName, sid, documentDict, checkForModifications=False)
-
-            rowIdx += 1
-
-            if onProgressUpdate:
-                onProgressUpdate(float(rowIdx) / rowCount)
+        collectionName = self.dbCollectionName
 
         if replaceExistingCollection:
-            self.dbManager.dropCollection(self.dbCollectionName + Keys.OLD_VERSIONS_COLLECTION_SUFFIX)
-            self.dbManager.dropCollection(self.dbCollectionName)
-            self.dbManager.db[collectionName].rename(self.dbCollectionName)
+            tempCollectionName = self.dbCollectionName + '_TEMP'
+            self.dbManager.db[collectionName].rename(tempCollectionName)
+
+        try:
+            for row in table.getRowsWithoutHeader():
+                # Convert values to string for consistency
+                row = [str(v) if v != None else v for v in row]
+                documentDict = table.getRowAsDict(header, row)
+                
+                if PipelineKeys.Perspective in documentDict:
+                    perspectiveCodes = [documentDict[PipelineKeys.Perspective]]
+                else:
+                    perspectiveCodes = RenderingPipelineUtil.getPerspectiveCodes(environmentSettings)
+
+                    if len(perspectiveCodes) == 0:
+                        perspectiveCodes.append('')
+
+                postOutputExt = self.getPreferredPreviewExtension(environmentSettings)
+
+                for perspectiveCode in perspectiveCodes:
+                    documentDict[PipelineKeys.Perspective] = perspectiveCode
+
+                    documentWithSettings = self.combineDocumentWithSettings(documentDict, environmentSettings)
+
+                    sid = self.getSID(documentWithSettings, row)
+                    documentDict[Keys.systemIDKey] = sid
+                    documentWithSettings[Keys.systemIDKey] = sid
+
+                    if sid in sidSet:
+                        logger.warning(f'Duplicate sid {sid} found at row {rowIdx}. This row will be skipped.')
+                        continue
+                    else:
+                        sidSet.add(sid)
+
+                        renderingName = extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.RenderingNaming), documentWithSettings)
+                        mappedDocument = renderingToDocumentMap.get(renderingName)
+
+                        documentDict[Keys.preview] = self.namingConvention.getPostFilename(documentWithSettings, postOutputExt)
+
+                        if mappedDocument:
+                            documentDict[PipelineKeys.Mapping] = mappedDocument.get(Keys.systemIDKey)
+                        else:
+                            renderingToDocumentMap[renderingName] = documentDict
+                            documentDict[PipelineKeys.Mapping] = None
+
+                        self.dbManager.insertOrModifyDocument(collectionName, sid, documentDict, checkForModifications=False)
+
+                rowIdx += 1
+
+                if onProgressUpdate:
+                    onProgressUpdate(float(rowIdx) / rowCount)
+
+            if replaceExistingCollection:
+                self.dbManager.dropCollection(self.dbCollectionName + Keys.OLD_VERSIONS_COLLECTION_SUFFIX)
+                self.dbManager.dropCollection(tempCollectionName)
+        except Exception as e:
+            logger.error(str(e))
+
+            # Undo
+            if replaceExistingCollection:
+                self.dbManager.dropCollection(collectionName)
+                self.dbManager.db[tempCollectionName].rename(collectionName)
