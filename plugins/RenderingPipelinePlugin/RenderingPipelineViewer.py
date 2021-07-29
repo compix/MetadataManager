@@ -179,7 +179,7 @@ class RenderingPipelineViewer(object):
         self.pipelineSelectionMenu = None
         self.pipelineNameActions = []
 
-        self.renderingPipelineManager.onPipelineClassRegistrationEvent.subscribe(lambda _: self.updatePipelineClassComboBox())
+        self.renderingPipelineManager.onPipelineClassRegistrationEvent.subscribe(lambda _: self.onPipelineClassRegistered)
         self.initIconMap()
 
         if self.iconMap.get('Deadline'):
@@ -270,6 +270,10 @@ class RenderingPipelineViewer(object):
         self.environmentViewer.setEnvironment(self.environment)
         self.environmentViewer.setKeyDisplayIgnoreFilter('^rp_.*')
         self.environmentViewer.allowSave = False
+
+    def onPipelineClassRegistered(self):
+        self.updatePipelineClassComboBox()
+        self.refreshAvailablePipelineMenu()
 
     def perspectiveCodesEditingFinished(self):
         self.refreshPerspectiveTabWidget()
