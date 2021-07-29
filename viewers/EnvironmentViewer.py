@@ -250,7 +250,7 @@ class EnvironmentViewer(object):
         if not self.validateCurrentEnvironment():
             return
 
-        filePath,_ = QFileDialog.getOpenFileName(self, "Open Settings File", "", "Any File (*.*)")
+        filePath,_ = QFileDialog.getOpenFileName(self.widget, "Open Settings File", "", "Any File (*.*)")
 
         if filePath != None and filePath != "":
             # Try to open a json settings file first
@@ -293,7 +293,7 @@ class EnvironmentViewer(object):
         if not self.validateCurrentEnvironment():
             return
 
-        filePath,_ = QFileDialog.getSaveFileName(self, "Save Settings As Json", "", "Any File (*.*)")
+        filePath,_ = QFileDialog.getSaveFileName(self.widget, "Save Settings As Json", "", "Any File (*.*)")
         self.exportSettingsAsJson(filePath)
 
     def openSelectAutoExportPathFileDialog(self):
@@ -301,7 +301,7 @@ class EnvironmentViewer(object):
             QMessageBox.warning(self.widget, "No Active Environment", "Please set an active environment.")
             return
 
-        filePath,_ = QFileDialog.getSaveFileName(self, "Save Settings As Json", "", "Any File (*.*)")
+        filePath,_ = QFileDialog.getSaveFileName(self.widget, "Save Settings As Json", "", "Any File (*.*)")
 
         if filePath != None and filePath != "":
             self.environment.autoExportPath = filePath
