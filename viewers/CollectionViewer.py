@@ -147,6 +147,9 @@ class CollectionViewer(DockWidget):
             else:
                 print(f"Error: Could not find collection checkbox {collectionName}")
 
+    def getSelectedCollectionNames(self):
+        return [c for c in self.yieldSelectedCollectionNames()]
+
     def saveState(self, settings: QtCore.QSettings):
         for collectionName in self.dbManager.getVisibleCollectionNames():
             collectionCheckbox = self.collectionCheckBoxMap.get(collectionName)

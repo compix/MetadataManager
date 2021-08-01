@@ -37,7 +37,7 @@ class FilteredDocumentsSnapshot(object):
         customFilters = []
         for filterDict in self.fullSearchFilterInfo['customFilters']:
             f = None
-            for filter_ in self.documentFilterManager.customFilters:
+            for filter_ in self.documentFilterManager.getFilters(self.collectionNames):
                 if filter_.uniqueFilterLabel == filterDict['uniqueFilterLabel']:
                     f = filter_.copy()
                     f.setFromDict(filterDict)
@@ -136,6 +136,7 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         self.updateDisplayedFilters()
 
         self.documentFilterManager.onFilterListUpdateEvent.subscribe(self.updateDisplayedFilters)
+        self.collectionViewer.connectCollectionSelectionUpdateHandler(self.updateDisplayedFilters)
 
         self.setupHistoryContextMenu()
 
@@ -250,9 +251,10 @@ class DocumentSearchFilterViewer(QtCore.QObject):
     def applyFullSearchFilterEntry(self, entry):
         self.widget.filterEdit.setText(entry['itemsFilterText'])
         self.widget.distinctEdit.setText(entry['distinctionText'])
+        collectionNames = self.collectionViewer.getSelectedCollectionNames()
 
         for filterDict in entry['customFilters']:
-            for searchFilter in self.documentFilterManager.customFilters:
+            for searchFilter in self.documentFilterManager.getFilters(collectionNames):
                 if searchFilter.uniqueFilterLabel == filterDict['uniqueFilterLabel']:
                     searchFilter.setFromDict(filterDict)
                     break
@@ -287,7 +289,8 @@ class DocumentSearchFilterViewer(QtCore.QObject):
 
     def getCurrentFullSearchFilterEntry(self):
         customFilters = []
-        for searchFilter in self.documentFilterManager.customFilters:
+        collectionNames = self.collectionViewer.getSelectedCollectionNames()
+        for searchFilter in self.documentFilterManager.getFilters(collectionNames):
             customFilters.append(searchFilter.asDict())
 
         entry = {
@@ -324,7 +327,9 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         self.documentFilterViews.clear()
         qt_util.clearContainer(self.customFilterScrollAreaLayout)
 
-        for docFilter in self.documentFilterManager.customFilters:
+        collectionNames = self.collectionViewer.getSelectedCollectionNames()
+
+        for docFilter in self.documentFilterManager.getFilters(collectionNames):
             filterView = DocumentFilterView(docFilter)
             self.documentFilterViews.append(filterView)
             self.customFilterScrollAreaLayout.addWidget(filterView.container)
@@ -339,7 +344,7 @@ class DocumentSearchFilterViewer(QtCore.QObject):
     def getFilteredDocumentsOfCollection(self, collectionName):
         for d in self.documentFilterManager.yieldFilteredDocuments(collectionName, self.getItemsFilter(), 
                                                                    distinctionText=self.widget.distinctEdit.text(), 
-                                                                   filters=self.documentFilterManager.customFilters):
+                                                                   filters=self.documentFilterManager.getFilters([collectionName])):
             yield d
 
     def getItemsFilter(self):

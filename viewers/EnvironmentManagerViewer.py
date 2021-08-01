@@ -78,7 +78,7 @@ class EnvironmentManagerViewer(DockWidget):
 
     def onEnvironmentsComboBoxSelectedTextChanged(self, txt):
         potentialEnvironmentName = txt
-        envId = self.environmentManager.getIdFromEnvironmentName(potentialEnvironmentName)
+        envId = EnvironmentManager.getIdFromEnvironmentName(potentialEnvironmentName)
         env = self.environmentManager.getEnvironmentFromId(envId)
         if env != None:
             self.setCurrentEnvironment(env)

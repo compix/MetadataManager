@@ -1,9 +1,8 @@
+from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
 from viewers.EnvironmentViewer import EnvironmentViewer
-import PySide2
 from table import table_util
 from qt_extensions.InputConfirmDialog import InputConfirmDialog
 from AppInfo import AppInfo
-from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
 from RenderingPipelinePlugin.filters.MappingFilter import MappingFilter
 from ServiceRegistry import ServiceRegistry
 from MetadataManagerCore import Keys
@@ -17,7 +16,6 @@ from qt_extensions.ProgressDialog import ProgressDialog
 from PySide2 import QtGui, QtWidgets
 from MetadataManagerCore.environment.Environment import Environment
 import os
-import xlrd
 import logging
 from RenderingPipelinePlugin import PipelineKeys, RenderingPipelineUtil
 from qt_extensions.RegexPatternInputValidator import RegexPatternInputValidator
@@ -438,7 +436,7 @@ class RenderingPipelineViewer(object):
             self.dialog.statusLabel.setText(f'Please specify a pipeline name.')
             return
 
-        envId = self.environmentManager.getIdFromEnvironmentName(pipelineName)
+        envId = EnvironmentManager.getIdFromEnvironmentName(pipelineName)
 
         if self.dialog.updateCollectionCheckBox.isChecked() and not self.dialog.headerConfirmationCheckBox.isChecked():
             self.dialog.statusLabel.setText(f'Please confirm the table extraction.')
