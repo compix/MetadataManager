@@ -85,6 +85,27 @@ class MainWindowManager(QtCore.QObject):
         selModel = self.window.tableView.selectionModel()
         selModel.selectionChanged.connect(self.onTableSelectionChanged)
 
+    def copyTableSelection(self):
+            selection = self.window.tableView.selectedIndexes()
+            if selection:
+                rows = sorted(index.row() for index in selection)
+                columns = sorted(index.column() for index in selection)
+                rowcount = rows[-1] - rows[0] + 1
+                colcount = columns[-1] - columns[0] + 1
+                table = [[''] * colcount for _ in range(rowcount)]
+                for index in selection:
+                    row = index.row() - rows[0]
+                    column = index.column() - columns[0]
+                    table[row][column] = str(index.data()) if index.data() else ''
+
+                csv = ""
+                for row in table:
+                    csv += '\t'.join(row) + '\n'
+
+                cb = QtWidgets.QApplication.clipboard()
+                cb.clear(mode=cb.Clipboard)
+                cb.setText(csv, mode=cb.Clipboard)
+
     def initViewers(self):
         self.visualScriptingViewer = VisualScriptingViewer(self.serviceRegistry.visualScripting)
         self.visualScriptingViewer.updateNodeRegistration()
@@ -333,6 +354,11 @@ class MainWindowManager(QtCore.QObject):
             self.quitApp()
             event.ignore()
             return True
+
+        if event.type() == QtCore.QEvent.ShortcutOverride and event.matches(QtGui.QKeySequence.Copy):
+            self.copyTableSelection()
+            return True
+
         return super(MainWindowManager, self).eventFilter(obj, event)
 
     def close(self):
