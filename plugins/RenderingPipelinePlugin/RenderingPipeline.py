@@ -1,4 +1,6 @@
 from RenderingPipelinePlugin.filters.HasInputSceneFilter import HasInputSceneFilter
+from RenderingPipelinePlugin.filters.HasRenderSceneFilter import HasRenderSceneFilter
+from RenderingPipelinePlugin.filters.HasRenderingFilter import HasRenderingFilter
 from viewers.ViewerRegistry import ViewerRegistry
 from qt_extensions import qt_util
 from MetadataManagerCore.Event import Event
@@ -61,9 +63,9 @@ class RenderingPipeline(object):
         self.registerAndLinkAction(RefreshPreviewFilenameAction(self))
 
     def addFilters(self):
-        hasInputSceneFilter = HasInputSceneFilter()
-        hasInputSceneFilter.setPipeline(self)
-        self.serviceRegistry.documentFilterManager.addFilter(hasInputSceneFilter, self.dbCollectionName)
+        self.serviceRegistry.documentFilterManager.addFilter(HasInputSceneFilter(self), self.dbCollectionName)
+        self.serviceRegistry.documentFilterManager.addFilter(HasRenderSceneFilter(self), self.dbCollectionName)
+        self.serviceRegistry.documentFilterManager.addFilter(HasRenderingFilter(self), self.dbCollectionName)
 
     def registerAndLinkAction(self, action: Action):
         self.serviceRegistry.actionManager.registerAction(action)

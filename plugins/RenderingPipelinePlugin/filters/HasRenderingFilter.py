@@ -1,4 +1,5 @@
 from MetadataManagerCore.filtering.DocumentFilter import DocumentFilter
+from MetadataManagerCore.animation import anim_util
 import os
 
 import typing
@@ -6,14 +7,14 @@ import typing
 if typing.TYPE_CHECKING:
     from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
 
-class HasInputSceneFilter(DocumentFilter):
+class HasRenderingFilter(DocumentFilter):
     def __init__(self, pipeline: 'RenderingPipeline' = None, active = False) -> None:
-        super().__init__(filterFunction=self.filterFunc, uniqueFilterLabel='Has Input Scene', active=active, hasStringArg=False)
+        super().__init__(filterFunction=self.filterFunc, uniqueFilterLabel='Has Rendering', active=active, hasStringArg=False)
 
         self.pipeline = pipeline
 
     def filterFunc(self, document: dict):
         documentWithSettings = self.pipeline.combineDocumentWithSettings(document, self.pipeline.environmentSettings)
-        inputSceneFilename = self.pipeline.namingConvention.getInputSceneFilename(documentWithSettings)
+        renderingFilename = self.pipeline.namingConvention.getRenderingFilename(documentWithSettings)
         
-        return inputSceneFilename and os.path.exists(inputSceneFilename)
+        return renderingFilename and anim_util.hasExistingFrameFilenames(renderingFilename)
