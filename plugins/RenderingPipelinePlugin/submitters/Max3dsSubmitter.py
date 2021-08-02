@@ -22,6 +22,9 @@ class Max3dsSubmitter(Submitter):
         jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)
         jobInfoDict['OutputFilename0'] = os.path.basename(filename)
 
+        # Make sure the output folder exists:
+        os.makedirs(jobInfoDict['OutputDirectory0'], exist_ok=True)
+
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineInputSceneTimeout)
 
         return deadline_nodes.submit_3dsMaxPipelineJob(sceneCreationScript, pipelineInfoDict, jobInfoDict, documentWithSettings.get(PipelineKeys.Max3dsVersion))
@@ -42,6 +45,9 @@ class Max3dsSubmitter(Submitter):
         filename = self.pipeline.namingConvention.getRenderSceneFilename(documentWithSettings)
         jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)
         jobInfoDict['OutputFilename0'] = os.path.basename(filename)
+
+        # Make sure the output folder exists:
+        os.makedirs(jobInfoDict['OutputDirectory0'], exist_ok=True)
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderSceneTimeout)
 
@@ -65,6 +71,9 @@ class Max3dsSubmitter(Submitter):
         jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)
         jobInfoDict['OutputFilename0'] = os.path.basename(filename)
         
+        # Make sure the output folder exists:
+        os.makedirs(jobInfoDict['OutputDirectory0'], exist_ok=True)
+
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderingTimeout)
 
         sceneFilename = self.pipeline.namingConvention.getRenderSceneFilename(documentWithSettings)

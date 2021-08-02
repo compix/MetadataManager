@@ -23,6 +23,9 @@ class BlenderSubmitter(Submitter):
         jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)
         jobInfoDict['OutputFilename0'] = os.path.basename(filename)
 
+        # Make sure the output folder exists:
+        os.makedirs(jobInfoDict['OutputDirectory0'], exist_ok=True)
+
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineInputSceneTimeout)
 
         extraPluginInfoDict = {
@@ -48,6 +51,9 @@ class BlenderSubmitter(Submitter):
         filename = self.pipeline.namingConvention.getRenderSceneFilename(documentWithSettings)
         jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)
         jobInfoDict['OutputFilename0'] = os.path.basename(filename)
+
+        # Make sure the output folder exists:
+        os.makedirs(jobInfoDict['OutputDirectory0'], exist_ok=True)
 
         frames = documentWithSettings.get(PipelineKeys.getKeyWithPerspective(PipelineKeys.Frames, documentWithSettings.get(PipelineKeys.Perspective, '')), '')
         pipelineInfoDict[PipelineKeys.Frames] = frames
@@ -78,6 +84,9 @@ class BlenderSubmitter(Submitter):
         filename = self.pipeline.namingConvention.getRenderingFilename(documentWithSettings)
         jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)
         jobInfoDict['OutputFilename0'] = os.path.basename(filename)
+
+        # Make sure the output folder exists:
+        os.makedirs(jobInfoDict['OutputDirectory0'], exist_ok=True)
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderingTimeout)
 

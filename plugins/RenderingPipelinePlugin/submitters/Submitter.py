@@ -83,6 +83,10 @@ class Submitter(object):
         jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getNukePriority(documentWithSettings), 
                                                    documentWithSettings.get(PipelineKeys.DeadlineNukePool), dependentJobIds=dependentJobIds)
 
+        # Make sure the output folder exists:
+        outputDir = os.path.dirname(self.pipeline.namingConvention.getPostFilename(documentWithSettings))
+        os.makedirs(outputDir, exist_ok=True)
+
         for i, ext in enumerate(RenderingPipelineUtil.getPostOutputExtensions(documentWithSettings)):
             filename = self.pipeline.namingConvention.getPostFilename(documentWithSettings, ext=ext)
             jobInfoDict[f'OutputDirectory{i}'] = os.path.dirname(filename)
@@ -104,6 +108,10 @@ class Submitter(object):
         batchName = 'Delivery Copy'
         jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getDeliveryPriority(documentWithSettings), 
                                                    documentWithSettings.get(PipelineKeys.DeadlineDeliveryPool), dependentJobIds=dependentJobIds)
+
+        # Make sure the output folder exists:
+        outputDir = os.path.dirname(self.pipeline.namingConvention.getDeliveryFilename(documentWithSettings))
+        os.makedirs(outputDir, exist_ok=True)
 
         for i, ext in enumerate(RenderingPipelineUtil.getPostOutputExtensions(documentWithSettings)):
             filename = self.pipeline.namingConvention.getDeliveryFilename(documentWithSettings, ext=ext)
