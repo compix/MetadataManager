@@ -177,7 +177,7 @@ class RenderingPipelineViewer(object):
         self.pipelineSelectionMenu = None
         self.pipelineNameActions = []
 
-        self.renderingPipelineManager.onPipelineClassRegistrationEvent.subscribe(lambda _: self.onPipelineClassRegistered)
+        self.renderingPipelineManager.onPipelineClassRegistrationEvent.subscribe(lambda _: self.onPipelineClassRegistered())
         self.initIconMap()
 
         if self.iconMap.get('Deadline'):
