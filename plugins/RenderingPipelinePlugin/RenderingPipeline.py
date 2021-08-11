@@ -29,6 +29,7 @@ from RenderingPipelinePlugin.PipelineType import PipelineType
 from RenderingPipelinePlugin.PipelineActions import RefreshPreviewFilenameAction, SelectInputSceneInExplorerAction, SelectPostImageInExplorerAction, SelectRenderSceneInExplorerAction, SelectRenderingInExplorerAction, SubmissionAction, CopyForDeliveryDocumentAction, CollectionUpdateAction
 from MetadataManagerCore.actions.Action import Action
 from qt_extensions.RegexPatternInputValidator import RegexPatternInputValidator
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -267,7 +268,7 @@ class RenderingPipeline(object):
         return None
         
     def readProductTable(self, productTablePath: str = None, productTableSheetname: str = None, environmentSettings: dict = None, 
-                         onProgressUpdate: Callable[[float, str],None] = None, replaceExistingCollection=False):
+                         onProgressUpdate: Callable[[float, str],None] = None, replaceExistingCollection=False, logHandler: Callable[[str],None] = None):
         """Generates a database collection with rendering entries from the given table.
 
         Args:
@@ -299,8 +300,11 @@ class RenderingPipeline(object):
         collectionName = self.dbCollectionName
 
         if replaceExistingCollection:
-            tempCollectionName = self.dbCollectionName + '_TEMP'
-            self.dbManager.db[collectionName].rename(tempCollectionName)
+            tempCollectionName = f'{self.dbCollectionName}_{uuid.uuid4().hex[:6]}'
+            try:
+                self.dbManager.db[collectionName].rename(tempCollectionName)
+            except Exception as e:
+                raise RuntimeError(f'Failed to rename collection {collectionName} to temporary collection {tempCollectionName}. Maybe it already exists?')
 
         try:
             for row in table.getRowsWithoutHeader():
@@ -328,7 +332,10 @@ class RenderingPipeline(object):
                     documentWithSettings[Keys.systemIDKey] = sid
 
                     if sid in sidSet:
-                        logger.warning(f'Duplicate sid {sid} found at row {rowIdx}. This row will be skipped.')
+                        m = f'Duplicate sid {sid} found at row {rowIdx}. This row will be skipped.'
+                        logger.warning(m)
+                        if logHandler:
+                            logHandler(m)
                         continue
                     else:
                         sidSet.add(sid)
@@ -356,6 +363,8 @@ class RenderingPipeline(object):
                 self.dbManager.dropCollection(tempCollectionName)
         except Exception as e:
             logger.error(str(e))
+            if logHandler:
+                logHandler(str(e))
 
             # Undo
             if replaceExistingCollection:

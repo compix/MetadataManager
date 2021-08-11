@@ -19,7 +19,7 @@ class BlenderSubmitter(Submitter):
         jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getInputSceneCreationPriority(documentWithSettings),
                                                    documentWithSettings.get(PipelineKeys.DeadlineInputScenePool), dependentJobIds=dependentJobIds)
 
-        filename = self.pipeline.namingConvention.getInputSceneFilename(documentWithSettings)
+        filename = self.pipeline.namingConvention.getCreatedInputSceneFilename(documentWithSettings)
         jobInfoDict['OutputDirectory0'] = os.path.dirname(filename)
         jobInfoDict['OutputFilename0'] = os.path.basename(filename)
 

@@ -232,6 +232,7 @@ class RenderingPipelineViewer(object):
 
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.BaseScenesFolder, self.dialog.baseScenesFolderEdit, self, self.dialog.baseScenesFolderButton))
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.InputScenesFolder, self.dialog.inputScenesFolderEdit, self, self.dialog.inputScenesFolderButton))
+        self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.CreatedInputScenesFolder, self.dialog.createdInputScenesFolderEdit, self, self.dialog.createdInputScenesFolderButton))
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.RenderScenesFolder, self.dialog.renderScenesFolderEdit, self, self.dialog.renderScenesFolderButton))
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.EnvironmentScenesFolder, self.dialog.environmentScenesEdit, self, self.dialog.environmentScenesButton))
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.NukeScenesFolder, self.dialog.nukeScenesFolderEdit, self, self.dialog.nukeScenesFolderButton))
@@ -243,6 +244,7 @@ class RenderingPipelineViewer(object):
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.SidNaming, self.dialog.sidNamingEdit))
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.RenderSceneNaming, self.dialog.renderSceneNamingEdit))
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.InputSceneNaming, self.dialog.inputSceneNamingEdit))
+        self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.CreatedInputSceneNaming, self.dialog.createdInputSceneNamingEdit))
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.NukeSceneNaming, self.dialog.nukeSceneNamingEdit))
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.EnvironmentSceneNaming, self.dialog.environmentSceneNamingEdit))
 
@@ -519,8 +521,9 @@ class RenderingPipelineViewer(object):
                 replaceExistingCollection = pipelineExists and self.dialog.replaceExistingCollectionCheckBox.isChecked()
                 progressDialog = ProgressDialog()
                 progressDialog.open()
+                logHandler = lambda msg: self.dialog.logTextEdit.append(msg)
                 pipeline.readProductTable(productTablePath=productTable, productTableSheetname=sheetName, environmentSettings=self.environment.getEvaluatedSettings(), 
-                                        onProgressUpdate=progressDialog.updateProgress, replaceExistingCollection=replaceExistingCollection)
+                                        onProgressUpdate=progressDialog.updateProgress, replaceExistingCollection=replaceExistingCollection, logHandler=logHandler)
             except Exception as e:
                 progressDialog.close()
                 self.dialog.statusLabel.setText(f'Failed reading the product table {productTable} with exception: {str(e)}')
@@ -547,7 +550,11 @@ class RenderingPipelineViewer(object):
             self.dialog.deleteButton.setVisible(True)
             self.dialog.replaceExistingCollectionCheckBox.setVisible(True)
         else:
-            self.environment = Environment()
+            prevEnv = self.environment
+            self.environment = Environment(EnvironmentManager.getIdFromEnvironmentName(pipelineName))
+            if prevEnv:
+                self.environment.settingsDict = prevEnv.settingsDict.copy()
+
             self.environmentViewer.setEnvironment(self.environment)
             self.dialog.createButton.setText(' Create')
             self.dialog.updateCollectionCheckBox.setText('Create Table')
@@ -593,7 +600,7 @@ class RenderingPipelineViewer(object):
         pipeline = self.renderingPipelineManager.getPipelineFromName(pipelineName)
         self.environment = self.environmentManager.getEnvironmentFromName(pipeline.environmentName)
         if not self.environment:
-            self.environment = Environment('')
+            self.environment = Environment(EnvironmentManager.getIdFromEnvironmentName(pipelineName))
 
         environmentSettings = self.environment.settings
 

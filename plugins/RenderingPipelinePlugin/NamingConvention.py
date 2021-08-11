@@ -50,6 +50,7 @@ class NamingConvention(object):
         """
         documentWithSettings[PipelineKeys.BaseSceneFilename] = self.getBaseSceneFilename(documentWithSettings)
         documentWithSettings[PipelineKeys.InputSceneFilename] = self.getInputSceneFilename(documentWithSettings)
+        documentWithSettings[PipelineKeys.CreatedInputSceneFilename] = self.getCreatedInputSceneFilename(documentWithSettings)
         documentWithSettings[PipelineKeys.RenderSceneFilename] = self.getRenderSceneFilename(documentWithSettings)
         documentWithSettings[PipelineKeys.EnvironmentSceneFilename] = self.getEnvironmentSceneFilename(documentWithSettings)
         documentWithSettings[PipelineKeys.NukeSceneFilename] = self.getNukeSceneFilename(documentWithSettings)
@@ -98,6 +99,9 @@ class NamingConvention(object):
     def getInputSceneRelPath(self, documentWithSettings: dict):
         return extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.InputSceneNaming, ''), documentWithSettings)
 
+    def getCreatedInputSceneRelPath(self, documentWithSettings: dict):
+        return extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.CreatedInputSceneNaming, ''), documentWithSettings)
+
     def getEnvironmentSceneRelPath(self, documentWithSettings: dict):
         return extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.EnvironmentSceneNaming, ''), documentWithSettings)
 
@@ -118,6 +122,9 @@ class NamingConvention(object):
     def getInputSceneFilename(self, documentWithSettings: dict):
         return os.path.join(documentWithSettings.get(PipelineKeys.InputScenesFolder, ''), self.getInputSceneRelPath(documentWithSettings)) + f'.{documentWithSettings.get(PipelineKeys.SceneExtension, "")}'
 
+    def getCreatedInputSceneFilename(self, documentWithSettings: dict):
+        return os.path.join(documentWithSettings.get(PipelineKeys.CreatedInputScenesFolder, ''), self.getCreatedInputSceneRelPath(documentWithSettings)) + f'.{documentWithSettings.get(PipelineKeys.SceneExtension, "")}'
+        
     def getRenderSceneFilename(self, documentWithSettings: dict):
         return os.path.join(documentWithSettings.get(PipelineKeys.RenderScenesFolder, ''), self.getRenderSceneRelPath(documentWithSettings)) + f'.{documentWithSettings.get(PipelineKeys.SceneExtension, "")}'
 

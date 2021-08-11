@@ -106,28 +106,27 @@ def generateMaxSourceCodeTemplate(edit: QtWidgets.QTextEdit, sceneType: SourceCo
     addCodeLine(edit, '    ')
     addCodeLine(edit, '    -- Prepare')
     addCodeLine(edit, '    loadedBaseSceneFile = loadMaxFile baseFile useFileUnits:true')
-    addCodeLine(edit, '    if not loadedBaseSceneFile do throw ("Failed to load base scene file: " + BaseSceneFilename as string)')
+    addCodeLine(edit, '    if not loadedBaseSceneFile do throw ("Failed to load base scene file: " + g_BaseSceneFilename as string)')
     addCodeLine(edit, '    ')
 
     if sceneType == SourceCodeTemplateSceneType.RenderScene:
         addCodeLine(edit, '    -- Merge environment scene file if available')
-        addCodeLine(edit, '    if EnvironmentSceneNaming != "" do (')
-        addCodeLine(edit, '        mergedEnvSceneFile = mergeMAXFile EnvironmentSceneFilename #mergeDups #useMergedMtlDups #neverReparent')
-        addCodeLine(edit, '        if not mergedEnvSceneFile do throw ("Failed to merge env scene file: " + EnvironmentSceneFilename as string)')
+        addCodeLine(edit, '    if g_EnvironmentSceneNaming != "" do (')
+        addCodeLine(edit, '        mergedEnvSceneFile = mergeMAXFile g_EnvironmentSceneFilename #mergeDups #useMergedMtlDups #neverReparent')
+        addCodeLine(edit, '        if not mergedEnvSceneFile do throw ("Failed to merge env scene file: " + g_EnvironmentSceneFilename as string)')
         addCodeLine(edit, '    )')
         addCodeLine(edit, '    ')
 
-    if sceneType == SourceCodeTemplateSceneType.RenderScene:
         addCodeLine(edit, '    -- Merge input scene file')
-        addCodeLine(edit, '    mergedInputSceneFile = mergeMAXFile InputSceneFilename #mergeDups #useMergedMtlDups #neverReparent')
-        addCodeLine(edit, '    if not mergedInputSceneFile do throw ("Failed to merge input scene file: " + InputSceneFilename as string)')
+        addCodeLine(edit, '    mergedInputSceneFile = mergeMAXFile g_InputSceneFilename #mergeDups #useMergedMtlDups #neverReparent')
+        addCodeLine(edit, '    if not mergedInputSceneFile do throw ("Failed to merge input scene file: " + g_InputSceneFilename as string)')
         addCodeLine(edit, '    ')
 
     addCodeLine(edit, '    /*******************************************************')
     addCodeLine(edit, '    TODO: Apply variation logic')
     addCodeLine(edit, '    ********************************************************/')
     addCodeLine(edit, '    ')
-    addCodeLine(edit, f'    saveMaxFileChecked {"InputSceneFilename" if sceneType == SourceCodeTemplateSceneType.InputScene else "RenderSceneFilename"}')
+    addCodeLine(edit, f'    saveMaxFileChecked {"g_CreatedInputSceneFilename" if sceneType == SourceCodeTemplateSceneType.InputScene else "g_RenderSceneFilename"}')
     addCodeLine(edit, ')')
 
 def generateBlenderSourceCodeTemplate(edit: QtWidgets.QTextEdit, sceneType: SourceCodeTemplateSceneType):
@@ -318,5 +317,5 @@ def generateBlenderSourceCodeTemplate(edit: QtWidgets.QTextEdit, sceneType: Sour
         addCodeLine(edit, '            print("Renaming output files...")')
         addCodeLine(edit, '            renameOutputFiles(env)')
     elif sceneType == SourceCodeTemplateSceneType.InputScene:
-        addCodeLine(edit, '    print(f"Saving scene to {env.InputSceneFilename}")')
-        addCodeLine(edit, '    bpy.ops.wm.save_mainfile(filepath=env.InputSceneFilename, check_existing=False)')
+        addCodeLine(edit, '    print(f"Saving scene to {env.CreatedInputSceneFilename}")')
+        addCodeLine(edit, '    bpy.ops.wm.save_mainfile(filepath=env.CreatedInputSceneFilename, check_existing=False)')
