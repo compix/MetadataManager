@@ -158,13 +158,13 @@ class EnvironmentViewer(object):
         self.widget.deleteEntryButton.setEnabled(True)
 
     def onChooseFile(self):
-        fileName,_ = QFileDialog.getOpenFileName(self, "Open", "", "Any File (*.*)")
+        fileName,_ = QFileDialog.getOpenFileName(self.widget, "Open", "", "Any File (*.*)")
         if fileName != None and fileName != "":
             self.inspectorWidget.value = fileName
             self.onAddKeyValue()
 
     def onChooseDir(self):
-        dirName = QFileDialog.getExistingDirectory(self, "Open", "")
+        dirName = QFileDialog.getExistingDirectory(self.widget, "Open", "")
         if dirName != None and dirName != "":
             self.inspectorWidget.value = dirName
             self.onAddKeyValue()
