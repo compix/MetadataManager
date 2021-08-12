@@ -63,7 +63,8 @@ class RenderingPipelineManager(object):
     def pipelineDict(self, pipeline: RenderingPipeline) -> dict:
         return {
             'name': pipeline.name,
-            'className': pipeline.__class__.__name__
+            'className': pipeline.__class__.__name__,
+            'customData': pipeline.customData
         }
 
     def constructPipelineFromDict(self, pipelineInfoDict: dict) -> RenderingPipeline:
@@ -72,7 +73,9 @@ class RenderingPipelineManager(object):
         pipelineClass = self.getPipelineClassFromName(className)
 
         if pipelineClass:
-            return pipelineClass(pipelineName, self.serviceRegistry, self.viewerRegistry, self.appInfo)
+            pipeline = pipelineClass(pipelineName, self.serviceRegistry, self.viewerRegistry, self.appInfo)
+            pipeline.customData = pipelineInfoDict.get('customData')
+            return pipeline
         else:
             logger.error(f'Could not construct pipeline from {pipelineInfoDict}')
 

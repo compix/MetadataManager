@@ -47,9 +47,20 @@ class RenderingPipeline(object):
         self.collectionUpdateArgs = []
 
         self._namingConvention = NamingConvention()
+        self.rowSkipConditions: Callable[[dict],bool] = []
+        self.customData = None
 
         self.registerAndLinkActions()
         self.addFilters()
+
+    def setCustomDataEntry(self, key: str, value):
+        if self.customData == None:
+            self.customData = dict()
+
+        self.customData[key] = value
+
+    def getCustomDataValue(self, key: str, default = None):
+        return self.customData.get(key) if self.customData else default
 
     def registerAndLinkActions(self):
         if self.appInfo.mode == ApplicationMode.GUI:
@@ -266,6 +277,9 @@ class RenderingPipeline(object):
             return BlenderSubmitter(self)
 
         return None
+
+    def setRowSkipConditions(self, rowSkipConditions: Callable[[dict],bool]):
+        self.rowSkipConditions = rowSkipConditions
         
     def readProductTable(self, productTablePath: str = None, productTableSheetname: str = None, environmentSettings: dict = None, 
                          onProgressUpdate: Callable[[float, str],None] = None, replaceExistingCollection=False, logHandler: Callable[[str],None] = None):
@@ -311,6 +325,9 @@ class RenderingPipeline(object):
                 # Convert values to string for consistency
                 row = [str(v) if v != None else v for v in row]
                 documentDict = table.getRowAsDict(header, row)
+
+                if any(rowSkipCondition(documentDict) for rowSkipCondition in self.rowSkipConditions):
+                    continue
                 
                 if PipelineKeys.Perspective in documentDict:
                     perspectiveCodes = [documentDict[PipelineKeys.Perspective]]

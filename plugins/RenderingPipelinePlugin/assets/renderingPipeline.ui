@@ -35,7 +35,7 @@
             <x>0</x>
             <y>0</y>
             <width>865</width>
-            <height>1296</height>
+            <height>1366</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -517,6 +517,25 @@
                      </widget>
                     </item>
                    </layout>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_13">
+                <property name="title">
+                 <string>Row Skip Conditions</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_31">
+                 <item>
+                  <layout class="QVBoxLayout" name="rowSkipConditionLayout"/>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="addRowSkipConditionButton">
+                   <property name="text">
+                    <string>Add Condition</string>
+                   </property>
                   </widget>
                  </item>
                 </layout>

@@ -1,4 +1,5 @@
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
+from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
 from viewers.EnvironmentViewer import EnvironmentViewer
 from table import table_util
 from qt_extensions.InputConfirmDialog import InputConfirmDialog
@@ -26,6 +27,7 @@ from enum import Enum
 import re
 from RenderingPipelinePlugin import SourceCodeTemplateGeneration
 from RenderingPipelinePlugin.SourceCodeTemplateGeneration import SourceCodeTemplateSceneType
+from RenderingPipelinePlugin.RowSkipConditionUIElement import RowSkipConditionUIElement
 
 logger = logging.getLogger(__name__)
 
@@ -271,6 +273,47 @@ class RenderingPipelineViewer(object):
         self.environmentViewer.setKeyDisplayIgnoreFilter('^rp_.*')
         self.environmentViewer.allowSave = False
 
+        self.rowSkipConditions: List[RowSkipConditionUIElement] = []
+        self.dialog.addRowSkipConditionButton.clicked.connect(self.onAddRowSkipConditionClick)
+
+    def onAddRowSkipConditionClick(self):
+        if not self.currentHeader:
+            QtWidgets.QMessageBox.warning(self.dialog, "No Table Header", "Please specify a valid product table first.")
+            return
+
+        rowSkipCondition = RowSkipConditionUIElement(self.currentHeader)
+        self.addRowSkipCondition(rowSkipCondition)
+
+    def addRowSkipCondition(self, rowSkipCondition: RowSkipConditionUIElement):
+        rowSkipCondition.deleteButton.clicked.connect(lambda: self.removeRowSkipCondition(rowSkipCondition))
+        self.rowSkipConditions.append(rowSkipCondition)
+        self.dialog.rowSkipConditionLayout.addLayout(rowSkipCondition)
+
+    def removeRowSkipCondition(self, rowSkipCondition: RowSkipConditionUIElement):
+        self.rowSkipConditions.remove(rowSkipCondition)
+        
+        for idx, child in enumerate(self.dialog.rowSkipConditionLayout.children()):
+            if child == rowSkipCondition:
+                self.dialog.rowSkipConditionLayout.takeAt(idx)
+                qt_util.clearContainer(child)
+                child.deleteLater()
+
+    def loadRowSkipConditions(self, pipeline: RenderingPipeline):
+        self.rowSkipConditions = []
+        qt_util.clearContainer(self.dialog.rowSkipConditionLayout)
+        skipConditions = pipeline.getCustomDataValue('rowSkipConditions')
+        if skipConditions:
+            header = pipeline.getCustomDataValue('header', [])
+            for skipConditionDict in skipConditions:
+                skipCondition = RowSkipConditionUIElement(header)
+                skipCondition.setFromDict(skipConditionDict)
+                self.addRowSkipCondition(skipCondition)
+
+    def saveRowSkipConditions(self, pipeline: RenderingPipeline):
+        rowSkipConditions = [condition.getAsDict() for condition in self.rowSkipConditions]
+        pipeline.setCustomDataEntry('rowSkipConditions', rowSkipConditions)
+        pipeline.setCustomDataEntry('header', self.currentHeader)
+
     def onPipelineClassRegistered(self):
         self.updatePipelineClassComboBox()
         self.refreshAvailablePipelineMenu()
@@ -487,6 +530,8 @@ class RenderingPipelineViewer(object):
 
         self.environment.setUID(envId)
         pipeline = self.renderingPipelineManager.constructPipeline(pipelineName, pipelineClassName)
+        self.saveRowSkipConditions(pipeline)
+        pipeline.rowSkipConditions = [condition.evaluateCondition for condition in self.rowSkipConditions]
 
         self.environment.settings[PipelineKeys.BaseFolder] = baseProjectFolder
         self.environment.settings[PipelineKeys.PipelineType] = pipelineType
@@ -626,6 +671,8 @@ class RenderingPipelineViewer(object):
             for envEntry in self.environmentEntries:
                 if envEntry.isApplicable():
                     envEntry.loadValue(self.environment)
+
+            self.loadRowSkipConditions(pipeline)
 
         self.environmentViewer.setEnvironment(self.environment)
 
