@@ -52,6 +52,6 @@ class RowSkipConditionUIElement(QHBoxLayout):
         }
 
     def setFromDict(self, d: dict):
-        self.headerComboBox.setCurrentText(d.get('header_key'))
+        self.headerComboBox.setCurrentText(d.get('headerKey'))
         self.operatorComboBox.setCurrentText(d.get('operator'))
         self.valueEdit.setText(d.get('value'))
