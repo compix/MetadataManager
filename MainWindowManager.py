@@ -248,14 +248,6 @@ class MainWindowManager(QtCore.QObject):
             for item in collection.find({}):
                 collection.update_one({"_id":item["_id"]}, {"$set": {"preview":"C:/Users/compix/Desktop/surprised_pikachu.png"}})
 
-    def showItemInInspector(self, uid):
-        form = self.window.inspectorFormLayout
-        qt_util.clearContainer(form)
-        item = self.dbManager.findOne(uid)
-        if item != None:
-            for key, val in item.items():
-                form.addRow(self.window.tr(str(key)), QtWidgets.QLabel(str(val)))
-
     def extractSystemValues(self, item):
         vals = []
         for sysKey in Keys.systemKeys:
