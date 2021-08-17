@@ -1,4 +1,4 @@
-from MetadataManagerCore.filtering.DocumentFilter import DocumentFilter
+from RenderingPipelinePlugin.filters.PipelineFilter import PipelineFilter
 import os
 
 import typing
@@ -6,9 +6,9 @@ import typing
 if typing.TYPE_CHECKING:
     from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
 
-class HasInputSceneFilter(DocumentFilter):
+class HasInputSceneFilter(PipelineFilter):
     def __init__(self, pipeline: 'RenderingPipeline' = None, active = False) -> None:
-        super().__init__(filterFunction=self.filterFunc, uniqueFilterLabel='Has Input Scene', active=active, hasStringArg=False)
+        super().__init__(pipeline, filterFunction=self.filterFunc, uniqueFilterLabel='Has Input Scene', active=active, hasStringArg=False)
 
         self.pipeline = pipeline
 
