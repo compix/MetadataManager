@@ -222,6 +222,7 @@ class Bootstrapper(object):
         MDApi.ENVIRONMENT_MANAGER = self.serviceRegistry.environmentManager
         MDApi.DB_MANAGER = self.dbManager
         MDApi.SERVICE_REGISTRY = self.serviceRegistry
+        MDApi.ON_INITIALIZED()
 
     def onDBManagerConnected(self):
         self.initHostProcessController()
