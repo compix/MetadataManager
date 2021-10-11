@@ -281,6 +281,12 @@ class RenderingPipeline(object):
     def setRowSkipConditions(self, rowSkipConditions: Callable[[dict],bool]):
         self.rowSkipConditions = rowSkipConditions
         
+    def processHeader(self, header: List[str]):
+        pass
+
+    def processDocumentDict(self, documentDict: dict):
+        return True
+
     def readProductTable(self, productTablePath: str = None, productTableSheetname: str = None, environmentSettings: dict = None, 
                          onProgressUpdate: Callable[[float, str],None] = None, replaceExistingCollection=False, logHandler: Callable[[str],None] = None):
         """Generates a database collection with rendering entries from the given table.
@@ -300,6 +306,7 @@ class RenderingPipeline(object):
             raise RuntimeError(f'Could not read table {productTablePath}' + (f' with sheet name {productTableSheetname}.' if productTableSheetname else '.'))
 
         header = [h if h != None else '' for h in table.getHeader()]
+        self.processHeader(header)
 
         # In case of rendering name duplicates, create mappings/links to the document with the first-assigned rendering.
         renderingToDocumentMap: Dict[str,dict] = dict()
@@ -327,6 +334,9 @@ class RenderingPipeline(object):
                 documentDict = table.getRowAsDict(header, row)
 
                 if any(rowSkipCondition(documentDict) for rowSkipCondition in self.rowSkipConditions):
+                    continue
+
+                if not self.processDocumentDict(documentDict):
                     continue
                 
                 if PipelineKeys.Perspective in documentDict:
