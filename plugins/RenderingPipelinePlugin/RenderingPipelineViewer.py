@@ -368,7 +368,11 @@ class RenderingPipelineViewer(object):
                         envEntry = LineEditEnvironmentEntry(envKey, edit)
                     else:
                         envEntry = NamingEnvironmentEntry(envKey, edit)
+                    
                     self.environmentEntries.append(envEntry)
+
+                    if self.environment:
+                        envEntry.loadValue(self.environment)
 
     def initIconMap(self):
         deadlineRepoFolder = self.serviceRegistry.deadlineService.info.deadlineRepositoryLocation
