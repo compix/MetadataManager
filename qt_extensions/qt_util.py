@@ -42,6 +42,7 @@ def clearContainer(container):
         item = container.takeAt(i)
         
         if item.widget():
+            item.widget().deleteLater()
             item.widget().setParent(None)
         elif item.layout():
             clearContainer(item.layout())

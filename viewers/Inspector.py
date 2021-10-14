@@ -17,7 +17,7 @@ class Inspector(DockWidget):
         item = self.dbManager.findOne(uid)
         if item != None:
             for key, val in item.items():
-                valueEdit = QtWidgets.QLineEdit()
+                valueEdit = QtWidgets.QLineEdit(self.widget)
                 valueEdit.setReadOnly(True)
                 valueEdit.setText(str(val) if val else '')
                 valueEdit.setStyleSheet("* { background-color: rgba(0, 0, 0, 0); }")
