@@ -89,7 +89,7 @@ class Updater(FileSystemEventHandler):
         self.updateAskTimer.stop()
         ret = QMessageBox.question(self.mainWindow, f"New Update: {os.path.basename(latestVersionFilename)}", "There is an update available. Update now? (recommended)")
         if ret == QMessageBox.Yes:
-            self.bootstrapper.requestUpdate()
+            self.bootstrapper.requestRestart()
         else:
             self.askingToUpdate = False
             self.updateAskTimer.start(self.updateAskTimeInSeconds * 1000)
