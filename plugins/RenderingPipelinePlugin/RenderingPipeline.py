@@ -284,7 +284,10 @@ class RenderingPipeline(object):
     def processHeader(self, header: List[str]):
         pass
 
-    def processDocumentDict(self, documentDict: dict):
+    def processDocumentDict(self, documentDict: dict, logHandler: Callable[[str],None] = None):
+        return True
+
+    def postProcessDocumentDict(self, documentDict: dict, logHandler: Callable[[str],None] = None):
         return True
 
     def readProductTable(self, productTablePath: str = None, productTableSheetname: str = None, environmentSettings: dict = None, 
@@ -323,7 +326,11 @@ class RenderingPipeline(object):
         if replaceExistingCollection:
             tempCollectionName = f'{self.dbCollectionName}_{uuid.uuid4().hex[:6]}'
             try:
-                self.dbManager.db[collectionName].rename(tempCollectionName)
+                existingCollection = self.dbManager.db[collectionName]
+                if existingCollection.count() > 0:
+                    self.dbManager.db[collectionName].rename(tempCollectionName)
+                else:
+                    replaceExistingCollection = False
             except Exception as e:
                 raise RuntimeError(f'Failed to rename collection {collectionName} to temporary collection {tempCollectionName}. Maybe it already exists?')
 
@@ -336,7 +343,7 @@ class RenderingPipeline(object):
                 if any(rowSkipCondition(documentDict) for rowSkipCondition in self.rowSkipConditions):
                     continue
 
-                if not self.processDocumentDict(documentDict):
+                if not self.processDocumentDict(documentDict, logHandler):
                     continue
                 
                 if PipelineKeys.Perspective in documentDict:
@@ -357,6 +364,8 @@ class RenderingPipeline(object):
                     sid = self.getSID(documentWithSettings, row)
                     documentDict[Keys.systemIDKey] = sid
                     documentWithSettings[Keys.systemIDKey] = sid
+
+                    self.postProcessDocumentDict(documentDict, logHandler)
 
                     if sid in sidSet:
                         m = f'Duplicate sid {sid} found at row {rowIdx}. This row will be skipped.'
