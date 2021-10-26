@@ -570,6 +570,8 @@ class RenderingPipelineViewer(object):
                 replaceExistingCollection = pipelineExists and self.dialog.replaceExistingCollectionCheckBox.isChecked()
                 progressDialog = ProgressDialog()
                 progressDialog.open()
+                self.dialog.statusLabel.setText('')
+                self.dialog.logTextEdit.clear()
                 logHandler = lambda msg: self.dialog.logTextEdit.append(msg)
                 pipeline.readProductTable(productTablePath=productTable, productTableSheetname=sheetName, environmentSettings=self.environment.getEvaluatedSettings(), 
                                         onProgressUpdate=progressDialog.updateProgress, replaceExistingCollection=replaceExistingCollection, logHandler=logHandler)
