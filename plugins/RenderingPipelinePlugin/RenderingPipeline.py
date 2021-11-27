@@ -49,9 +49,14 @@ class RenderingPipeline(object):
         self._namingConvention = NamingConvention()
         self.rowSkipConditions: Callable[[dict],bool] = []
         self.customData = None
+        self.activated = False
 
-        self.registerAndLinkActions()
-        self.addFilters()
+    def activate(self):
+        if not self.activated:
+            self.registerAndLinkActions()
+            self.addFilters()
+
+            self.activated = True
 
     def setCustomDataEntry(self, key: str, value):
         if self.customData == None:
@@ -90,8 +95,9 @@ class RenderingPipeline(object):
         submitNuke = self.submissionDialog.submitNukeCheckBox.isEnabled() and self.submissionDialog.submitNukeCheckBox.isChecked()
         submitDelivery = self.submissionDialog.submitCopyForDeliveryCheckBox.isEnabled() and self.submissionDialog.submitCopyForDeliveryCheckBox.isChecked()
         priority = int(self.submissionDialog.basePriorityEdit.text()) if self.submissionDialog.basePriorityEdit.text() else None
+        initialStatus = self.submissionDialog.initialStatusComboBox.currentText()
 
-        self.submissionArgs = [priority, submitInputScene, submitRenderScene, submitRendering, submitNuke, submitDelivery]
+        self.submissionArgs = [priority, submitInputScene, submitRenderScene, submitRendering, submitNuke, submitDelivery, initialStatus]
         self.submissionDialog.accept()
 
     def setupAndRegisterSubmissionAction(self):

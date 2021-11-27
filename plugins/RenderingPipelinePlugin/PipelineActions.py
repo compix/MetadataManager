@@ -58,7 +58,8 @@ class SubmissionAction(PipelineDocumentAction):
     def displayName(self):
         return 'Submit'
 
-    def execute(self, document: dict, basePriority: int, submitInputSceneCreation: bool, submitRenderSceneCreation: bool, submitRendering: bool, submitNuke: bool, submitCopyForDelivery: bool):
+    def execute(self, document: dict, basePriority: int, submitInputSceneCreation: bool, 
+                submitRenderSceneCreation: bool, submitRendering: bool, submitNuke: bool, submitCopyForDelivery: bool, initialStatus: str):
         lastJobId = None
 
         documentWithSettings = self.pipeline.combineDocumentWithSettings(document, self.pipeline.environmentSettings)
@@ -68,6 +69,7 @@ class SubmissionAction(PipelineDocumentAction):
             documentWithSettings[PipelineKeys.DeadlinePriority] = basePriority
 
         submitter = self.pipeline.submitter
+        submitter.initialStatus = initialStatus
 
         if submitInputSceneCreation:
             lastJobId = submitter.submitInputSceneCreation(documentWithSettings, dependentJobIds=lastJobId)

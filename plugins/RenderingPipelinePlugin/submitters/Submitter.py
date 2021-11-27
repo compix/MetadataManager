@@ -17,6 +17,7 @@ class Submitter(object):
         super().__init__()
 
         self.pipeline = pipeline
+        self.initialStatus = 'Active'
 
     @property
     def baseDeadlinePriority(self):
@@ -34,7 +35,8 @@ class Submitter(object):
              "Department":"", 
              "Pool":pool, 
              "SecondaryPool":"",
-             "Group":""}
+             "Group":"",
+             "InitialStatus": self.initialStatus if not dependentJobIds else 'Active'}
 
         if dependentJobIds:
             d["JobDependencies"] = (",".join(dependentJobIds) if isinstance(dependentJobIds, list) else dependentJobIds)

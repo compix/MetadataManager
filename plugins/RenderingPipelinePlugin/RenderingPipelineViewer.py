@@ -427,6 +427,7 @@ class RenderingPipelineViewer(object):
         if selectedPipelineName:
             pipeline = self.renderingPipelineManager.getPipelineFromName(selectedPipelineName)
             if pipeline:
+                pipeline.activate()
                 self.viewerRegistry.environmentManagerViewer.setCurrentEnvironment(pipeline.environment)
             self.pipelineSelectionMenu.setTitle(f'Selected RP: {selectedPipelineName}')
 
@@ -436,6 +437,7 @@ class RenderingPipelineViewer(object):
     def selectPipelineFromName(self, pipelineName: str):
         pipeline = self.renderingPipelineManager.getPipelineFromName(pipelineName)
         if pipeline:
+            pipeline.activate()
             self.viewerRegistry.collectionViewer.showSingleCollection(pipeline.dbCollectionName)
             self.viewerRegistry.environmentManagerViewer.setCurrentEnvironment(pipeline.environment)
             self.viewerRegistry.documentSearchFilterViewer.viewItems(saveSearchHistoryEntry=False)
