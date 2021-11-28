@@ -45,7 +45,7 @@ class BlenderSubmitter(Submitter):
         pluginName = deadline_nodes.getBlenderPipelinePluginName()
         jobName = self.pipeline.namingConvention.getRenderSceneName(documentWithSettings)
         batchName = 'Render Scene'
-        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getrenderSceneCreationPriority(documentWithSettings), 
+        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getRenderSceneCreationPriority(documentWithSettings), 
                                                    documentWithSettings.get(PipelineKeys.DeadlineRenderScenePool), dependentJobIds=dependentJobIds)
 
         filename = self.pipeline.namingConvention.getRenderSceneFilename(documentWithSettings)

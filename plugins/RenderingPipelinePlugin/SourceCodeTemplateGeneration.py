@@ -5,6 +5,7 @@ from RenderingPipelinePlugin.PipelineType import PipelineType
 class SourceCodeTemplateSceneType:
     InputScene = 'InputScene'
     RenderScene = 'RenderScene'
+    Compositing = 'Compositing'
 
 def addCodeLine(edit: QtWidgets.QTextEdit, codeLine: str, tabs=0):
     edit.append(f'{" "*tabs*4}{codeLine}')
@@ -148,23 +149,24 @@ def generateBlenderSourceCodeTemplate(edit: QtWidgets.QTextEdit, sceneType: Sour
         addCodeLine(edit, f'return self.infoDict.get("{value}")', tabs=2)
         addCodeLine(edit, '')
     
-    addCodeLine(edit, 'def mergeScene(filename: str):')
-    addCodeLine(edit, '    if os.path.exists(filename):')
-    addCodeLine(edit, '        with bpy.data.libraries.load(filename) as (dataFrom, _):')
-    addCodeLine(edit, '            files = []')
-    addCodeLine(edit, '            for c in dataFrom.collections:')
-    addCodeLine(edit, '                files.append({"name" : c})')
-    addCodeLine(edit, '')
-    addCodeLine(edit, '            bpy.ops.wm.append(directory=os.path.join(filename, "Collection"), files=files)')
-    addCodeLine(edit, '')
-    addCodeLine(edit, 'def resetScene():')
-    addCodeLine(edit, '    for collection in [col for col in bpy.data.collections]:')
-    addCodeLine(edit, '        for obj in [obj for obj in collection.objects if obj.users > 0]:')
-    addCodeLine(edit, '            bpy.data.objects.remove(obj)')
-    addCodeLine(edit, '')
-    addCodeLine(edit, '        bpy.data.collections.remove(collection)')
+    if sceneType != SourceCodeTemplateSceneType.Compositing:
+        addCodeLine(edit, 'def mergeScene(filename: str):')
+        addCodeLine(edit, '    if os.path.exists(filename):')
+        addCodeLine(edit, '        with bpy.data.libraries.load(filename) as (dataFrom, _):')
+        addCodeLine(edit, '            files = []')
+        addCodeLine(edit, '            for c in dataFrom.collections:')
+        addCodeLine(edit, '                files.append({"name" : c})')
+        addCodeLine(edit, '')
+        addCodeLine(edit, '            bpy.ops.wm.append(directory=os.path.join(filename, "Collection"), files=files)')
+        addCodeLine(edit, '')
+        addCodeLine(edit, 'def resetScene():')
+        addCodeLine(edit, '    for collection in [col for col in bpy.data.collections]:')
+        addCodeLine(edit, '        for obj in [obj for obj in collection.objects if obj.users > 0]:')
+        addCodeLine(edit, '            bpy.data.objects.remove(obj)')
+        addCodeLine(edit, '')
+        addCodeLine(edit, '        bpy.data.collections.remove(collection)')
 
-    if sceneType == SourceCodeTemplateSceneType.RenderScene:
+    if sceneType in [SourceCodeTemplateSceneType.RenderScene, SourceCodeTemplateSceneType.Compositing]:
         addCodeLine(edit, '')
         addCodeLine(edit, 'def frameCamera(cameraName: str):')
         addCodeLine(edit, '    camera = bpy.data.objects.get(cameraName)')
@@ -260,15 +262,33 @@ def generateBlenderSourceCodeTemplate(edit: QtWidgets.QTextEdit, sceneType: Sour
         addCodeLine(edit, '            frames.append(int(f))')
         addCodeLine(edit, '    return frames')
 
+    if sceneType == SourceCodeTemplateSceneType.Compositing:
+        addCodeLine(edit, '')
+        addCodeLine(edit, 'def replaceFramePlaceholder(name: str, frame: int):')
+        addCodeLine(edit, '    start = name.find("#")')
+        addCodeLine(edit, '    end = name.rfind("#") + 1')
+        addCodeLine(edit, '')
+        addCodeLine(edit, '    frameStr = str(frame)')
+        addCodeLine(edit, '    count = len(frameStr)')
+        addCodeLine(edit, '    needCount = end - start')
+        addCodeLine(edit, '    for _ in range(needCount-count):')
+        addCodeLine(edit, '        frameStr = "0" + frameStr')
+        addCodeLine(edit, '')
+        addCodeLine(edit, '    return name[:start] + frameStr + name[end:]')
+        addCodeLine(edit, '')
+        addCodeLine(edit, 'def getRenderingFilename(env: Environment, frame: int):')
+        addCodeLine(edit, '    return replaceFramePlaceholder(env.RenderingFilename, frame)')
+
     addCodeLine(edit, '')
     addCodeLine(edit, 'def process(infoDict: dict):')
     addCodeLine(edit, '    """Entry point function for processing"""')
     addCodeLine(edit, '    env = Environment(infoDict)\n')
 
     # Always start with an empty scene if no base scene was provided:
-    addCodeLine(edit, '    if not env.BaseSceneNaming:')
-    addCodeLine(edit, '        print("Resetting scene...")\n')
-    addCodeLine(edit, '        resetScene()\n')
+    if sceneType != SourceCodeTemplateSceneType.Compositing:
+        addCodeLine(edit, '    if not env.BaseSceneNaming:')
+        addCodeLine(edit, '        print("Resetting scene...")\n')
+        addCodeLine(edit, '        resetScene()\n')
     
     if sceneType == SourceCodeTemplateSceneType.RenderScene:
         addCodeLine(edit, '    # Merge environment scene file if available:')
@@ -285,11 +305,12 @@ def generateBlenderSourceCodeTemplate(edit: QtWidgets.QTextEdit, sceneType: Sour
         addCodeLine(edit, '    setRenderingOutputFilenames(env)')
         addCodeLine(edit, '')
 
-    addCodeLine(edit, '    print("Applying variation logic...")')
+    if sceneType != SourceCodeTemplateSceneType.Compositing:
+        addCodeLine(edit, '    print("Applying variation logic...")')
 
-    addCodeLine(edit, '')
-    addCodeLine(edit, '    # TODO: Apply variation logic')
-    addCodeLine(edit, '')
+        addCodeLine(edit, '')
+        addCodeLine(edit, '    # TODO: Apply variation logic')
+        addCodeLine(edit, '')
 
     if sceneType == SourceCodeTemplateSceneType.RenderScene:
         addCodeLine(edit, '    if env.ApplyCameraFraming:')
@@ -319,3 +340,36 @@ def generateBlenderSourceCodeTemplate(edit: QtWidgets.QTextEdit, sceneType: Sour
     elif sceneType == SourceCodeTemplateSceneType.InputScene:
         addCodeLine(edit, '    print(f"Saving scene to {env.CreatedInputSceneFilename}")')
         addCodeLine(edit, '    bpy.ops.wm.save_mainfile(filepath=env.CreatedInputSceneFilename, check_existing=False)')
+    elif sceneType == SourceCodeTemplateSceneType.Compositing:
+        addCodeLine(edit, '    bpy.context.scene.use_nodes = True')
+        addCodeLine(edit, '    compositorTree = bpy.context.scene.node_tree')
+        addCodeLine(edit, '    inputNode = compositorTree.nodes["Input"]')
+        addCodeLine(edit, '')
+        addCodeLine(edit, '    print("Setting rendering output filenames...")')
+        addCodeLine(edit, '    setRenderingOutputFilenames(env)')
+        addCodeLine(edit, '')
+        addCodeLine(edit, '    print("Rendering...")')
+        addCodeLine(edit, '    frames = getFrames(env)')
+        addCodeLine(edit, '    if len(frames) > 0:')
+        addCodeLine(edit, '        for frame in frames:')
+        addCodeLine(edit, '            print(f"Rendering frame {frame}...")')
+        addCodeLine(edit, '')
+        addCodeLine(edit, '            renderingImage = bpy.data.images.load(getRenderingFilename(env, frame))')
+        addCodeLine(edit, '            inputNode.image = renderingImage')
+        addCodeLine(edit, '')
+        addCodeLine(edit, '            bpy.context.scene.frame_set(frame)')
+        addCodeLine(edit, '            bpy.ops.render.render()')
+        addCodeLine(edit, '    else:')
+        addCodeLine(edit, '        renderingFilename, ext = os.path.splitext(env.RenderingFilename)')
+        addCodeLine(edit, '')
+        addCodeLine(edit, '        # Handle the case where blender adds 0000 to the file')
+        addCodeLine(edit, '        if not os.path.exists(env.RenderingFilename):')
+        addCodeLine(edit, '            renderingFilename += "0000" + ext')
+        addCodeLine(edit, '')
+        addCodeLine(edit, '        renderingImage = bpy.data.images.load(renderingFilename)')
+        addCodeLine(edit, '        inputNode.image = renderingImage')
+        addCodeLine(edit, '        bpy.ops.render.render()')
+        addCodeLine(edit, '')
+        addCodeLine(edit, '    if not "#" in env.RenderingFilename:')
+        addCodeLine(edit, '        print("Renaming output files...")')
+        addCodeLine(edit, '        renameOutputFiles(env)')

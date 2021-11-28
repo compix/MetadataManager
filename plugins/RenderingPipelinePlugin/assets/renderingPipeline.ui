@@ -33,9 +33,9 @@
           <property name="geometry">
            <rect>
             <x>0</x>
-            <y>0</y>
+            <y>-725</y>
             <width>865</width>
-            <height>1366</height>
+            <height>1458</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -216,14 +216,14 @@
                   </item>
                  </layout>
                 </item>
-                <item row="8" column="0">
+                <item row="9" column="0">
                  <widget class="QLabel" name="label_8">
                   <property name="text">
                    <string>Product Table</string>
                   </property>
                  </widget>
                 </item>
-                <item row="8" column="1">
+                <item row="9" column="1">
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
                   <item>
                    <widget class="QLineEdit" name="productTableEdit">
@@ -245,14 +245,14 @@
                   </item>
                  </layout>
                 </item>
-                <item row="11" column="0">
+                <item row="12" column="0">
                  <widget class="QLabel" name="label_10">
                   <property name="text">
                    <string>Render Settings</string>
                   </property>
                  </widget>
                 </item>
-                <item row="11" column="1">
+                <item row="12" column="1">
                  <layout class="QHBoxLayout" name="horizontalLayout_7">
                   <item>
                    <widget class="QLineEdit" name="renderSettingsEdit">
@@ -274,14 +274,14 @@
                   </item>
                  </layout>
                 </item>
-                <item row="12" column="0">
+                <item row="13" column="0">
                  <widget class="QLabel" name="label_11">
                   <property name="text">
                    <string>Replace German Characters</string>
                   </property>
                  </widget>
                 </item>
-                <item row="12" column="1">
+                <item row="13" column="1">
                  <widget class="QCheckBox" name="replaceGermanCharactersCheckBox">
                   <property name="toolTip">
                    <string>Some programs may have problems with german characters (öäüß). The checkbox indicates to replace them by common convention.</string>
@@ -294,35 +294,35 @@
                   </property>
                  </widget>
                 </item>
-                <item row="9" column="0">
+                <item row="10" column="0">
                  <widget class="QLabel" name="label_20">
                   <property name="text">
                    <string>Product Table Sheet Name</string>
                   </property>
                  </widget>
                 </item>
-                <item row="13" column="0">
+                <item row="14" column="0">
                  <widget class="QLabel" name="label_27">
                   <property name="text">
                    <string>Perspective Codes</string>
                   </property>
                  </widget>
                 </item>
-                <item row="13" column="1">
+                <item row="14" column="1">
                  <widget class="QLineEdit" name="perspectiveCodesEdit">
                   <property name="toolTip">
                    <string>Perspective codes separated by comma. These codes are used by the render scene creation script to generate perspective-variants.</string>
                   </property>
                  </widget>
                 </item>
-                <item row="15" column="0">
+                <item row="16" column="0">
                  <widget class="QLabel" name="label_12">
                   <property name="text">
                    <string>Post Output Extensions</string>
                   </property>
                  </widget>
                 </item>
-                <item row="15" column="1">
+                <item row="16" column="1">
                  <widget class="QLineEdit" name="postOutputExtensionsEdit">
                   <property name="toolTip">
                    <string>Comma-separated list of post output file extensions.</string>
@@ -332,14 +332,14 @@
                   </property>
                  </widget>
                 </item>
-                <item row="14" column="0">
+                <item row="15" column="0">
                  <widget class="QLabel" name="label_30">
                   <property name="text">
                    <string>Rendering Extension</string>
                   </property>
                  </widget>
                 </item>
-                <item row="14" column="1">
+                <item row="15" column="1">
                  <widget class="QComboBox" name="renderingExtensionComboBox">
                   <item>
                    <property name="text">
@@ -455,8 +455,37 @@
                   </property>
                  </widget>
                 </item>
-                <item row="9" column="1">
+                <item row="10" column="1">
                  <widget class="QComboBox" name="productTableSheetNameComboBox"/>
+                </item>
+                <item row="8" column="0">
+                 <widget class="QLabel" name="label_15">
+                  <property name="text">
+                   <string>Blender Compositing Script</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="8" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayout_16">
+                  <item>
+                   <widget class="QLineEdit" name="blenderCompositingScriptEdit">
+                    <property name="toolTip">
+                     <string>Optional blender compositing script for post processing.</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="blenderCompositingScriptButton">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../../../assets/resource_files/resources.qrc">
+                      <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </item>
                </layout>
               </item>
@@ -629,14 +658,14 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="7" column="0">
+                   <item row="8" column="0">
                     <widget class="QLabel" name="label_23">
                      <property name="text">
                       <string>Renderings</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="7" column="1">
+                   <item row="8" column="1">
                     <layout class="QHBoxLayout" name="horizontalLayout_20">
                      <item>
                       <widget class="QLineEdit" name="renderingsFolderEdit">
@@ -661,14 +690,14 @@
                      </item>
                     </layout>
                    </item>
-                   <item row="8" column="0">
+                   <item row="9" column="0">
                     <widget class="QLabel" name="label_24">
                      <property name="text">
                       <string>Post</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="8" column="1">
+                   <item row="9" column="1">
                     <layout class="QHBoxLayout" name="horizontalLayout_21">
                      <item>
                       <widget class="QLineEdit" name="postFolderEdit">
@@ -693,14 +722,14 @@
                      </item>
                     </layout>
                    </item>
-                   <item row="10" column="0">
+                   <item row="11" column="0">
                     <widget class="QLabel" name="label_25">
                      <property name="text">
                       <string>Delivery</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="10" column="1">
+                   <item row="11" column="1">
                     <layout class="QHBoxLayout" name="horizontalLayout_22">
                      <item>
                       <widget class="QLineEdit" name="deliveryFolderEdit">
@@ -835,6 +864,35 @@
                      </item>
                      <item>
                       <widget class="QPushButton" name="createdInputScenesFolderButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="7" column="0">
+                    <widget class="QLabel" name="label_57">
+                     <property name="text">
+                      <string>Blender Compositing Scenes</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="7" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_30">
+                     <item>
+                      <widget class="QLineEdit" name="blenderCompositingScenesFolderEdit">
+                       <property name="text">
+                        <string>scenes/blender_composite</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="blenderCompositingScenesFolderButton">
                        <property name="text">
                         <string/>
                        </property>
@@ -1017,6 +1075,20 @@
                      </item>
                     </layout>
                    </item>
+                   <item row="8" column="0">
+                    <widget class="QLabel" name="label_58">
+                     <property name="text">
+                      <string>Blender Compositing Relative File Naming Convention</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="8" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_31">
+                     <item>
+                      <widget class="QLineEdit" name="blenderCompositingNamingEdit"/>
+                     </item>
+                    </layout>
+                   </item>
                   </layout>
                  </item>
                 </layout>
@@ -1174,7 +1246,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="0">
+                   <item row="5" column="0">
                     <widget class="QLabel" name="label_39">
                      <property name="text">
                       <string>Delivery Pool</string>
@@ -1193,8 +1265,18 @@
                    <item row="3" column="1">
                     <widget class="QComboBox" name="deadlineNukePoolComboBox"/>
                    </item>
-                   <item row="4" column="1">
+                   <item row="5" column="1">
                     <widget class="QComboBox" name="deadlineDeliveryPoolComboBox"/>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="label_61">
+                     <property name="text">
+                      <string>Blender Compositing Pool</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <widget class="QComboBox" name="deadlineBlenderCompositingPoolComboBox"/>
                    </item>
                   </layout>
                  </item>
@@ -1247,7 +1329,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="0">
+                   <item row="5" column="0">
                     <widget class="QLabel" name="label_45">
                      <property name="text">
                       <string>Delivery Timeout</string>
@@ -1278,12 +1360,22 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="1">
+                   <item row="5" column="1">
                     <widget class="QLineEdit" name="deliveryDeadlineTimeout">
                      <property name="toolTip">
                       <string>No timeout if unspecified.</string>
                      </property>
                     </widget>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="label_60">
+                     <property name="text">
+                      <string>Blender Compositing Timeout</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <widget class="QLineEdit" name="blenderCompositingDeadlineTimeout"/>
                    </item>
                   </layout>
                  </item>
@@ -1602,6 +1694,19 @@
                    </item>
                    <item>
                     <widget class="QTextEdit" name="blenderRenderSceneSourceCodeTemplateEdit"/>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="label_59">
+                     <property name="text">
+                      <string>Compositing</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QTextEdit" name="blenderCompositingSourceCodeTemplateEdit"/>
                    </item>
                   </layout>
                  </widget>
@@ -1948,7 +2053,6 @@
   <tabstop>deliveryFolderButton</tabstop>
   <tabstop>cancelButton</tabstop>
   <tabstop>nukeScenesFolderButton</tabstop>
-  <tabstop>scrollArea</tabstop>
   <tabstop>tabWidget</tabstop>
   <tabstop>renderScenesFolderButton</tabstop>
   <tabstop>inputSceneCreationScriptButton</tabstop>

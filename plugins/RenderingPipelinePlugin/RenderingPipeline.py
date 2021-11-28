@@ -56,6 +56,9 @@ class RenderingPipeline(object):
             self.registerAndLinkActions()
             self.addFilters()
 
+            if self.environmentSettings.get(PipelineKeys.BlenderCompositingScript, ''):
+                self.submissionDialog.submitBlenderCompositingCheckBox.setChecked(True)
+
             self.activated = True
 
     def setCustomDataEntry(self, key: str, value):
@@ -93,11 +96,12 @@ class RenderingPipeline(object):
         submitRenderScene = self.submissionDialog.submitRenderSceneCheckBox.isEnabled() and self.submissionDialog.submitRenderSceneCheckBox.isChecked()
         submitRendering = self.submissionDialog.submitRenderingCheckBox.isEnabled() and self.submissionDialog.submitRenderingCheckBox.isChecked()
         submitNuke = self.submissionDialog.submitNukeCheckBox.isEnabled() and self.submissionDialog.submitNukeCheckBox.isChecked()
+        submitBlenderCompositing = self.submissionDialog.submitBlenderCompositingCheckBox.isEnabled() and self.submissionDialog.submitBlenderCompositingCheckBox.isChecked()
         submitDelivery = self.submissionDialog.submitCopyForDeliveryCheckBox.isEnabled() and self.submissionDialog.submitCopyForDeliveryCheckBox.isChecked()
         priority = int(self.submissionDialog.basePriorityEdit.text()) if self.submissionDialog.basePriorityEdit.text() else None
         initialStatus = self.submissionDialog.initialStatusComboBox.currentText()
 
-        self.submissionArgs = [priority, submitInputScene, submitRenderScene, submitRendering, submitNuke, submitDelivery, initialStatus]
+        self.submissionArgs = [priority, submitInputScene, submitRenderScene, submitRendering, submitNuke, submitBlenderCompositing, submitDelivery, initialStatus]
         self.submissionDialog.accept()
 
     def setupAndRegisterSubmissionAction(self):
@@ -128,6 +132,7 @@ class RenderingPipeline(object):
                 
             if value.strip() == '':
                 checkBox.setEnabled(False)
+                checkBox.setChecked(False)
                 checkBox.setToolTip(tooltip)
             else:
                 checkBox.setEnabled(True)
@@ -139,6 +144,7 @@ class RenderingPipeline(object):
         setCheckBoxState(self.submissionDialog.submitRenderSceneCheckBox, PipelineKeys.RenderSceneCreationScript, tooltip='A render scene creation script is not specified.')
         setCheckBoxState(self.submissionDialog.submitRenderingCheckBox, PipelineKeys.RenderingNaming, tooltip='Rendering naming convention not specified.', perspectiveDependent=True)
         setCheckBoxState(self.submissionDialog.submitNukeCheckBox, PipelineKeys.NukeScript, tooltip='A nuke script is not specified.')
+        setCheckBoxState(self.submissionDialog.submitBlenderCompositingCheckBox, PipelineKeys.BlenderCompositingScript, tooltip='A blender compositing script is not specified.')
         setCheckBoxState(self.submissionDialog.submitCopyForDeliveryCheckBox, PipelineKeys.DeliveryNaming, tooltip='Delivery naming convention not specified.', perspectiveDependent=True)
 
         self.submissionDialog.open()

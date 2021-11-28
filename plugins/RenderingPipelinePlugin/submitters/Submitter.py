@@ -54,13 +54,16 @@ class Submitter(object):
     def getInputSceneCreationPriority(self, documentWithSettings: dict):
         return documentWithSettings.get(PipelineKeys.DeadlinePriority, self.baseDeadlinePriority) + 4
 
-    def getrenderSceneCreationPriority(self, documentWithSettings: dict):
+    def getRenderSceneCreationPriority(self, documentWithSettings: dict):
         return documentWithSettings.get(PipelineKeys.DeadlinePriority, self.baseDeadlinePriority) + 3
 
     def getRenderingPriority(self, documentWithSettings: dict):
         return documentWithSettings.get(PipelineKeys.DeadlinePriority, self.baseDeadlinePriority) + 2
 
     def getNukePriority(self, documentWithSettings: dict):
+        return documentWithSettings.get(PipelineKeys.DeadlinePriority, self.baseDeadlinePriority) + 1
+
+    def getBlenderCompositingPriority(self, documentWithSettings: dict):
         return documentWithSettings.get(PipelineKeys.DeadlinePriority, self.baseDeadlinePriority) + 1
 
     def getDeliveryPriority(self, documentWithSettings: dict):
@@ -103,6 +106,40 @@ class Submitter(object):
         scriptInfoDict = documentWithSettings
 
         return deadline_nodes.submitNukeJob(jobInfoDict, pluginInfoDict, scriptFilename, scriptInfoDict, jobDependencies=dependentJobIds)
+
+    def submitBlenderCompositing(self, documentWithSettings: dict, dependentJobIds: List[str]=None):
+        if documentWithSettings.get(PipelineKeys.Mapping):
+            return
+
+        script = documentWithSettings.get(PipelineKeys.BlenderCompositingScript)
+        pipelineInfoDict = documentWithSettings
+
+        pluginName = deadline_nodes.getBlenderPipelinePluginName()
+        jobName = self.pipeline.namingConvention.getPostName(documentWithSettings)
+        batchName = 'Blender Compositing'
+        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.getBlenderCompositingPriority(documentWithSettings), 
+                                                   documentWithSettings.get(PipelineKeys.DeadlineBlenderCompositingPool), dependentJobIds=dependentJobIds)
+
+        # Make sure the output folder exists:
+        outputDir = os.path.dirname(self.pipeline.namingConvention.getPostFilename(documentWithSettings))
+        os.makedirs(outputDir, exist_ok=True)
+
+        for i, ext in enumerate(RenderingPipelineUtil.getPostOutputExtensions(documentWithSettings)):
+            filename = self.pipeline.namingConvention.getPostFilename(documentWithSettings, ext=ext)
+            jobInfoDict[f'OutputDirectory{i}'] = os.path.dirname(filename)
+            jobInfoDict[f'OutputFilename{i}'] = os.path.basename(filename)
+
+        frames = documentWithSettings.get(PipelineKeys.getKeyWithPerspective(PipelineKeys.Frames, documentWithSettings.get(PipelineKeys.Perspective, '')), '')
+        pipelineInfoDict[PipelineKeys.Frames] = frames
+
+        self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineBlenderCompositingTimeout)
+
+        extraPluginInfoDict = {
+            "BaseScene": self.pipeline.namingConvention.getBlenderCompositingSceneFilename(documentWithSettings) if documentWithSettings.get(PipelineKeys.BlenderCompositingSceneNaming) else ''
+        }
+
+        return deadline_nodes.submitBlenderPipelineJob(script, pipelineInfoDict, jobInfoDict, 
+                                                       blenderVersion=documentWithSettings.get(PipelineKeys.BlenderVersion), extraPluginInfoDict=extraPluginInfoDict)
 
     def submitCopyForDelivery(self, documentWithSettings: dict, dependentJobIds: List[str]=None):
         pluginName = deadline_nodes.getMetadataManagerPluginName()

@@ -54,6 +54,7 @@ class NamingConvention(object):
         documentWithSettings[PipelineKeys.RenderSceneFilename] = self.getRenderSceneFilename(documentWithSettings)
         documentWithSettings[PipelineKeys.EnvironmentSceneFilename] = self.getEnvironmentSceneFilename(documentWithSettings)
         documentWithSettings[PipelineKeys.NukeSceneFilename] = self.getNukeSceneFilename(documentWithSettings)
+        documentWithSettings[PipelineKeys.BlenderCompositingSceneFilename] = self.getBlenderCompositingSceneFilename(documentWithSettings)
         documentWithSettings[PipelineKeys.RenderingFilename] = self.getRenderingFilename(documentWithSettings)
         documentWithSettings[PipelineKeys.PostFilename] = self.getPostFilename(documentWithSettings)
         documentWithSettings[PipelineKeys.DeliveryFilename] = self.getDeliveryFilename(documentWithSettings)
@@ -74,6 +75,9 @@ class NamingConvention(object):
 
     def getNukeSceneName(self, documentWithSettings: dict):
         return os.path.basename(extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.NukeSceneNaming, ''), documentWithSettings))
+
+    def getBlenderCompositingSceneName(self, documentWithSettings: dict):
+        return os.path.basename(extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.BlenderCompositingSceneNaming, ''), documentWithSettings))
 
     def getPerspectiveDependentNaming(self, documentWithSettings: dict, namingKey: str):
         key = PipelineKeys.getKeyWithPerspective(namingKey, documentWithSettings.get(PipelineKeys.Perspective, ''))
@@ -108,6 +112,9 @@ class NamingConvention(object):
     def getNukeSceneRelPath(self, documentWithSettings: dict):
         return extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.NukeSceneNaming, ''), documentWithSettings)
 
+    def getBlenderCompositingSceneRelPath(self, documentWithSettings: dict):
+        return extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.BlenderCompositingSceneNaming, ''), documentWithSettings)
+
     def getRenderingRelPath(self, documentWithSettings: dict):
         return extractNameFromNamingConvention(self.getPerspectiveDependentNaming(documentWithSettings, PipelineKeys.RenderingNaming), documentWithSettings)
 
@@ -133,6 +140,9 @@ class NamingConvention(object):
 
     def getNukeSceneFilename(self, documentWithSettings: dict):
         return os.path.join(documentWithSettings.get(PipelineKeys.NukeScenesFolder, ''), self.getNukeSceneRelPath(documentWithSettings)) + f'.nk'
+
+    def getBlenderCompositingSceneFilename(self, documentWithSettings: dict):
+        return os.path.join(documentWithSettings.get(PipelineKeys.BlenderCompositingScenesFolder, ''), self.getBlenderCompositingSceneRelPath(documentWithSettings)) + f'.blend'
 
     def getRenderingFilename(self, documentWithSettings: dict):
         return os.path.join(documentWithSettings.get(PipelineKeys.RenderingsFolder, ''), self.getRenderingRelPath(documentWithSettings)) + f'.{documentWithSettings.get(PipelineKeys.RenderingExtension, "")}'

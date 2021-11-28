@@ -59,7 +59,8 @@ class SubmissionAction(PipelineDocumentAction):
         return 'Submit'
 
     def execute(self, document: dict, basePriority: int, submitInputSceneCreation: bool, 
-                submitRenderSceneCreation: bool, submitRendering: bool, submitNuke: bool, submitCopyForDelivery: bool, initialStatus: str):
+                submitRenderSceneCreation: bool, submitRendering: bool, submitNuke: bool, 
+                submitBlenderCompositing: bool, submitCopyForDelivery: bool, initialStatus: str):
         lastJobId = None
 
         documentWithSettings = self.pipeline.combineDocumentWithSettings(document, self.pipeline.environmentSettings)
@@ -82,6 +83,9 @@ class SubmissionAction(PipelineDocumentAction):
 
         if submitNuke:
             lastJobId = submitter.submitNuke(documentWithSettings, dependentJobIds=lastJobId)
+
+        if submitBlenderCompositing:
+            lastJobId = submitter.submitBlenderCompositing(documentWithSettings, dependentJobIds=lastJobId)
 
         if submitCopyForDelivery:
             submitter.submitCopyForDelivery(documentWithSettings, dependentJobIds=lastJobId)

@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>386</width>
-    <height>229</height>
+    <height>258</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -60,6 +60,13 @@
         </property>
         <property name="checked">
          <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="submitBlenderCompositingCheckBox">
+        <property name="text">
+         <string>Submit Blender Compositing</string>
         </property>
        </widget>
       </item>

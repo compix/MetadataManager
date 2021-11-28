@@ -218,6 +218,7 @@ class RenderingPipelineViewer(object):
         qt_util.connectFileSelection(self.dialog, self.dialog.renderSceneCreationScriptEdit, self.dialog.renderSceneCreationScriptButton)
         qt_util.connectFileSelection(self.dialog, self.dialog.inputSceneCreationScriptEdit, self.dialog.inputSceneCreationScriptButton)
         qt_util.connectFileSelection(self.dialog, self.dialog.nukeScriptEdit, self.dialog.nukeScriptButton)
+        qt_util.connectFileSelection(self.dialog, self.dialog.blenderCompositingScriptEdit, self.dialog.blenderCompositingScriptButton)
         qt_util.connectFileSelection(self.dialog, self.dialog.productTableEdit, self.dialog.productTableButton, filter='Table File (*.xlsx;*.xls;*.csv)')
         qt_util.connectFileSelection(self.dialog, self.dialog.renderSettingsEdit, self.dialog.renderSettingsButton)
 
@@ -230,6 +231,7 @@ class RenderingPipelineViewer(object):
         self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineRenderSceneTimeout, self.dialog.renderSceneDeadlineTimeout))
         self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineRenderingTimeout, self.dialog.renderingDeadlineTimeout))
         self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineNukeTimeout, self.dialog.nukeDeadlineTimeout))
+        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineBlenderCompositingTimeout, self.dialog.blenderCompositingDeadlineTimeout))
         self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineDeliveryTimeout, self.dialog.deliveryDeadlineTimeout))
 
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.BaseScenesFolder, self.dialog.baseScenesFolderEdit, self, self.dialog.baseScenesFolderButton))
@@ -238,6 +240,7 @@ class RenderingPipelineViewer(object):
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.RenderScenesFolder, self.dialog.renderScenesFolderEdit, self, self.dialog.renderScenesFolderButton))
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.EnvironmentScenesFolder, self.dialog.environmentScenesEdit, self, self.dialog.environmentScenesButton))
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.NukeScenesFolder, self.dialog.nukeScenesFolderEdit, self, self.dialog.nukeScenesFolderButton))
+        self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.BlenderCompositingScenesFolder, self.dialog.blenderCompositingScenesFolderEdit, self, self.dialog.blenderCompositingScenesFolderButton))
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.RenderingsFolder, self.dialog.renderingsFolderEdit, self, self.dialog.renderingsFolderButton))
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.PostFolder, self.dialog.postFolderEdit, self, self.dialog.postFolderButton))
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.DeliveryFolder, self.dialog.deliveryFolderEdit, self, self.dialog.deliveryFolderButton))
@@ -248,6 +251,7 @@ class RenderingPipelineViewer(object):
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.InputSceneNaming, self.dialog.inputSceneNamingEdit))
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.CreatedInputSceneNaming, self.dialog.createdInputSceneNamingEdit))
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.NukeSceneNaming, self.dialog.nukeSceneNamingEdit))
+        self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.BlenderCompositingSceneNaming, self.dialog.blenderCompositingNamingEdit))
         self.environmentEntries.append(NamingEnvironmentEntry(PipelineKeys.EnvironmentSceneNaming, self.dialog.environmentSceneNamingEdit))
 
         self.environmentEntries.append(CheckBoxEnvironmentEntry(PipelineKeys.SaveRenderScene, self.dialog.saveRenderSceneCheckBox, PipelineType.Blender))
@@ -453,6 +457,7 @@ class RenderingPipelineViewer(object):
         self.setupDeadlinePoolComboBox(self.dialog.deadlineRenderScenePoolComboBox, poolNames, PipelineKeys.DeadlineRenderScenePool)
         self.setupDeadlinePoolComboBox(self.dialog.deadlineRenderingPoolComboBox, poolNames, PipelineKeys.DeadlineRenderingPool)
         self.setupDeadlinePoolComboBox(self.dialog.deadlineNukePoolComboBox, poolNames, PipelineKeys.DeadlineNukePool)
+        self.setupDeadlinePoolComboBox(self.dialog.deadlineBlenderCompositingPoolComboBox, poolNames, PipelineKeys.DeadlineBlenderCompositingPool)
         self.setupDeadlinePoolComboBox(self.dialog.deadlineDeliveryPoolComboBox, poolNames, PipelineKeys.DeadlineDeliveryPool)
 
     def setupDeadlinePoolComboBox(self, comboBox: QtWidgets.QComboBox, poolNames: List[str], envKey: str):
@@ -504,6 +509,7 @@ class RenderingPipelineViewer(object):
         renderSceneCreationScript = self.dialog.renderSceneCreationScriptEdit.text()
         inputSceneCreationScript = self.dialog.inputSceneCreationScriptEdit.text()
         nukeScript = self.dialog.nukeScriptEdit.text()
+        blenderCompositingScript = self.dialog.blenderCompositingScriptEdit.text()
         productTable = self.dialog.productTableEdit.text()
         sheetName = self.dialog.productTableSheetNameComboBox.currentText()
         renderSettingsFile = self.dialog.renderSettingsEdit.text()
@@ -545,6 +551,7 @@ class RenderingPipelineViewer(object):
         self.environment.settings[PipelineKeys.RenderSceneCreationScript] = renderSceneCreationScript
         self.environment.settings[PipelineKeys.InputSceneCreationScript] = inputSceneCreationScript
         self.environment.settings[PipelineKeys.NukeScript] = nukeScript
+        self.environment.settings[PipelineKeys.BlenderCompositingScript] = blenderCompositingScript
         self.environment.settings[PipelineKeys.ProductTable] = productTable
         self.environment.settings[PipelineKeys.ProductTableSheetName] = sheetName
         self.environment.settings[PipelineKeys.RenderSettings] = renderSettingsFile
@@ -664,6 +671,7 @@ class RenderingPipelineViewer(object):
             self.dialog.renderSceneCreationScriptEdit.setText(environmentSettings.get(PipelineKeys.RenderSceneCreationScript, ''))
             self.dialog.inputSceneCreationScriptEdit.setText(environmentSettings.get(PipelineKeys.InputSceneCreationScript, ''))
             self.dialog.nukeScriptEdit.setText(environmentSettings.get(PipelineKeys.NukeScript, ''))
+            self.dialog.blenderCompositingScriptEdit.setText(environmentSettings.get(PipelineKeys.BlenderCompositingScript, ''))
             self.dialog.productTableEdit.setText(environmentSettings.get(PipelineKeys.ProductTable, ''))
             self.dialog.productTableSheetNameComboBox.setCurrentText(environmentSettings.get(PipelineKeys.ProductTableSheetName, ''))
             self.dialog.renderSettingsEdit.setText(environmentSettings.get(PipelineKeys.RenderSettings, ''))
@@ -721,7 +729,6 @@ class RenderingPipelineViewer(object):
         tabWidget: QtWidgets.QTabWidget = self.dialog.tabWidget
 
         if pipelineType == PipelineType.Max3ds:
-            tabWidget.removeTab(tabWidget.indexOf(self.dialog.blenderTab))
             tabWidget.addTab(self.dialog.max3dsTab, '3dsMax')
 
             if self.iconMap.get(PipelineType.Max3ds.value):
@@ -749,6 +756,7 @@ class RenderingPipelineViewer(object):
         SourceCodeTemplateGeneration.generateMaxSourceCodeTemplate(self.dialog.maxRenderSceneSourceCodeTemplateEdit, SourceCodeTemplateSceneType.RenderScene)
         SourceCodeTemplateGeneration.generateBlenderSourceCodeTemplate(self.dialog.blenderInputSceneSourceCodeTemplateEdit, SourceCodeTemplateSceneType.InputScene)
         SourceCodeTemplateGeneration.generateBlenderSourceCodeTemplate(self.dialog.blenderRenderSceneSourceCodeTemplateEdit, SourceCodeTemplateSceneType.RenderScene)
+        SourceCodeTemplateGeneration.generateBlenderSourceCodeTemplate(self.dialog.blenderCompositingSourceCodeTemplateEdit, SourceCodeTemplateSceneType.Compositing)
         self.dialog.pipelineNameComboBox.currentTextChanged.disconnect()
         self.refreshPipelineNameComboBox()
         self.dialog.pipelineNameComboBox.currentTextChanged.connect(self.onPipelineNameChanged)
