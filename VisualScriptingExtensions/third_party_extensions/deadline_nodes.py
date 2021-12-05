@@ -177,6 +177,19 @@ def create3dsMaxPluginInfoDictionary(SceneFile, Version="2017", DisableMultipass
 
     return pluginDict
 
+@defNode("Create Unreal Engine Pipeline Plugin Info Dictionary", isExecutable=True, returnNames=["Plugin Info Dict"], identifier=DEADLINE_IDENTIFIER)
+def createUnrealEnginePipelinePluginInfoDictionary(ProjectFile: str, MoviePipelineQueueSettings: str, 
+                                                   VSyncEnabled: bool, OverrideResolution: bool=False, ResX: int=1280, ResY: int=720, Map: str = ""):
+    return {
+        "ProjectFile": ProjectFile,
+        "MoviePipelineQueueSettings": MoviePipelineQueueSettings,
+        "VSyncEnabled": VSyncEnabled,
+        "OverrideResolution": OverrideResolution,
+        "ResX": ResX,
+        "ResY": ResY,
+        "Map": Map
+    }
+
 @defNode("Create Blender Plugin Info Dictionary", isExecutable=True, returnNames=["Plugin Info Dict"], identifier=DEADLINE_IDENTIFIER)
 def createBlenderPluginInfoDictionary(SceneFile: str, OutputFile: str):
     return {
@@ -215,7 +228,11 @@ def getBlenderPipelinePluginName():
 @defNode("Blender Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
 def getBlenderPluginName():
     return "Blender"
-    
+
+@defNode("Unreal Engine Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
+def getUnrealEnginePipelinePluginName():
+    return "UnrealEnginePipeline"
+
 @defNode("Metadata Manager Plugin Name", returnNames=["Plugin Name"], identifier=DEADLINE_IDENTIFIER)
 def getMetadataManagerPluginName():
     return "MetadataManager"
@@ -276,6 +293,98 @@ def submitBlenderPipelineJob(pipelineScriptFilename: str, pipelineInfoDict: dict
         f.write('        print(f"ERROR: {failMsg}")')
 
     os.close(scriptFileHandle)
+
+    job = submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=auxiliaryFilenames, 
+                    quiet=quiet, returnJobIdOnly=returnJobIdOnly, jobDependencies=jobDependencies, 
+                    removeAuxiliaryFilesAfterSubmission=True)
+
+    return job
+
+@defNode("Submit Unreal Engine Script Job", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
+def submitUnrealEngineScriptJob(pipelineScriptFilename: str, pipelineInfoDict: dict, jobInfoDict: dict, 
+                                unrealEngineVersion='4', extraPluginInfoDict = None, quiet=True, returnJobIdOnly=True, jobDependencies=None):
+    if extraPluginInfoDict:
+        pluginInfoDict = extraPluginInfoDict
+    else:
+        pluginInfoDict = dict()
+
+    jobInfoDict["Plugin"] = getUnrealEnginePipelinePluginName()
+    pluginInfoDict["Version"] = unrealEngineVersion
+    pluginInfoDict["ExecutePythonScript"] = True
+
+    auxiliaryFilenames = []
+
+    # Generate auxiliary pipeline info file:
+    pipelineInfoFileHandle, tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")
+    auxiliaryFilenames.append(tempPipelineInfoFilename)
+    with open(tempPipelineInfoFilename, "w+") as f:
+        json.dump(pipelineInfoDict, f, sort_keys=True, indent=4)
+
+    os.close(pipelineInfoFileHandle)
+
+    # Generate auxiliary script file:
+    scriptFileHandle, tempScriptFilename = tempfile.mkstemp(suffix=".py")
+    auxiliaryFilenames.insert(0, tempScriptFilename)
+
+    moduleName = os.path.basename(pipelineScriptFilename).rstrip(".py")
+    pipelineScriptDir = os.path.dirname(pipelineScriptFilename)
+    tempPipelineInfoBasename = os.path.basename(tempPipelineInfoFilename)
+    
+    with open(tempScriptFilename, "w+") as f:
+        f.write('import sys, os, json, importlib, traceback\n')
+        
+        f.write('failMsg = None\n\n')
+        f.write('try:\n')
+        f.write('    \n')
+        f.write('    curFolder = os.path.dirname(os.path.realpath(__file__))\n')
+        f.write('    print("Script folder: " + curFolder)\n')
+        f.write('\n')
+        f.write(f'    sys.path.append("{pipelineScriptDir}")\n')
+        f.write('\n')
+        f.write(f'    with open(os.path.join(curFolder, "{tempPipelineInfoBasename}")) as f:\n')
+        f.write('        infoDict = json.load(f)\n')
+        f.write('\n')
+        f.write(f'    moduleName = "{moduleName}"\n')
+        f.write('    module = importlib.import_module(moduleName)\n')
+        f.write('    module.process(infoDict)\n')
+        f.write('except Exception as e:\n')
+        f.write('    failMsg = str(e)\n')
+        f.write('    raise\n')
+        f.write('except:\n')
+        f.write('    failMsg = "Failed. Please check the error traceback below."\n')
+        f.write('    raise\n')
+        f.write('finally:\n')
+        f.write('    if failMsg:\n')
+        f.write('        print(f"ERROR: {failMsg}")')
+
+    os.close(scriptFileHandle)
+
+    job = submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=auxiliaryFilenames, 
+                    quiet=quiet, returnJobIdOnly=returnJobIdOnly, jobDependencies=jobDependencies, 
+                    removeAuxiliaryFilesAfterSubmission=True)
+
+    return job
+
+@defNode("Submit Unreal Engine Render Job", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
+def submitUnrealEngineRenderJob(pipelineInfoDict: dict, jobInfoDict: dict, unrealEngineVersion='4', 
+                                extraPluginInfoDict = None, quiet=True, returnJobIdOnly=True, jobDependencies=None):
+    if extraPluginInfoDict:
+        pluginInfoDict = extraPluginInfoDict
+    else:
+        pluginInfoDict = dict()
+
+    jobInfoDict["Plugin"] = getUnrealEnginePipelinePluginName()
+    pluginInfoDict["Version"] = unrealEngineVersion
+
+    auxiliaryFilenames = []
+
+    # Generate auxiliary pipeline info file:
+    pipelineInfoFileHandle, tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")
+    auxiliaryFilenames.append(tempPipelineInfoFilename)
+    with open(tempPipelineInfoFilename, "w+") as f:
+        json.dump(pipelineInfoDict, f, sort_keys=True, indent=4)
+
+    os.close(pipelineInfoFileHandle)
 
     job = submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=auxiliaryFilenames, 
                     quiet=quiet, returnJobIdOnly=returnJobIdOnly, jobDependencies=jobDependencies, 

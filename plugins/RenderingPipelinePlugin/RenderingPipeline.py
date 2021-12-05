@@ -1,6 +1,8 @@
 from RenderingPipelinePlugin.filters.HasInputSceneFilter import HasInputSceneFilter
 from RenderingPipelinePlugin.filters.HasRenderSceneFilter import HasRenderSceneFilter
 from RenderingPipelinePlugin.filters.HasRenderingFilter import HasRenderingFilter
+from RenderingPipelinePlugin.submitters.UnrealEngineSubmitter import UnrealEngineSubmitter
+from node_exec.string_nodes import removeWhiteSpace
 from viewers.ViewerRegistry import ViewerRegistry
 from qt_extensions import qt_util
 from MetadataManagerCore.Event import Event
@@ -26,7 +28,9 @@ from MetadataManagerCore import Keys
 import shutil
 import logging
 from RenderingPipelinePlugin.PipelineType import PipelineType
-from RenderingPipelinePlugin.PipelineActions import RefreshPreviewFilenameAction, SelectInputSceneInExplorerAction, SelectPostImageInExplorerAction, SelectRenderSceneInExplorerAction, SelectRenderingInExplorerAction, SubmissionAction, CopyForDeliveryDocumentAction, CollectionUpdateAction
+from RenderingPipelinePlugin.PipelineActions import RefreshPreviewFilenameAction, SelectInputSceneInExplorerAction, \
+    SelectPostImageInExplorerAction, SelectRenderSceneInExplorerAction, \
+    SelectRenderingInExplorerAction, SubmissionAction, CopyForDeliveryDocumentAction, CollectionUpdateAction
 from MetadataManagerCore.actions.Action import Action
 from qt_extensions.RegexPatternInputValidator import RegexPatternInputValidator
 import uuid
@@ -266,6 +270,7 @@ class RenderingPipeline(object):
             rowStr = ''.join([v for v in tableRow if v]) + documentWithSettings.get(PipelineKeys.Perspective, "")
             sid = hashlib.md5(rowStr.encode('utf-8')).hexdigest()
 
+        sid += f'_{self.dbCollectionName}'
         return sid
 
     def copyForDelivery(self, documentWithSettings: dict):
@@ -287,12 +292,14 @@ class RenderingPipeline(object):
             return Max3dsSubmitter(self)
         elif self.pipelineType == PipelineType.Blender:
             return BlenderSubmitter(self)
+        elif self.pipelineType == PipelineType.UnrealEngine:
+            return UnrealEngineSubmitter(self)
 
         return None
 
     def setRowSkipConditions(self, rowSkipConditions: Callable[[dict],bool]):
         self.rowSkipConditions = rowSkipConditions
-        
+
     def processHeader(self, header: List[str]):
         pass
 
@@ -377,7 +384,8 @@ class RenderingPipeline(object):
                     documentDict[Keys.systemIDKey] = sid
                     documentWithSettings[Keys.systemIDKey] = sid
 
-                    self.postProcessDocumentDict(documentDict, logHandler)
+                    if not self.postProcessDocumentDict(documentDict, logHandler):
+                        continue
 
                     if sid in sidSet:
                         m = f'Duplicate sid {sid} found at row {rowIdx}. This row will be skipped.'

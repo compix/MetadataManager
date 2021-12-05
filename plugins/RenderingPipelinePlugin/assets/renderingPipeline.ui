@@ -2,20 +2,30 @@
 <ui version="4.0">
  <class>Form</class>
  <widget class="QWidget" name="Form">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>926</width>
-    <height>1053</height>
+    <height>1018</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Rendering Pipeline Creation</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../../../assets/resource_files/resources.qrc">
+    <normaloff>:/icons/automation.png</normaloff>:/icons/automation.png</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QTabWidget" name="tabWidget">
+     <property name="tabPosition">
+      <enum>QTabWidget::North</enum>
+     </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
@@ -33,9 +43,9 @@
           <property name="geometry">
            <rect>
             <x>0</x>
-            <y>-725</y>
+            <y>0</y>
             <width>865</width>
-            <height>1458</height>
+            <height>1459</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -69,6 +79,19 @@
                  <widget class="QLabel" name="label">
                   <property name="text">
                    <string>Pipeline Name</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QComboBox" name="pipelineNameComboBox">
+                  <property name="toolTip">
+                   <string>Unique name of the rendering pipeline. You may choose an existing pipeline as a template but be careful to avoid folder collisions.</string>
+                  </property>
+                  <property name="inputMethodHints">
+                   <set>Qt::ImhNone</set>
+                  </property>
+                  <property name="editable">
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
@@ -216,153 +239,6 @@
                   </item>
                  </layout>
                 </item>
-                <item row="9" column="0">
-                 <widget class="QLabel" name="label_8">
-                  <property name="text">
-                   <string>Product Table</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="9" column="1">
-                 <layout class="QHBoxLayout" name="horizontalLayout_5">
-                  <item>
-                   <widget class="QLineEdit" name="productTableEdit">
-                    <property name="toolTip">
-                     <string>The product table is used to determine which renderings to generate. Prefer CSV tables to avoid representational issues.</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QPushButton" name="productTableButton">
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="icon">
-                     <iconset resource="../../../assets/resource_files/resources.qrc">
-                      <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </item>
-                <item row="12" column="0">
-                 <widget class="QLabel" name="label_10">
-                  <property name="text">
-                   <string>Render Settings</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="12" column="1">
-                 <layout class="QHBoxLayout" name="horizontalLayout_7">
-                  <item>
-                   <widget class="QLineEdit" name="renderSettingsEdit">
-                    <property name="toolTip">
-                     <string>Optional render settings file.</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QPushButton" name="renderSettingsButton">
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="icon">
-                     <iconset resource="../../../assets/resource_files/resources.qrc">
-                      <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </item>
-                <item row="13" column="0">
-                 <widget class="QLabel" name="label_11">
-                  <property name="text">
-                   <string>Replace German Characters</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="13" column="1">
-                 <widget class="QCheckBox" name="replaceGermanCharactersCheckBox">
-                  <property name="toolTip">
-                   <string>Some programs may have problems with german characters (öäüß). The checkbox indicates to replace them by common convention.</string>
-                  </property>
-                  <property name="text">
-                   <string/>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="10" column="0">
-                 <widget class="QLabel" name="label_20">
-                  <property name="text">
-                   <string>Product Table Sheet Name</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="14" column="0">
-                 <widget class="QLabel" name="label_27">
-                  <property name="text">
-                   <string>Perspective Codes</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="14" column="1">
-                 <widget class="QLineEdit" name="perspectiveCodesEdit">
-                  <property name="toolTip">
-                   <string>Perspective codes separated by comma. These codes are used by the render scene creation script to generate perspective-variants.</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="16" column="0">
-                 <widget class="QLabel" name="label_12">
-                  <property name="text">
-                   <string>Post Output Extensions</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="16" column="1">
-                 <widget class="QLineEdit" name="postOutputExtensionsEdit">
-                  <property name="toolTip">
-                   <string>Comma-separated list of post output file extensions.</string>
-                  </property>
-                  <property name="text">
-                   <string>jpg,tif</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="15" column="0">
-                 <widget class="QLabel" name="label_30">
-                  <property name="text">
-                   <string>Rendering Extension</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="15" column="1">
-                 <widget class="QComboBox" name="renderingExtensionComboBox">
-                  <item>
-                   <property name="text">
-                    <string>exr</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>png</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>tif</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>jpg</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
                 <item row="7" column="0">
                  <widget class="QLabel" name="label_40">
                   <property name="text">
@@ -442,22 +318,6 @@
                   </item>
                  </widget>
                 </item>
-                <item row="0" column="1">
-                 <widget class="QComboBox" name="pipelineNameComboBox">
-                  <property name="toolTip">
-                   <string>Unique name of the rendering pipeline. You may choose an existing pipeline as a template but be careful to avoid folder collisions.</string>
-                  </property>
-                  <property name="inputMethodHints">
-                   <set>Qt::ImhNone</set>
-                  </property>
-                  <property name="editable">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="10" column="1">
-                 <widget class="QComboBox" name="productTableSheetNameComboBox"/>
-                </item>
                 <item row="8" column="0">
                  <widget class="QLabel" name="label_15">
                   <property name="text">
@@ -486,6 +346,156 @@
                    </widget>
                   </item>
                  </layout>
+                </item>
+                <item row="9" column="0">
+                 <widget class="QLabel" name="label_8">
+                  <property name="text">
+                   <string>Product Table</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="9" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayout_5">
+                  <item>
+                   <widget class="QLineEdit" name="productTableEdit">
+                    <property name="toolTip">
+                     <string>The product table is used to determine which renderings to generate. Prefer CSV tables to avoid representational issues.</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="productTableButton">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../../../assets/resource_files/resources.qrc">
+                      <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item row="10" column="0">
+                 <widget class="QLabel" name="label_20">
+                  <property name="text">
+                   <string>Product Table Sheet Name</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="10" column="1">
+                 <widget class="QComboBox" name="productTableSheetNameComboBox"/>
+                </item>
+                <item row="12" column="0">
+                 <widget class="QLabel" name="label_10">
+                  <property name="text">
+                   <string>Render Settings</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="12" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayout_7">
+                  <item>
+                   <widget class="QLineEdit" name="renderSettingsEdit">
+                    <property name="toolTip">
+                     <string>Optional render settings file.</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="renderSettingsButton">
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../../../assets/resource_files/resources.qrc">
+                      <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item row="13" column="0">
+                 <widget class="QLabel" name="label_11">
+                  <property name="text">
+                   <string>Replace German Characters</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="13" column="1">
+                 <widget class="QCheckBox" name="replaceGermanCharactersCheckBox">
+                  <property name="toolTip">
+                   <string>Some programs may have problems with german characters (öäüß). The checkbox indicates to replace them by common convention.</string>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="14" column="0">
+                 <widget class="QLabel" name="label_27">
+                  <property name="text">
+                   <string>Perspective Codes</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="14" column="1">
+                 <widget class="QLineEdit" name="perspectiveCodesEdit">
+                  <property name="toolTip">
+                   <string>Perspective codes separated by comma. These codes are used by the render scene creation script to generate perspective-variants.</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="15" column="0">
+                 <widget class="QLabel" name="label_30">
+                  <property name="text">
+                   <string>Rendering Extension</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="15" column="1">
+                 <widget class="QComboBox" name="renderingExtensionComboBox">
+                  <item>
+                   <property name="text">
+                    <string>exr</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>png</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>tif</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>jpg</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="16" column="0">
+                 <widget class="QLabel" name="label_12">
+                  <property name="text">
+                   <string>Post Output Extensions</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="16" column="1">
+                 <widget class="QLineEdit" name="postOutputExtensionsEdit">
+                  <property name="toolTip">
+                   <string>Comma-separated list of post output file extensions.</string>
+                  </property>
+                  <property name="text">
+                   <string>jpg,tif</string>
+                  </property>
+                 </widget>
                 </item>
                </layout>
               </item>
@@ -1158,7 +1168,7 @@
             <x>0</x>
             <y>0</y>
             <width>882</width>
-            <height>733</height>
+            <height>698</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -1407,7 +1417,7 @@
             <x>0</x>
             <y>0</y>
             <width>882</width>
-            <height>733</height>
+            <height>698</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -1504,7 +1514,7 @@
               <item>
                <widget class="QGroupBox" name="groupBox_8">
                 <property name="title">
-                 <string>Source Code Template</string>
+                 <string>Source Code Templates</string>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_23">
                  <item alignment="Qt::AlignHCenter">
@@ -1555,7 +1565,7 @@
             <x>0</x>
             <y>0</y>
             <width>882</width>
-            <height>733</height>
+            <height>698</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1672,7 +1682,7 @@
                 <item>
                  <widget class="QGroupBox" name="groupBox_9">
                   <property name="title">
-                   <string>Source Code Template</string>
+                   <string>Source Code Templates</string>
                   </property>
                   <layout class="QVBoxLayout" name="verticalLayout_26">
                    <item alignment="Qt::AlignHCenter">
@@ -1849,6 +1859,291 @@
            </widget>
           </item>
          </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="unrealEngineTab">
+      <attribute name="title">
+       <string>UE</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_32">
+       <item>
+        <widget class="QScrollArea" name="scrollArea_5">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents_5">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>882</width>
+            <height>698</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_33">
+           <item>
+            <widget class="QFrame" name="frame_14">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_34">
+              <item alignment="Qt::AlignTop">
+               <widget class="QFrame" name="frame_15">
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_35">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <layout class="QFormLayout" name="formLayout_10">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_62">
+                     <property name="text">
+                      <string>Unreal Engine Version</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QComboBox" name="unrealEngineVersionComboBox">
+                     <item>
+                      <property name="text">
+                       <string>4</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>5</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_67">
+                     <property name="text">
+                      <string>Project</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_32">
+                     <item>
+                      <widget class="QLineEdit" name="ueProjectFilenameEdit"/>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="ueProjectFilenameButton">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../../assets/resource_files/resources.qrc">
+                         <normaloff>:/icons/file.png</normaloff>:/icons/file.png</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="label_65">
+                     <property name="text">
+                      <string>Keep Extension Settings</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <widget class="QCheckBox" name="ueKeepExtensionSettingsCheckBox">
+                     <property name="text">
+                      <string/>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="0">
+                    <widget class="QLabel" name="label_66">
+                     <property name="text">
+                      <string>Keep File Name Format</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="1">
+                    <widget class="QCheckBox" name="ueKeepFileNameFormatCheckBox">
+                     <property name="text">
+                      <string/>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="6" column="0">
+                    <widget class="QLabel" name="label_68">
+                     <property name="text">
+                      <string>Override Window Resolution</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="6" column="1">
+                    <layout class="QHBoxLayout" name="horizontalLayout_33">
+                     <item>
+                      <widget class="QCheckBox" name="ueOverrideWindowResolutionCheckBox">
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="checked">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QFrame" name="ueWindowResolutionFrame">
+                       <property name="enabled">
+                        <bool>true</bool>
+                       </property>
+                       <property name="frameShape">
+                        <enum>QFrame::NoFrame</enum>
+                       </property>
+                       <property name="frameShadow">
+                        <enum>QFrame::Raised</enum>
+                       </property>
+                       <layout class="QHBoxLayout" name="horizontalLayout_34">
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QLineEdit" name="ueWindowResolutionX">
+                          <property name="text">
+                           <string>1280</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLabel" name="label_69">
+                          <property name="text">
+                           <string>x</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLineEdit" name="ueWindowResolutionY">
+                          <property name="text">
+                           <string>720</string>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QLabel" name="label_70">
+                     <property name="text">
+                      <string>Movie Pipeline Queue Settings</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QLineEdit" name="ueMoviePipelineQueueSettings"/>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_71">
+                     <property name="text">
+                      <string>VSync</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1">
+                    <widget class="QCheckBox" name="ueVSyncCheckBox">
+                     <property name="text">
+                      <string/>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_14">
+                <property name="title">
+                 <string>Source Code Templates</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_36">
+                 <item>
+                  <widget class="QLabel" name="label_63">
+                   <property name="text">
+                    <string>Input Scene Creation</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QTextEdit" name="ueInputSceneSourceCodeTemplateEdit_2"/>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="label_64">
+                   <property name="text">
+                    <string>Render Scene Creation</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QTextEdit" name="ueRenderSceneSourceCodeTemplateEdit"/>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_35">
+                <item>
+                 <widget class="QLineEdit" name="lineEdit">
+                  <property name="styleSheet">
+                   <string notr="true">color: &quot;orange&quot;</string>
+                  </property>
+                  <property name="text">
+                   <string>Make sure to add md_pipeline_init_unreal.py as a startup script in the unreal project under &quot;Project Settings/Plugins/Python/Startup Scripts&quot;.</string>
+                  </property>
+                  <property name="readOnly">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </widget>
        </item>
       </layout>

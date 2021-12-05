@@ -80,5 +80,8 @@ NukeVersion = 'rp_nuke_version'
 # Blender
 BlenderVersion = 'rp_blender_version'
 
+# Unreal Engine
+UnrealEngineVersion = 'rp_unreal_engine_version'
+
 def getKeyWithPerspective(key: str, perspective: str):
     return f'{key}_{perspective}'

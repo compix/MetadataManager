@@ -1,5 +1,6 @@
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
 from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
+from RenderingPipelinePlugin.unreal_engine import UnrealEnginePipelineKeys
 from viewers.EnvironmentViewer import EnvironmentViewer
 from table import table_util
 from qt_extensions.InputConfirmDialog import InputConfirmDialog
@@ -26,7 +27,7 @@ from viewers.ViewerRegistry import ViewerRegistry
 from enum import Enum
 import re
 from RenderingPipelinePlugin import SourceCodeTemplateGeneration
-from RenderingPipelinePlugin.SourceCodeTemplateGeneration import SourceCodeTemplateSceneType
+from RenderingPipelinePlugin.SourceCodeTemplateGeneration import SourceCodeTemplateSceneType, generateUnrealEngineMoviePipelineExecutorCode
 from RenderingPipelinePlugin.RowSkipConditionUIElement import RowSkipConditionUIElement
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,18 @@ def connectRelativeProjectFolderSelection(dialog, lineEdit: QtWidgets.QLineEdit,
                 dirName = os.path.relpath(dirName, baseProjectFolder)
 
             lineEdit.setText(dirName)
+    
+    button.clicked.connect(onSelect)
+
+def connectRelativeProjectFileSelection(dialog, lineEdit: QtWidgets.QLineEdit, button: QtWidgets.QPushButton, filter=""):
+    def onSelect():
+        filename,_ = QtWidgets.QFileDialog.getOpenFileName(dialog, "Open", "", filter=filter)
+        if filename:
+            baseProjectFolder = dialog.baseProjectFolderEdit.text()
+            if os.path.normpath(filename).startswith(os.path.normpath(baseProjectFolder)):
+                filename = os.path.relpath(filename, baseProjectFolder)
+
+            lineEdit.setText(filename)
     
     button.clicked.connect(onSelect)
 
@@ -75,18 +88,23 @@ class EnvironmentEntry(object):
         pass
 
 class LineEditEnvironmentEntry(EnvironmentEntry):
-    def __init__(self, envKey: str, widget: QtWidgets.QWidget, pipelineType: PipelineType = None, pipelineComboBox: QtWidgets.QComboBox = None, regexPattern = None) -> None:
+    def __init__(self, envKey: str, widget: QtWidgets.QWidget, pipelineType: PipelineType = None, 
+                 pipelineComboBox: QtWidgets.QComboBox = None, regexPattern = None, valueType=str) -> None:
         super().__init__(envKey, widget, pipelineType=pipelineType, pipelineComboBox=pipelineComboBox)
 
         self.regexPattern = regexPattern
+        self.valueType = valueType
 
     def saveValue(self, environment: Environment):
         edit: QtWidgets.QLineEdit = self.widget
-        environment.settings[self.envKey] = edit.text()
+        if self.valueType == str:
+            environment.settings[self.envKey] = edit.text()
+        else:
+            environment.settings[self.envKey] = self.valueType(edit.text())
 
     def loadValue(self, environment: Environment):
         edit: QtWidgets.QLineEdit = self.widget
-        edit.setText(environment.settings.get(self.envKey))
+        edit.setText(str(environment.settings.get(self.envKey)))
 
     def verify(self):
         if self.regexPattern:
@@ -153,7 +171,36 @@ class ProjectSubFolderEnvironmentEntry(LineEditEnvironmentEntry):
         try:
             os.makedirs(fullpath, exist_ok=True)
         except Exception as e:
-            raise RuntimeError(f'Failed to create subfolder for key {self.envKeys}: {str(e)}')
+            raise RuntimeError(f'Failed to create subfolder for key {self.envKey}: {str(e)}')
+
+    def loadValue(self, environment: Environment):
+        edit: QtWidgets.QLineEdit = self.widget
+        edit.setText(stripBaseFolder(environment.settings.get(self.envKey, '')))
+
+class ProjectFileEnvironmentEntry(LineEditEnvironmentEntry):
+    def __init__(self, envKey: str, lineEdit: QtWidgets.QLineEdit, renderingPipelineViewer, 
+                 fileSelectButton: QtWidgets.QPushButton, pipelineType: PipelineType = None, pipelineComboBox: QtWidgets.QComboBox = None, fileFilter="") -> None:
+        super().__init__(envKey, lineEdit, pipelineType=pipelineType, pipelineComboBox=pipelineComboBox)
+
+        connectRelativeProjectFileSelection(renderingPipelineViewer.dialog, lineEdit, fileSelectButton, filter=fileFilter)
+
+        self.renderingPipelineViewer = renderingPipelineViewer
+
+    def saveValue(self, environment: Environment):
+        baseProjectFolder = self.renderingPipelineViewer.dialog.baseProjectFolderEdit.text()
+        filename = self.widget.text()
+        fullpath = filename
+        if os.path.isabs(fullpath):
+            environment.settings[self.envKey] = fullpath.replace('\\', '/')
+        else:
+            fullpath = os.path.join(baseProjectFolder, filename)
+            base = '${' + PipelineKeys.BaseFolder + '}'
+            environment.settings[self.envKey] = os.path.normpath(fullpath).replace(os.path.normpath(baseProjectFolder), base).replace('\\', '/')
+
+        try:
+            os.makedirs(os.path.dirname(fullpath), exist_ok=True)
+        except Exception as e:
+            raise RuntimeError(f'Failed to create subfolder for key {self.envKey}: {str(e)}')
 
     def loadValue(self, environment: Environment):
         edit: QtWidgets.QLineEdit = self.widget
@@ -167,7 +214,6 @@ class RenderingPipelineViewer(object):
         
         uiFilePath = asset_manager.getPluginUIFilePath("RenderingPipelinePlugin", "assets/renderingPipeline.ui")
         self.dialog = asset_manager.loadDialogAbsolutePath(uiFilePath, fixedSize=False)
-
         self.serviceRegistry = serviceRegistry
         self.viewerRegistry = viewerRegistry
         self.appInfo = appInfo
@@ -225,6 +271,7 @@ class RenderingPipelineViewer(object):
         self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlinePriority, self.dialog.deadlinePriorityEdit))
         self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.Max3dsVersion, self.dialog.versionOf3dsMaxComboBox, PipelineType.Max3ds, self.dialog.pipelineTypeComboBox))
         self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.BlenderVersion, self.dialog.blenderVersionComboBox, PipelineType.Blender, self.dialog.pipelineTypeComboBox))
+        self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.UnrealEngineVersion, self.dialog.unrealEngineVersionComboBox, PipelineType.UnrealEngine, self.dialog.pipelineTypeComboBox))
         self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.NukeVersion, self.dialog.nukeVersionComboBox))
 
         self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineInputSceneTimeout, self.dialog.inputSceneDeadlineTimeout))
@@ -257,6 +304,19 @@ class RenderingPipelineViewer(object):
         self.environmentEntries.append(CheckBoxEnvironmentEntry(PipelineKeys.SaveRenderScene, self.dialog.saveRenderSceneCheckBox, PipelineType.Blender))
         self.environmentEntries.append(CheckBoxEnvironmentEntry(PipelineKeys.RenderInSceneCreationScript, self.dialog.renderInSceneCreationScriptCheckBox, PipelineType.Blender))
         self.environmentEntries.append(CheckBoxEnvironmentEntry(PipelineKeys.ApplyCameraFraming, self.dialog.applyCameraFramingCheckBox, PipelineType.Blender))
+
+        # Unreal Engine
+        self.environmentEntries.append(ProjectFileEnvironmentEntry(UnrealEnginePipelineKeys.ProjectFilename, self.dialog.ueProjectFilenameEdit, self,
+            self.dialog.ueProjectFilenameButton, fileFilter='UE Project (*.uproject)'))
+        self.environmentEntries.append(NamingEnvironmentEntry(UnrealEnginePipelineKeys.MoviePipelineQueueSettings, self.dialog.ueMoviePipelineQueueSettings))
+        self.environmentEntries.append(CheckBoxEnvironmentEntry(UnrealEnginePipelineKeys.VSync, self.dialog.ueVSyncCheckBox))
+        self.environmentEntries.append(CheckBoxEnvironmentEntry(UnrealEnginePipelineKeys.KeepExtensionSettings, self.dialog.ueKeepExtensionSettingsCheckBox))
+        self.environmentEntries.append(CheckBoxEnvironmentEntry(UnrealEnginePipelineKeys.KeepFileNameFormat, self.dialog.ueKeepFileNameFormatCheckBox))
+        self.environmentEntries.append(CheckBoxEnvironmentEntry(UnrealEnginePipelineKeys.OverrideWindowResolution, self.dialog.ueOverrideWindowResolutionCheckBox))
+        self.environmentEntries.append(LineEditEnvironmentEntry(UnrealEnginePipelineKeys.WindowResolutionX, self.dialog.ueWindowResolutionX, valueType=int))
+        self.environmentEntries.append(LineEditEnvironmentEntry(UnrealEnginePipelineKeys.WindowResolutionY, self.dialog.ueWindowResolutionY, valueType=int))
+
+        self.dialog.ueOverrideWindowResolutionCheckBox.stateChanged.connect(lambda: self.dialog.ueWindowResolutionFrame.setEnabled(self.dialog.ueOverrideWindowResolutionCheckBox.isChecked()))
 
         self.perspectiveToNamingConventionEnvEntries: Dict[str,List[EnvironmentEntry]] = dict()
 
@@ -387,6 +447,9 @@ class RenderingPipelineViewer(object):
 
         if os.path.exists(os.path.join(deadlineRepoFolder, 'plugins','3dsmax', '3dsmax.ico')):
             self.iconMap[PipelineType.Max3ds.value] = QtGui.QIcon(os.path.join(deadlineRepoFolder, 'plugins','3dsmax', '3dsmax.ico'))
+
+        if os.path.exists(os.path.join(deadlineRepoFolder, 'plugins','UnrealEngine', 'UnrealEngine.ico')):
+            self.iconMap[PipelineType.UnrealEngine.value] = QtGui.QIcon(os.path.join(deadlineRepoFolder, 'plugins','UnrealEngine', 'UnrealEngine.ico'))
 
         if os.path.exists(os.path.join(deadlineRepoFolder, 'plugins', 'MayaBatch', 'MayaBatch.ico')):
             self.iconMap[PipelineType.Maya.value] = QtGui.QIcon(os.path.join(deadlineRepoFolder, 'plugins', 'MayaBatch', 'MayaBatch.ico'))
@@ -571,6 +634,20 @@ class RenderingPipelineViewer(object):
             self.dialog.statusLabel.setText(str(e))
             return
 
+        if pipelineType == PipelineType.UnrealEngine.value:
+            # Generate required python source code in project location
+            evaluatedSettings = self.environment.getEvaluatedSettings()
+            ueProjectFolder = os.path.dirname(evaluatedSettings[UnrealEnginePipelineKeys.ProjectFilename])
+            ueCodeFilename = os.path.join(ueProjectFolder, 'Content', 'Python', 'md_pipeline_init_unreal.py')
+            try:
+                os.makedirs(os.path.dirname(ueCodeFilename), exist_ok=True)
+                code = generateUnrealEngineMoviePipelineExecutorCode()
+                with open(ueCodeFilename, mode='w+') as f:
+                    f.write(code)
+            except Exception as e:
+                self.dialog.statusLabel.setText(f'Failed to add required code at project location: {ueCodeFilename}. Exception: {e}')
+                return
+
         pipelineExists = self.renderingPipelineManager.getPipelineFromName(pipelineName) != None
 
         # Read the table:
@@ -585,9 +662,10 @@ class RenderingPipelineViewer(object):
                 pipeline.readProductTable(productTablePath=productTable, productTableSheetname=sheetName, environmentSettings=self.environment.getEvaluatedSettings(), 
                                         onProgressUpdate=progressDialog.updateProgress, replaceExistingCollection=replaceExistingCollection, logHandler=logHandler)
             except Exception as e:
-                progressDialog.close()
                 self.dialog.statusLabel.setText(f'Failed reading the product table {productTable} with exception: {str(e)}')
                 return
+            finally:
+                progressDialog.close()
 
         self.renderingPipelineManager.addNewPipelineInstance(pipeline, replaceExisting=True)
         self.environmentManager.addEnvironment(self.environment, save=True, replaceExisting=False)
@@ -598,7 +676,6 @@ class RenderingPipelineViewer(object):
 
         if not pipelineExists:
             self.selectPipelineFromName(pipelineName)
-            self.hide()
         else:
             self.viewerRegistry.documentSearchFilterViewer.viewItems(saveSearchHistoryEntry=False)
 
@@ -705,6 +782,8 @@ class RenderingPipelineViewer(object):
             return 'blend'
         elif pipelineType == PipelineType.Maya:
             return 'mb'
+        elif pipelineType == PipelineType.UnrealEngine:
+            return ''
 
         return None
 
@@ -724,21 +803,44 @@ class RenderingPipelineViewer(object):
         self.updateTabs()
         SourceCodeTemplateGeneration.generateNukeSourceCodeTemplate(self.dialog.nukeSourceCodeTemplateEdit, self.selectedPipelineType)
 
+        pipelineType = PipelineType(text)
+        cb: QtWidgets.QComboBox = self.dialog.renderingExtensionComboBox
+        currentRenderingExt = cb.currentText()
+        cb.clear()
+
+        if pipelineType == PipelineType.UnrealEngine:
+            # Unreal currently does not support tifs:
+            renderingExtensions = ['exr', 'png', 'jpg']
+        else:
+            renderingExtensions = ['exr', 'png', 'tif', 'jpg']
+
+        cb.addItems(renderingExtensions)
+        if currentRenderingExt in renderingExtensions:
+            cb.setCurrentText(currentRenderingExt)    
+
     def updateTabs(self):
         pipelineType = PipelineType(self.dialog.pipelineTypeComboBox.currentText())
         tabWidget: QtWidgets.QTabWidget = self.dialog.tabWidget
 
         if pipelineType == PipelineType.Max3ds:
+            tabWidget.removeTab(tabWidget.indexOf(self.dialog.unrealEngineTab))
             tabWidget.addTab(self.dialog.max3dsTab, '3dsMax')
 
             if self.iconMap.get(PipelineType.Max3ds.value):
                 tabWidget.setTabIcon(tabWidget.indexOf(self.dialog.max3dsTab), self.iconMap.get(PipelineType.Max3ds.value))
         elif pipelineType == PipelineType.Blender:
             tabWidget.removeTab(tabWidget.indexOf(self.dialog.max3dsTab))
+            tabWidget.removeTab(tabWidget.indexOf(self.dialog.unrealEngineTab))
             tabWidget.addTab(self.dialog.blenderTab, 'Blender')
 
             if self.iconMap.get(PipelineType.Blender.value):
                 tabWidget.setTabIcon(tabWidget.indexOf(self.dialog.blenderTab), self.iconMap.get(PipelineType.Blender.value))
+        elif pipelineType == PipelineType.UnrealEngine:
+            tabWidget.removeTab(tabWidget.indexOf(self.dialog.max3dsTab))
+            tabWidget.addTab(self.dialog.unrealEngineTab, 'UE')
+
+            if self.iconMap.get(PipelineType.UnrealEngine.value):
+                tabWidget.setTabIcon(tabWidget.indexOf(self.dialog.unrealEngineTab), self.iconMap.get(PipelineType.UnrealEngine.value))
 
     def updatePipelineClassComboBox(self):
         cb: QtWidgets.QComboBox = self.dialog.pipelineClassComboBox
@@ -757,6 +859,9 @@ class RenderingPipelineViewer(object):
         SourceCodeTemplateGeneration.generateBlenderSourceCodeTemplate(self.dialog.blenderInputSceneSourceCodeTemplateEdit, SourceCodeTemplateSceneType.InputScene)
         SourceCodeTemplateGeneration.generateBlenderSourceCodeTemplate(self.dialog.blenderRenderSceneSourceCodeTemplateEdit, SourceCodeTemplateSceneType.RenderScene)
         SourceCodeTemplateGeneration.generateBlenderSourceCodeTemplate(self.dialog.blenderCompositingSourceCodeTemplateEdit, SourceCodeTemplateSceneType.Compositing)
+        SourceCodeTemplateGeneration.generateUnrealEngineSourceCodeTemplate(self.dialog.ueInputSceneSourceCodeTemplateEdit_2, SourceCodeTemplateSceneType.InputScene)
+        SourceCodeTemplateGeneration.generateUnrealEngineSourceCodeTemplate(self.dialog.ueRenderSceneSourceCodeTemplateEdit, SourceCodeTemplateSceneType.RenderScene)
+
         self.dialog.pipelineNameComboBox.currentTextChanged.disconnect()
         self.refreshPipelineNameComboBox()
         self.dialog.pipelineNameComboBox.currentTextChanged.connect(self.onPipelineNameChanged)

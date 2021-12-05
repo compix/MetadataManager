@@ -30,7 +30,8 @@ class DeadlineServiceViewer(DockWidget):
 
         self.availablePluginsMap = {"3ds Max Pipeline Plugin":"3dsMaxPipeline", 
                                     "Metadata Manager Plugin":"MetadataManager",
-                                    "Blender Pipeline Plugin":"BlenderPipeline"}
+                                    "Blender Pipeline Plugin":"BlenderPipeline",
+                                    "Unreal Engine Pipeline Plugin": "UnrealEnginePipeline"}
 
         for key in self.availablePluginsMap.keys():
             self.widget.installPluginComboBox.addItem(key)

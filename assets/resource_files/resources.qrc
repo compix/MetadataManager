@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="icons">
+    <file>automation.png</file>
+    <file>r.png</file>
     <file>alert.png</file>
     <file>question.png</file>
     <file>information.png</file>

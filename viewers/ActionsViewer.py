@@ -221,11 +221,12 @@ class ActionsViewer(DockWidget):
         self.clearProgressAsync()
 
     def executeActionOnAllSelectedDocuments(self, action: DocumentAction, *actionArgs):
+        collectionNames = self.mainWindowManager.collectionViewer.getSelectedCollectionNames()
         selectedDocumentIds = [i for i in self.mainWindowManager.selectedDocumentIds]
         selectedDocumentCount = len(selectedDocumentIds)
 
         for i, uid in enumerate(selectedDocumentIds):
-            document = self.dbManager.findOne(uid)
+            document = self.dbManager.findOneInCollections(uid, collectionNames)
             if document != None:
                 action.execute(document, *actionArgs)
             else:

@@ -48,16 +48,16 @@ class NamingConvention(object):
         Args:
             documentWithSettings (dict): The dictionary of the document merged with environment settings.
         """
-        documentWithSettings[PipelineKeys.BaseSceneFilename] = self.getBaseSceneFilename(documentWithSettings)
-        documentWithSettings[PipelineKeys.InputSceneFilename] = self.getInputSceneFilename(documentWithSettings)
-        documentWithSettings[PipelineKeys.CreatedInputSceneFilename] = self.getCreatedInputSceneFilename(documentWithSettings)
-        documentWithSettings[PipelineKeys.RenderSceneFilename] = self.getRenderSceneFilename(documentWithSettings)
-        documentWithSettings[PipelineKeys.EnvironmentSceneFilename] = self.getEnvironmentSceneFilename(documentWithSettings)
-        documentWithSettings[PipelineKeys.NukeSceneFilename] = self.getNukeSceneFilename(documentWithSettings)
-        documentWithSettings[PipelineKeys.BlenderCompositingSceneFilename] = self.getBlenderCompositingSceneFilename(documentWithSettings)
-        documentWithSettings[PipelineKeys.RenderingFilename] = self.getRenderingFilename(documentWithSettings)
-        documentWithSettings[PipelineKeys.PostFilename] = self.getPostFilename(documentWithSettings)
-        documentWithSettings[PipelineKeys.DeliveryFilename] = self.getDeliveryFilename(documentWithSettings)
+        documentWithSettings[PipelineKeys.BaseSceneFilename] = self.getBaseSceneFilename(documentWithSettings).replace('\\', '/')
+        documentWithSettings[PipelineKeys.InputSceneFilename] = self.getInputSceneFilename(documentWithSettings).replace('\\', '/')
+        documentWithSettings[PipelineKeys.CreatedInputSceneFilename] = self.getCreatedInputSceneFilename(documentWithSettings).replace('\\', '/')
+        documentWithSettings[PipelineKeys.RenderSceneFilename] = self.getRenderSceneFilename(documentWithSettings).replace('\\', '/')
+        documentWithSettings[PipelineKeys.EnvironmentSceneFilename] = self.getEnvironmentSceneFilename(documentWithSettings).replace('\\', '/')
+        documentWithSettings[PipelineKeys.NukeSceneFilename] = self.getNukeSceneFilename(documentWithSettings).replace('\\', '/')
+        documentWithSettings[PipelineKeys.BlenderCompositingSceneFilename] = self.getBlenderCompositingSceneFilename(documentWithSettings).replace('\\', '/')
+        documentWithSettings[PipelineKeys.RenderingFilename] = self.getRenderingFilename(documentWithSettings).replace('\\', '/')
+        documentWithSettings[PipelineKeys.PostFilename] = self.getPostFilename(documentWithSettings).replace('\\', '/')
+        documentWithSettings[PipelineKeys.DeliveryFilename] = self.getDeliveryFilename(documentWithSettings).replace('\\', '/')
 
     # Names without extension
 
@@ -126,17 +126,21 @@ class NamingConvention(object):
 
     # Absolute filenames with extension
 
+    def getSceneExtensionSuffix(self, documentWithSettings: dict):
+        ext = documentWithSettings.get(PipelineKeys.SceneExtension)
+        return f'.{ext}' if ext else ''
+
     def getInputSceneFilename(self, documentWithSettings: dict):
-        return os.path.join(documentWithSettings.get(PipelineKeys.InputScenesFolder, ''), self.getInputSceneRelPath(documentWithSettings)) + f'.{documentWithSettings.get(PipelineKeys.SceneExtension, "")}'
+        return os.path.join(documentWithSettings.get(PipelineKeys.InputScenesFolder, ''), self.getInputSceneRelPath(documentWithSettings)) + self.getSceneExtensionSuffix(documentWithSettings)
 
     def getCreatedInputSceneFilename(self, documentWithSettings: dict):
-        return os.path.join(documentWithSettings.get(PipelineKeys.CreatedInputScenesFolder, ''), self.getCreatedInputSceneRelPath(documentWithSettings)) + f'.{documentWithSettings.get(PipelineKeys.SceneExtension, "")}'
+        return os.path.join(documentWithSettings.get(PipelineKeys.CreatedInputScenesFolder, ''), self.getCreatedInputSceneRelPath(documentWithSettings)) + self.getSceneExtensionSuffix(documentWithSettings)
         
     def getRenderSceneFilename(self, documentWithSettings: dict):
-        return os.path.join(documentWithSettings.get(PipelineKeys.RenderScenesFolder, ''), self.getRenderSceneRelPath(documentWithSettings)) + f'.{documentWithSettings.get(PipelineKeys.SceneExtension, "")}'
+        return os.path.join(documentWithSettings.get(PipelineKeys.RenderScenesFolder, ''), self.getRenderSceneRelPath(documentWithSettings)) + self.getSceneExtensionSuffix(documentWithSettings)
 
     def getEnvironmentSceneFilename(self, documentWithSettings: dict):
-        return os.path.join(documentWithSettings.get(PipelineKeys.EnvironmentScenesFolder, ''), self.getEnvironmentSceneRelPath(documentWithSettings)) + f'.{documentWithSettings.get(PipelineKeys.SceneExtension, "")}'
+        return os.path.join(documentWithSettings.get(PipelineKeys.EnvironmentScenesFolder, ''), self.getEnvironmentSceneRelPath(documentWithSettings)) + self.getSceneExtensionSuffix(documentWithSettings)
 
     def getNukeSceneFilename(self, documentWithSettings: dict):
         return os.path.join(documentWithSettings.get(PipelineKeys.NukeScenesFolder, ''), self.getNukeSceneRelPath(documentWithSettings)) + f'.nk'
@@ -154,4 +158,4 @@ class NamingConvention(object):
         return os.path.join(documentWithSettings.get(PipelineKeys.DeliveryFolder, ''), self.getDeliveryRelPath(documentWithSettings)) + (f'.{ext}' if ext else '')
 
     def getBaseSceneFilename(self, documentWithSettings: dict):
-        return os.path.join(documentWithSettings.get(PipelineKeys.BaseScenesFolder, ''), self.getBaseSceneRelPath(documentWithSettings)) + f'.{documentWithSettings.get(PipelineKeys.SceneExtension, "")}'
+        return os.path.join(documentWithSettings.get(PipelineKeys.BaseScenesFolder, ''), self.getBaseSceneRelPath(documentWithSettings)) + self.getSceneExtensionSuffix(documentWithSettings)

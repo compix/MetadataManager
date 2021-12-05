@@ -234,18 +234,6 @@ class EnvironmentViewer(object):
 
         self.addEntry(key, value)
 
-    def showItem(self, uid):
-        form = self.widget.formLayout
-        qt_util.clearContainer(form)
-        item = self.dbManager.findOne(uid)
-        if item != None:
-            for key, val in item.items():
-                valueEdit = QtWidgets.QLineEdit()
-                valueEdit.setReadOnly(True)
-                valueEdit.setText(str(val))
-                valueEdit.setStyleSheet("* { background-color: rgba(0, 0, 0, 0); }")
-                form.addRow(str(key), valueEdit)
-    
     def openImportFromSettingsFileDialog(self):
         if not self.validateCurrentEnvironment():
             return

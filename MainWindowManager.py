@@ -116,10 +116,9 @@ class MainWindowManager(QtCore.QObject):
         self.collectionViewer.headerUpdatedEvent.subscribe(self.updateTableModelHeader)
 
         self.previewViewer = PreviewViewer(self.window)
-        settings = QtCore.QSettings(self.appInfo.company, self.appInfo.appName)
         self.environmentManagerViewer = EnvironmentManagerViewer(self.window, self.serviceRegistry.environmentManager, 
                                                                  self.serviceRegistry.dbManager)
-        self.inspector = Inspector(self.window, self.serviceRegistry.dbManager)
+        self.inspector = Inspector(self.window, self.serviceRegistry.dbManager, self.collectionViewer)
         self.actionsViewer = ActionsViewer(self.window, self.serviceRegistry.dbManager, self.serviceRegistry.actionManager, 
                                            self, self.collectionViewer, self.visualScriptingViewer)
         self.actionsManagerViewer = ActionManagerViewer(self.window, self.serviceRegistry.actionManager, self.serviceRegistry.dbManager, self.collectionViewer)
@@ -230,14 +229,12 @@ class MainWindowManager(QtCore.QObject):
         return self.documentSearchFilterViewer.getFilteredDocuments()
 
     def onTableSelectionChanged(self, newSelection, oldSelection):
-        #selectedRows = set([idx.row() for sel in newSelection for idx in sel.indexes()])
         selectedRows = self.window.tableView.selectionModel().selectedRows()
-        #newSelectedRows = set([idx.row() for idx in newSelection.indexes()])
 
         if len(selectedRows) > 0:
             lastSelectedRowIdx = selectedRows[-1].row()
             uid = self.tableModel.getUID(lastSelectedRowIdx)
-            item = self.dbManager.findOne(uid)
+            item = self.dbManager.findOneInCollections(uid, self.collectionViewer.getSelectedCollectionNames())
             if item != None:
                 self.previewViewer.showPreview(item.get(Keys.preview))
                 self.inspector.showItem(uid)

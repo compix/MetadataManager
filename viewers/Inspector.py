@@ -4,17 +4,19 @@ from qt_extensions import qt_util
 from PySide2 import QtWidgets
 from PySide2.QtCore import Qt
 from MetadataManagerCore.mongodb_manager import MongoDBManager
+from viewers.CollectionViewer import CollectionViewer
 
 class Inspector(DockWidget):
-    def __init__(self, parentWindow, dbManager : MongoDBManager):
+    def __init__(self, parentWindow, dbManager : MongoDBManager, collectionViewer: CollectionViewer):
         super().__init__("Inspector", parentWindow, asset_manager.getUIFilePath("inspector.ui"))
         
         self.dbManager = dbManager
+        self.collectionViewer = collectionViewer
 
     def showItem(self, uid):
         form = self.widget.formLayout
         qt_util.clearContainer(form)
-        item = self.dbManager.findOne(uid)
+        item = self.dbManager.findOneInCollections(uid, self.collectionViewer.getSelectedCollectionNames())
         if item != None:
             for key, val in item.items():
                 valueEdit = QtWidgets.QLineEdit(self.widget)

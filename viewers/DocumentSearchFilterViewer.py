@@ -429,7 +429,7 @@ class DocumentSearchFilterViewer(QtCore.QObject):
             return QColor.fromRgb(10,52,22) if v else None
 
         uid = self.documentTableModel.getUID(rowIdx)
-        doc = self.dbManager.findOne(uid)
+        doc = self.dbManager.findOneInCollections(uid, self.collectionViewer.getSelectedCollectionNames())
         
         if doc:
             preview = doc.get(Keys.preview)
