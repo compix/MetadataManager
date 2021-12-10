@@ -1,3 +1,4 @@
+from RenderingPipelinePlugin.submitters.Submitter import Submitter
 from qt_extensions import qt_util
 from MetadataManagerCore import Keys
 from os import pipe
@@ -58,9 +59,7 @@ class SubmissionAction(PipelineDocumentAction):
     def displayName(self):
         return 'Submit'
 
-    def execute(self, document: dict, basePriority: int, submitInputSceneCreation: bool, 
-                submitRenderSceneCreation: bool, submitRendering: bool, submitNuke: bool, 
-                submitBlenderCompositing: bool, submitCopyForDelivery: bool, initialStatus: str):
+    def execute(self, document: dict, basePriority: int, submitters: List[Submitter], initialStatus: str):
         lastJobId = None
 
         documentWithSettings = self.pipeline.combineDocumentWithSettings(document, self.pipeline.environmentSettings)
@@ -69,26 +68,10 @@ class SubmissionAction(PipelineDocumentAction):
         if basePriority != None:
             documentWithSettings[PipelineKeys.DeadlinePriority] = basePriority
 
-        submitter = self.pipeline.submitter
-        submitter.initialStatus = initialStatus
-
-        if submitInputSceneCreation:
-            lastJobId = submitter.submitInputSceneCreation(documentWithSettings, dependentJobIds=lastJobId)
-        
-        if submitRenderSceneCreation:
-            lastJobId = submitter.submitRenderSceneCreation(documentWithSettings, dependentJobIds=lastJobId)
-
-        if submitRendering:
-            lastJobId = submitter.submitRendering(documentWithSettings, dependentJobIds=lastJobId)
-
-        if submitNuke:
-            lastJobId = submitter.submitNuke(documentWithSettings, dependentJobIds=lastJobId)
-
-        if submitBlenderCompositing:
-            lastJobId = submitter.submitBlenderCompositing(documentWithSettings, dependentJobIds=lastJobId)
-
-        if submitCopyForDelivery:
-            submitter.submitCopyForDelivery(documentWithSettings, dependentJobIds=lastJobId)
+        for submitter in submitters:
+            if submitter.active:
+                submitter.initialStatus = initialStatus
+                lastJobId = submitter.submit(documentWithSettings, dependentJobIds=lastJobId)
 
 class CollectionUpdateAction(PipelineAction):
     @property

@@ -2,6 +2,7 @@
 AWS Thinkbox Software Deadline nodes
 """ 
 
+from MetadataManagerCore.task_processor.DataRetrievalType import DataRetrievalType
 from VisualScripting.node_exec.base_nodes import defNode, defInlineNode
 from MetadataManagerCore.third_party_integrations.deadline.deadline_service import DeadlineService, DeadlineServiceInfo
 import os
@@ -439,7 +440,7 @@ def createCustomFilterDict(filterLabel: str, args=None, active=True, negate=Fals
     return d
 
 @defNode("Create Metadata Manager Action Task Dictionary for Document", isExecutable=True, returnNames=["Task Dictionary"], identifier=DEADLINE_IDENTIFIER)
-def createMetadataManagerActionTaskDictForDocument(taskType="DocumentAction", actionId="", document=None, collections=None):
+def createMetadataManagerActionTaskDictForDocument(taskType="DocumentAction", actionId="", document=None, collections=None, dataRetrievalType: str = "", submittedData: dict = None):
     if collections == None:
         collections = []
 
@@ -448,8 +449,11 @@ def createMetadataManagerActionTaskDictForDocument(taskType="DocumentAction", ac
 
     docFilter = f'"s_id": "{document.get("s_id")}"'
 
+    if dataRetrievalType == "":
+        dataRetrievalType = DataRetrievalType.UseDocumentFilter.value
+        
     return {"taskType":taskType, "actionId":actionId, "collections":collections, 
-            "documentFilter":"{" + docFilter + "}", "distinctionFilter":""} 
+            "documentFilter":"{" + docFilter + "}", "distinctionFilter":"", "dataRetrievalType": dataRetrievalType, "submittedData": submittedData} 
 
 @defNode("Get Deadline Job Names", isExecutable=True, returnNames=["Job Names"])
 def getDeadlineJobNames(quiet=False):

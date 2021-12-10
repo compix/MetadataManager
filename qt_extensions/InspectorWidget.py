@@ -56,52 +56,22 @@ class InspectorWidget(object):
 
     def constructWidgetFromValue(self, value: Any):
         if isinstance(value, str):
-            self.widget = QtWidgets.QLineEdit()
-            self._setWidgetEditableFunction = self._setLineEditEditable
-            self._getValueFunction = self._getStringValue
-            self._setValueFunction = self._setStringValue
-            self._widgetType = InspectorWidgetType.String
-            self.widget.returnPressed.connect(lambda: self.onReturnPressedEvent())
+            self.constructFromInspectorWidgetType(InspectorWidgetType.String)
 
         elif isinstance(value, bool):
-            self.widget = QtWidgets.QCheckBox('')
-            self.widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Fixed)
-            self._setWidgetEditableFunction = self._setCheckBoxEditable
-            self._getValueFunction = self._getBoolValue
-            self._setValueFunction = self._setBoolValue
-            self._widgetType = InspectorWidgetType.Boolean
+            self.constructFromInspectorWidgetType(InspectorWidgetType.Boolean)
             
         elif isinstance(value, int):
-            self.widget = QtWidgets.QLineEdit()
-            self.widget.setValidator(RegexPatternInputValidator('^\d*$'))
-            self._setWidgetEditableFunction = self._setLineEditEditable
-            self._getValueFunction = self._getIntValue
-            self._setValueFunction = self._setIntValue
-            self._widgetType = InspectorWidgetType.Integer
-            self.widget.returnPressed.connect(lambda: self.onReturnPressedEvent())
+            self.constructFromInspectorWidgetType(InspectorWidgetType.Integer)
 
         elif isinstance(value, float):
-            self.widget = QtWidgets.QLineEdit()
-            self.widget.setValidator(RegexPatternInputValidator('^[+-]?([0-9]*[.])?[0-9]*$'))
-            self._setWidgetEditableFunction = self._setLineEditEditable
-            self._getValueFunction = self._getFloatValue
-            self._setValueFunction = self._setFloatValue
-            self._widgetType = InspectorWidgetType.Float
-            self.widget.returnPressed.connect(lambda: self.onReturnPressedEvent())
+            self.constructFromInspectorWidgetType(InspectorWidgetType.Float)
 
         elif isinstance(value, dict):
-            self.widget = QtWidgets.QTextEdit()
-            self._setWidgetEditableFunction = self._setLineEditEditable
-            self._getValueFunction = self._getDictValue
-            self._setValueFunction = self._setDictValue
-            self._widgetType = InspectorWidgetType.Dictionary
+            self.constructFromInspectorWidgetType(InspectorWidgetType.Dictionary)
 
         elif isinstance(value, list):
-            self.widget = QtWidgets.QTextEdit()
-            self._setWidgetEditableFunction = self._setLineEditEditable
-            self._getValueFunction = self._getDictValue
-            self._setValueFunction = self._setDictValue
-            self._widgetType = InspectorWidgetType.List
+            self.constructFromInspectorWidgetType(InspectorWidgetType.List)
 
         else:
             raise RuntimeError('Unsupported value type: ' + str(type(value)))
@@ -111,19 +81,61 @@ class InspectorWidget(object):
 
         return self.widget
 
-    def constructFromInspectorWidgetType(self, widgetType: InspectorWidgetType):
+    def constructFromInspectorWidgetType(self, widgetType: InspectorWidgetType, value: Any = None):
         if widgetType == InspectorWidgetType.String:
-            self.constructWidgetFromValue('')
+            self.widget = QtWidgets.QLineEdit()
+            self._setWidgetEditableFunction = self._setLineEditEditable
+            self._getValueFunction = self._getStringValue
+            self._setValueFunction = self._setStringValue
+            self._widgetType = InspectorWidgetType.String
+            self.widget.returnPressed.connect(lambda: self.onReturnPressedEvent())
+            self.value = value or ''
+
         elif widgetType == InspectorWidgetType.Integer:
-            self.constructWidgetFromValue(0)
+            self.widget = QtWidgets.QLineEdit()
+            self.widget.setValidator(RegexPatternInputValidator('^\d*$'))
+            self._setWidgetEditableFunction = self._setLineEditEditable
+            self._getValueFunction = self._getIntValue
+            self._setValueFunction = self._setIntValue
+            self._widgetType = InspectorWidgetType.Integer
+            self.widget.returnPressed.connect(lambda: self.onReturnPressedEvent())
+            self.value = value or 0
+
         elif widgetType == InspectorWidgetType.Boolean:
-            self.constructWidgetFromValue(False)
+            self.widget = QtWidgets.QCheckBox('')
+            self.widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Fixed)
+            self._setWidgetEditableFunction = self._setCheckBoxEditable
+            self._getValueFunction = self._getBoolValue
+            self._setValueFunction = self._setBoolValue
+            self._widgetType = InspectorWidgetType.Boolean
+            self.value = value or False
+
         elif widgetType == InspectorWidgetType.Float:
-            self.constructWidgetFromValue(0.0)
+            self.widget = QtWidgets.QLineEdit()
+            self.widget.setValidator(RegexPatternInputValidator('^[+-]?([0-9]*[.])?[0-9]*$'))
+            self._setWidgetEditableFunction = self._setLineEditEditable
+            self._getValueFunction = self._getFloatValue
+            self._setValueFunction = self._setFloatValue
+            self._widgetType = InspectorWidgetType.Float
+            self.widget.returnPressed.connect(lambda: self.onReturnPressedEvent())
+            self.value = value or 0.0
+
         elif widgetType == InspectorWidgetType.Dictionary:
-            self.constructWidgetFromValue(dict())
+            self.widget = QtWidgets.QTextEdit()
+            self._setWidgetEditableFunction = self._setLineEditEditable
+            self._getValueFunction = self._getDictValue
+            self._setValueFunction = self._setDictValue
+            self._widgetType = InspectorWidgetType.Dictionary
+            self.value = value or dict()
+
         elif widgetType == InspectorWidgetType.List:
-            self.constructWidgetFromValue([])
+            self.widget = QtWidgets.QTextEdit()
+            self._setWidgetEditableFunction = self._setLineEditEditable
+            self._getValueFunction = self._getDictValue
+            self._setValueFunction = self._setDictValue
+            self._widgetType = InspectorWidgetType.List
+            self.value = value or []
+
         else:
             raise RuntimeError('Unsupported widget type: ' + widgetType.value)
 

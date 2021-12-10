@@ -10,11 +10,15 @@
     <x>0</x>
     <y>0</y>
     <width>386</width>
-    <height>258</height>
+    <height>122</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Submission</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../../../assets/resource_files/resources.qrc">
+    <normaloff>:/icons/automation.png</normaloff>:/icons/automation.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item alignment="Qt::AlignTop">
@@ -27,55 +31,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QCheckBox" name="submitInputSceneCheckBox">
-        <property name="text">
-         <string>Submit Input Scene Creation</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="submitRenderSceneCheckBox">
-        <property name="text">
-         <string>Submit Render Scene Creation</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="submitRenderingCheckBox">
-        <property name="text">
-         <string>Submit Rendering</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="submitNukeCheckBox">
-        <property name="text">
-         <string>Submit Nuke</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="submitBlenderCompositingCheckBox">
-        <property name="text">
-         <string>Submit Blender Compositing</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="submitCopyForDeliveryCheckBox">
-        <property name="text">
-         <string>Submit Copy for Delivery</string>
-        </property>
-       </widget>
+       <layout class="QVBoxLayout" name="submitCheckboxLayout"/>
       </item>
       <item>
        <layout class="QFormLayout" name="formLayout">

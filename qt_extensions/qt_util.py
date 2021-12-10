@@ -1,6 +1,6 @@
 from PySide2 import QtCore
 from PySide2.QtCore import QRunnable
-from PySide2.QtWidgets import QFileDialog, QLineEdit, QPushButton
+from PySide2.QtWidgets import QFileDialog, QLineEdit, QPushButton, QWidget
 
 # From https://stackoverflow.com/questions/10991991/pyside-easier-way-of-updating-gui-from-another-thread
 # by chfoo: https://stackoverflow.com/users/1524507/chfoo
@@ -43,7 +43,6 @@ def clearContainer(container):
         
         if item.widget():
             item.widget().deleteLater()
-            item.widget().setParent(None)
         elif item.layout():
             clearContainer(item.layout())
 

@@ -85,3 +85,6 @@ UnrealEngineVersion = 'rp_unreal_engine_version'
 
 def getKeyWithPerspective(key: str, perspective: str):
     return f'{key}_{perspective}'
+
+CustomTasks = 'rp_custom_tasks'
+OrderedSubmitterInfos = 'rp_ordered_submitter_infos'

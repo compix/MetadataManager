@@ -43,9 +43,9 @@
           <property name="geometry">
            <rect>
             <x>0</x>
-            <y>0</y>
+            <y>-853</y>
             <width>865</width>
-            <height>1459</height>
+            <height>1548</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -1116,7 +1116,7 @@
               <item>
                <widget class="QTabWidget" name="perspectiveTabWidget">
                 <property name="currentIndex">
-                 <number>0</number>
+                 <number>1</number>
                 </property>
                 <widget class="QWidget" name="tab">
                  <attribute name="title">
@@ -1146,6 +1146,56 @@
              </layout>
             </widget>
            </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_15">
+             <property name="title">
+              <string>Task Execution Order</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_42">
+              <item>
+               <layout class="QVBoxLayout" name="taskExecutionOrderLayout"/>
+              </item>
+              <item alignment="Qt::AlignRight">
+               <widget class="QFrame" name="frame_16">
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_41">
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_37">
+                   <item>
+                    <widget class="QPushButton" name="taskExecutionOrderMoveUpButton">
+                     <property name="text">
+                      <string/>
+                     </property>
+                     <property name="icon">
+                      <iconset resource="../../../assets/resource_files/resources.qrc">
+                       <normaloff>:/icons/navigate-up-arrow.png</normaloff>:/icons/navigate-up-arrow.png</iconset>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="taskExecutionOrderMoveDownButton">
+                     <property name="text">
+                      <string/>
+                     </property>
+                     <property name="icon">
+                      <iconset resource="../../../assets/resource_files/resources.qrc">
+                       <normaloff>:/icons/arrow-down-sign-to-navigate.png</normaloff>:/icons/arrow-down-sign-to-navigate.png</iconset>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
           </layout>
          </widget>
         </widget>
@@ -1168,7 +1218,7 @@
             <x>0</x>
             <y>0</y>
             <width>882</width>
-            <height>698</height>
+            <height>695</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -1417,7 +1467,7 @@
             <x>0</x>
             <y>0</y>
             <width>882</width>
-            <height>698</height>
+            <height>695</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -1565,7 +1615,7 @@
             <x>0</x>
             <y>0</y>
             <width>882</width>
-            <height>698</height>
+            <height>695</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1879,7 +1929,7 @@
             <x>0</x>
             <y>0</y>
             <width>882</width>
-            <height>698</height>
+            <height>695</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_33">
@@ -2138,6 +2188,94 @@
                  </widget>
                 </item>
                </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="customTab">
+      <attribute name="icon">
+       <iconset resource="../../../assets/resource_files/resources.qrc">
+        <normaloff>:/icons/service.png</normaloff>:/icons/service.png</iconset>
+      </attribute>
+      <attribute name="title">
+       <string>Custom</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_37">
+       <item>
+        <widget class="QScrollArea" name="scrollArea_6">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents_6">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>882</width>
+            <height>695</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_38">
+           <item alignment="Qt::AlignTop">
+            <widget class="QFrame" name="frame_18">
+             <property name="frameShape">
+              <enum>QFrame::NoFrame</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_39">
+              <item>
+               <widget class="QFrame" name="customTasksFrame">
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_40"/>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_17">
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_36">
+                 <property name="leftMargin">
+                  <number>18</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>18</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QPushButton" name="newCustomTaskButton">
+                   <property name="text">
+                    <string> New Task</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="../../../assets/resource_files/resources.qrc">
+                     <normaloff>:/icons/service.png</normaloff>:/icons/service.png</iconset>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
               </item>
              </layout>
             </widget>

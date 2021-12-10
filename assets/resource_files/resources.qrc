@@ -1,5 +1,11 @@
 <RCC>
   <qresource prefix="icons">
+    <file>upload.png</file>
+    <file>arrow-down-sign-to-navigate.png</file>
+    <file>arrowhead-thin-outline-to-the-left.png</file>
+    <file>arrow-point-to-right.png</file>
+    <file>navigate-up-arrow.png</file>
+    <file>plus.png</file>
     <file>automation.png</file>
     <file>r.png</file>
     <file>alert.png</file>

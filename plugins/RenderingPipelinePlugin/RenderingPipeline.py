@@ -1,24 +1,28 @@
+import typing
 from RenderingPipelinePlugin.filters.HasInputSceneFilter import HasInputSceneFilter
 from RenderingPipelinePlugin.filters.HasRenderSceneFilter import HasRenderSceneFilter
 from RenderingPipelinePlugin.filters.HasRenderingFilter import HasRenderingFilter
-from RenderingPipelinePlugin.submitters.UnrealEngineSubmitter import UnrealEngineSubmitter
-from node_exec.string_nodes import removeWhiteSpace
+from RenderingPipelinePlugin.submitters.BlenderCompositingSubmitter import BlenderCompositingSubmitter
+from RenderingPipelinePlugin.submitters.DeliveryCopySubmitter import DeliveryCopySubmitter
+from RenderingPipelinePlugin.submitters.MetadataManagerSubmissionTaskSettings import MetadataManagerSubmissionTaskSettings
+from RenderingPipelinePlugin.submitters.MetadataManagerTaskSubmitter import MetadataManagerTaskSubmitter
+from RenderingPipelinePlugin.submitters.NukeSubmitter import NukeSubmitter
+from RenderingPipelinePlugin.submitters.SubmitterInfo import SubmitterInfo, getOrderedSubmitterInfos
+from RenderingPipelinePlugin.submitters.UnrealEngineSubmitter import UnrealEngineInputSceneCreationSubmitter, UnrealEngineRenderSceneCreationSubmitter, UnrealEngineRenderingSubmitter
 from viewers.ViewerRegistry import ViewerRegistry
 from qt_extensions import qt_util
 from MetadataManagerCore.Event import Event
-from PySide2.QtWidgets import QCheckBox, QDialog
+from PySide2.QtWidgets import QCheckBox, QVBoxLayout
 from ApplicationMode import ApplicationMode
 from AppInfo import AppInfo
 from ServiceRegistry import ServiceRegistry
-from RenderingPipelinePlugin.submitters.Submitter import Submitter
-from RenderingPipelinePlugin.submitters.BlenderSubmitter import BlenderSubmitter
-from RenderingPipelinePlugin.submitters.Max3dsSubmitter import Max3dsSubmitter
+from RenderingPipelinePlugin.submitters.Submitter import Submitter, SubmitterRequirementsResponse
+from RenderingPipelinePlugin.submitters.BlenderSubmitter import BlenderInputSceneCreationSubmitter, BlenderRenderSceneCreationSubmitter, BlenderRenderingSubmitter
+from RenderingPipelinePlugin.submitters.Max3dsSubmitter import Max3dsInputSceneCreationSubmitter, Max3dsRenderSceneCreationSubmitter, Max3dsRenderingSubmitter
 import asset_manager
 from typing import Callable, Dict, List
 from table import table_util
-from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
 from MetadataManagerCore.environment.Environment import Environment
-from MetadataManagerCore.mongodb_manager import MongoDBManager
 from RenderingPipelinePlugin.NamingConvention import NamingConvention
 from RenderingPipelinePlugin.NamingConvention import extractNameFromNamingConvention
 import hashlib
@@ -55,13 +59,12 @@ class RenderingPipeline(object):
         self.customData = None
         self.activated = False
 
+        self.submissionCheckBoxStates: typing.Dict[str, bool] = dict()
+
     def activate(self):
         if not self.activated:
             self.registerAndLinkActions()
             self.addFilters()
-
-            if self.environmentSettings.get(PipelineKeys.BlenderCompositingScript, ''):
-                self.submissionDialog.submitBlenderCompositingCheckBox.setChecked(True)
 
             self.activated = True
 
@@ -95,17 +98,24 @@ class RenderingPipeline(object):
         self.serviceRegistry.actionManager.registerAction(action)
         self.serviceRegistry.actionManager.linkActionToCollection(action.id, self.dbCollectionName)
 
+    @property
+    def submitCheckboxLayout(self) -> QVBoxLayout:
+        return self.submissionDialog.submitCheckboxLayout
+
     def onSubmit(self):
-        submitInputScene = self.submissionDialog.submitInputSceneCheckBox.isEnabled() and self.submissionDialog.submitInputSceneCheckBox.isChecked()
-        submitRenderScene = self.submissionDialog.submitRenderSceneCheckBox.isEnabled() and self.submissionDialog.submitRenderSceneCheckBox.isChecked()
-        submitRendering = self.submissionDialog.submitRenderingCheckBox.isEnabled() and self.submissionDialog.submitRenderingCheckBox.isChecked()
-        submitNuke = self.submissionDialog.submitNukeCheckBox.isEnabled() and self.submissionDialog.submitNukeCheckBox.isChecked()
-        submitBlenderCompositing = self.submissionDialog.submitBlenderCompositingCheckBox.isEnabled() and self.submissionDialog.submitBlenderCompositingCheckBox.isChecked()
-        submitDelivery = self.submissionDialog.submitCopyForDeliveryCheckBox.isEnabled() and self.submissionDialog.submitCopyForDeliveryCheckBox.isChecked()
+        submitters = self.submitters
+        for i in range(self.submitCheckboxLayout.count()):
+            item = self.submitCheckboxLayout.itemAt(i)
+            checkbox: QCheckBox = item.widget()
+            submitter = submitters[i]
+            submitter.active = checkbox.isChecked()
+            if submitter.info:
+                self.submissionCheckBoxStates[submitter.info.name] = checkbox.isChecked()
+
         priority = int(self.submissionDialog.basePriorityEdit.text()) if self.submissionDialog.basePriorityEdit.text() else None
         initialStatus = self.submissionDialog.initialStatusComboBox.currentText()
 
-        self.submissionArgs = [priority, submitInputScene, submitRenderScene, submitRendering, submitNuke, submitBlenderCompositing, submitDelivery, initialStatus]
+        self.submissionArgs = [priority, submitters, initialStatus]
         self.submissionDialog.accept()
 
     def setupAndRegisterSubmissionAction(self):
@@ -125,32 +135,32 @@ class RenderingPipeline(object):
         submissionAction.retrieveArgsFunction = lambda: self.submissionArgs
 
     def onOpenSubmissionDialog(self):
-        # Disable submission checkboxes if not applicable:
-        def setCheckBoxState(checkBox: QCheckBox, envKey: str, tooltip: str = '', perspectiveDependent=False):
-            if perspectiveDependent:
-                value = PipelineKeys.getKeyWithPerspective(envKey, self.environmentSettings.get(PipelineKeys.Perspective, ''))
-                if not value:
-                    value = self.environmentSettings.get(envKey, '')    
-            else:
-                value = self.environmentSettings.get(envKey, '')
-                
-            if value.strip() == '':
-                checkBox.setEnabled(False)
-                checkBox.setChecked(False)
-                checkBox.setToolTip(tooltip)
-            else:
+        def addCheckBox(submitterInfo: SubmitterInfo):
+            layout: QVBoxLayout = self.submissionDialog.submitCheckboxLayout
+            checkBox = QCheckBox(submitterInfo.name)
+
+            response: SubmitterRequirementsResponse = submitterInfo.submitterClass.checkRequirements(self.environmentSettings)
+            
+            if response.satisfied:
                 checkBox.setEnabled(True)
                 checkBox.setToolTip("")
+                lastState = self.submissionCheckBoxStates.get(submitterInfo.name)
+                if not lastState is None:
+                    checkBox.setChecked(lastState)
+            else:
+                checkBox.setEnabled(False)
+                checkBox.setChecked(False)
+                checkBox.setToolTip(", ".join(response.messages))
+
+            layout.addWidget(checkBox)
+
+        qt_util.clearContainer(self.submissionDialog.submitCheckboxLayout)
+
+        submitterInfos = getOrderedSubmitterInfos(self.environmentSettings)
+        for submitterInfo in submitterInfos:
+            addCheckBox(submitterInfo, )
 
         self.submissionDialog.basePriorityEdit.setText(str(self.environmentSettings.get(PipelineKeys.DeadlinePriority, '')))
-
-        setCheckBoxState(self.submissionDialog.submitInputSceneCheckBox, PipelineKeys.InputSceneCreationScript, tooltip='An input scene creation script is not specified.')
-        setCheckBoxState(self.submissionDialog.submitRenderSceneCheckBox, PipelineKeys.RenderSceneCreationScript, tooltip='A render scene creation script is not specified.')
-        setCheckBoxState(self.submissionDialog.submitRenderingCheckBox, PipelineKeys.RenderingNaming, tooltip='Rendering naming convention not specified.', perspectiveDependent=True)
-        setCheckBoxState(self.submissionDialog.submitNukeCheckBox, PipelineKeys.NukeScript, tooltip='A nuke script is not specified.')
-        setCheckBoxState(self.submissionDialog.submitBlenderCompositingCheckBox, PipelineKeys.BlenderCompositingScript, tooltip='A blender compositing script is not specified.')
-        setCheckBoxState(self.submissionDialog.submitCopyForDeliveryCheckBox, PipelineKeys.DeliveryNaming, tooltip='Delivery naming convention not specified.', perspectiveDependent=True)
-
         self.submissionDialog.open()
 
     def onDialogUpdateCollection(self):
@@ -287,15 +297,20 @@ class RenderingPipeline(object):
                 logger.warning(f'The source file {postFilename} does not exist.')
 
     @property
-    def submitter(self) -> Submitter:
-        if self.pipelineType == PipelineType.Max3ds:
-            return Max3dsSubmitter(self)
-        elif self.pipelineType == PipelineType.Blender:
-            return BlenderSubmitter(self)
-        elif self.pipelineType == PipelineType.UnrealEngine:
-            return UnrealEngineSubmitter(self)
+    def submitters(self) -> List[Submitter]:
+        submitterInfos = getOrderedSubmitterInfos(self.environmentSettings)
 
-        return None
+        submitters = []
+        for submitterInfo in submitterInfos:
+            if submitterInfo.taskSettings:
+                submitter = MetadataManagerTaskSubmitter(self, submitterInfo.taskSettings)
+            else:
+                submitter = submitterInfo.submitterClass(self)
+            
+            submitter.info = submitterInfo
+            submitters.append(submitter)
+
+        return submitters
 
     def setRowSkipConditions(self, rowSkipConditions: Callable[[dict],bool]):
         self.rowSkipConditions = rowSkipConditions

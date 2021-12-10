@@ -16,5 +16,14 @@
         "${workspaceFolder}\\plugins",
         "${workspaceFolder}\\VisualScripting",
         "C:\\blender_autocomplete\\2.90"
-    ]
+    ],
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/.qt_for_python": true
+    }
 }
