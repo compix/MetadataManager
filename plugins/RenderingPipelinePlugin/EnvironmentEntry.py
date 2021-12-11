@@ -5,6 +5,8 @@ from MetadataManagerCore.environment.Environment import Environment
 from RenderingPipelinePlugin.PipelineType import PipelineType
 import re
 
+from dist.MetadataManager.plugins.RenderingPipelinePlugin.NamingConvention import extractNameFromNamingConvention
+
 def connectRelativeProjectFolderSelection(dialog, lineEdit: QtWidgets.QLineEdit, button: QtWidgets.QPushButton, initialDir=""):
     def onSelect():
         dirName = QtWidgets.QFileDialog.getExistingDirectory(dialog, "Open", initialDir)
@@ -210,3 +212,11 @@ class ProjectFileEnvironmentEntry(LineEditEnvironmentEntry):
     def loadValue(self, environment: Environment):
         edit: QtWidgets.QLineEdit = self.widget
         edit.setText(stripBaseFolder(environment.settings.get(self.envKey, '')))
+
+    def getAbsoluteFilename(self):
+        baseProjectFolder = self.renderingPipelineViewer.dialog.baseProjectFolderEdit.text()
+        filename = self.widget.text()
+        if os.path.isabs(filename):
+            return filename.replace('\\', '/')
+        else:
+            return os.path.join(baseProjectFolder, filename).replace('\\', '/')

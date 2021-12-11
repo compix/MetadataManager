@@ -43,7 +43,7 @@
           <property name="geometry">
            <rect>
             <x>0</x>
-            <y>-853</y>
+            <y>0</y>
             <width>865</width>
             <height>1548</height>
            </rect>
@@ -364,6 +364,34 @@
                    </widget>
                   </item>
                   <item>
+                   <widget class="QPushButton" name="refreshTableHeaderButton">
+                    <property name="toolTip">
+                     <string>Refresh table header.</string>
+                    </property>
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../../../assets/resource_files/resources.qrc">
+                      <normaloff>:/icons/refresh.png</normaloff>:/icons/refresh.png</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="selectProductTableInExplorerButton">
+                    <property name="toolTip">
+                     <string>Select in explorer.</string>
+                    </property>
+                    <property name="text">
+                     <string/>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../../../assets/resource_files/resources.qrc">
+                      <normaloff>:/icons/select.png</normaloff>:/icons/select.png</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
                    <widget class="QPushButton" name="productTableButton">
                     <property name="text">
                      <string/>
@@ -542,17 +570,41 @@
                       </property>
                      </widget>
                     </item>
-                    <item>
-                     <widget class="QCheckBox" name="headerConfirmationCheckBox">
-                      <property name="layoutDirection">
-                       <enum>Qt::RightToLeft</enum>
+                    <item alignment="Qt::AlignRight">
+                     <widget class="QFrame" name="frame_19">
+                      <property name="frameShape">
+                       <enum>QFrame::NoFrame</enum>
                       </property>
-                      <property name="text">
-                       <string>The extracted header is correct. </string>
+                      <property name="frameShadow">
+                       <enum>QFrame::Raised</enum>
                       </property>
-                      <property name="tristate">
-                       <bool>false</bool>
-                      </property>
+                      <layout class="QHBoxLayout" name="horizontalLayout_39">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>0</number>
+                       </property>
+                       <item>
+                        <widget class="QCheckBox" name="headerConfirmationCheckBox">
+                         <property name="layoutDirection">
+                          <enum>Qt::RightToLeft</enum>
+                         </property>
+                         <property name="text">
+                          <string>The extracted header is correct. </string>
+                         </property>
+                         <property name="tristate">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
                      </widget>
                     </item>
                    </layout>
@@ -2462,7 +2514,6 @@
   <tabstop>perspectiveCodesEdit</tabstop>
   <tabstop>renderingExtensionComboBox</tabstop>
   <tabstop>postOutputExtensionsEdit</tabstop>
-  <tabstop>headerConfirmationCheckBox</tabstop>
   <tabstop>renderScenesFolderEdit</tabstop>
   <tabstop>inputScenesFolderEdit</tabstop>
   <tabstop>environmentScenesEdit</tabstop>
