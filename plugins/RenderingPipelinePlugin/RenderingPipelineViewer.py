@@ -742,6 +742,8 @@ class RenderingPipelineViewer(object):
         self.refreshPipelineNameComboBox()
         self.dialog.pipelineNameComboBox.currentTextChanged.connect(self.onPipelineNameChanged)
         self.dialog.show()
+        self.dialog.activateWindow()
+        self.dialog.raise_()
 
     def hide(self):
         self.dialog.hide()

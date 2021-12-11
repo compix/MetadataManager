@@ -137,7 +137,7 @@ class RenderingPipeline(object):
     def onOpenSubmissionDialog(self):
         def addCheckBox(submitterInfo: SubmitterInfo):
             layout: QVBoxLayout = self.submissionDialog.submitCheckboxLayout
-            checkBox = QCheckBox(submitterInfo.name)
+            checkBox = QCheckBox(submitterInfo.name.rstrip('Submitter'))
 
             response: SubmitterRequirementsResponse = submitterInfo.submitterClass.checkRequirements(self.environmentSettings)
             
@@ -147,6 +147,8 @@ class RenderingPipeline(object):
                 lastState = self.submissionCheckBoxStates.get(submitterInfo.name)
                 if not lastState is None:
                     checkBox.setChecked(lastState)
+                else:
+                    checkBox.setChecked(submitterInfo.submitterClass.defaultActive)
             else:
                 checkBox.setEnabled(False)
                 checkBox.setChecked(False)

@@ -40,6 +40,8 @@ class BlenderInputSceneCreationSubmitter(RenderingPipelineSubmitter):
         return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.InputSceneCreationScript, messages=['An input scene creation script is not specified.'])
 
 class BlenderRenderSceneCreationSubmitter(RenderingPipelineSubmitter):
+    defaultActive = True
+
     def submit(self, documentWithSettings: dict, dependentJobIds: List[str]=None):
         if documentWithSettings.get(PipelineKeys.Mapping):
             return
@@ -77,11 +79,8 @@ class BlenderRenderSceneCreationSubmitter(RenderingPipelineSubmitter):
         return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.RenderSceneCreationScript, messages=['A render scene creation script is not specified.'])
 
 class BlenderRenderingSubmitter(RenderingPipelineSubmitter):
-    def __init__(self, pipeline) -> None:
-        super().__init__(pipeline)
+    defaultActive = True
 
-        self.active = True
-        
     def submit(self, documentWithSettings: dict, dependentJobIds: List[str]=None):
         if documentWithSettings.get(PipelineKeys.Mapping):
             return
@@ -112,4 +111,5 @@ class BlenderRenderingSubmitter(RenderingPipelineSubmitter):
 
     @staticmethod
     def checkRequirements(envSettings: dict) -> SubmitterPipelineKeyRequirementsResponse:
-        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.RenderingNaming, messages=['Rendering naming convention not specified.'])
+        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.RenderingNaming, 
+                perspectiveDependent=True, messages=['Rendering naming convention not specified.'])

@@ -7,10 +7,7 @@ from RenderingPipelinePlugin import PipelineKeys, RenderingPipelineUtil
 import os
 
 class NukeSubmitter(RenderingPipelineSubmitter):
-    def __init__(self, pipeline) -> None:
-        super().__init__(pipeline)
-
-        self.active = True
+    defaultActive = True
 
     def submit(self, documentWithSettings: dict, dependentJobIds: List[str]=None):
         if documentWithSettings.get(PipelineKeys.Mapping):

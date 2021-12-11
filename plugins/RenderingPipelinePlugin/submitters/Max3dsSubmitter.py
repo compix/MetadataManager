@@ -35,6 +35,8 @@ class Max3dsInputSceneCreationSubmitter(RenderingPipelineSubmitter):
         return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.InputSceneCreationScript, messages=['An input scene creation script is not specified.'])
 
 class Max3dsRenderSceneCreationSubmitter(RenderingPipelineSubmitter):
+    defaultActive = True
+
     def submit(self, documentWithSettings: dict, dependentJobIds: List[str]=None):
         if documentWithSettings.get(PipelineKeys.Mapping):
             return
@@ -64,11 +66,8 @@ class Max3dsRenderSceneCreationSubmitter(RenderingPipelineSubmitter):
         return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.RenderSceneCreationScript, messages=['A render scene creation script is not specified.'])
 
 class Max3dsRenderingSubmitter(RenderingPipelineSubmitter):
-    def __init__(self, pipeline) -> None:
-        super().__init__(pipeline)
+    defaultActive = True
 
-        self.active = True
-        
     def submit(self, documentWithSettings: dict, dependentJobIds: List[str]=None):
         if documentWithSettings.get(PipelineKeys.Mapping):
             return
@@ -99,4 +98,5 @@ class Max3dsRenderingSubmitter(RenderingPipelineSubmitter):
 
     @staticmethod
     def checkRequirements(envSettings: dict) -> SubmitterPipelineKeyRequirementsResponse:
-        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.RenderingNaming, perspectiveDependent=True, messages=['Rendering naming convention not specified.'])
+        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.RenderingNaming, 
+                perspectiveDependent=True, messages=['Rendering naming convention not specified.'])

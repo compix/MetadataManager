@@ -27,6 +27,8 @@ class SubmitterPipelineKeyRequirementsResponse(object):
         self.messages = messages
 
 class Submitter(object):
+    defaultActive = False
+
     def __init__(self) -> None:
         super().__init__()
 
