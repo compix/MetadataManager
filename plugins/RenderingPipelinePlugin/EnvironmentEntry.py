@@ -62,25 +62,28 @@ class EnvironmentEntry(object):
 
 class LineEditEnvironmentEntry(EnvironmentEntry):
     def __init__(self, envKey: str, widget: QtWidgets.QWidget, pipelineType: PipelineType = None, 
-                 pipelineComboBox: QtWidgets.QComboBox = None, regexPattern = None, valueType=str) -> None:
+                 pipelineComboBox: QtWidgets.QComboBox = None, regexPattern = None, valueType=str, fallbackValue=None) -> None:
         super().__init__(envKey, widget, pipelineType=pipelineType, pipelineComboBox=pipelineComboBox)
 
         self.regexPattern = regexPattern
         self.valueType = valueType
+        self.fallbackValue = fallbackValue
 
     def saveValue(self, environment: Environment):
         edit: QtWidgets.QLineEdit = self.widget
-        if self.valueType == str:
-            environment.settings[self.envKey] = edit.text()
-        else:
-            try:
-                environment.settings[self.envKey] = self.valueType(edit.text())
-            except:
-                environment.settings[self.envKey] = None
+        try:
+            environment.settings[self.envKey] = self.valueType(edit.text())
+        except:
+            environment.settings[self.envKey] = self.fallbackValue
 
     def loadValue(self, environment: Environment):
         edit: QtWidgets.QLineEdit = self.widget
-        edit.setText(str(environment.settings.get(self.envKey)))
+        try:
+            value = self.valueType(environment.settings.get(self.envKey))
+        except:
+            value = self.fallbackValue
+
+        edit.setText('' if value is None else str(value))
 
     def verify(self):
         if self.regexPattern:
@@ -88,6 +91,14 @@ class LineEditEnvironmentEntry(EnvironmentEntry):
 
             if not valid:
                 raise RuntimeError(f'The text of {self.envKey} is not valid. The supported format is: {self.regexPattern}')
+
+class DeadlineTimeoutEnvironmentEntry(LineEditEnvironmentEntry):
+    def __init__(self, envKey: str, widget: QtWidgets.QWidget, pipelineType: PipelineType = None, 
+                 pipelineComboBox: QtWidgets.QComboBox = None, regexPattern=None, valueType=str, fallbackValue=None) -> None:
+        super().__init__(envKey, widget, pipelineType=pipelineType, pipelineComboBox=pipelineComboBox, 
+                         regexPattern=regexPattern, valueType=valueType, fallbackValue=fallbackValue)
+
+        widget.setToolTip('Timeout in minutes. There is no timeout if left empty.')
 
 class CheckBoxEnvironmentEntry(EnvironmentEntry):
     def saveValue(self, environment: Environment):
@@ -106,6 +117,24 @@ class ComboBoxEnvironmentEntry(EnvironmentEntry):
     def loadValue(self, environment: Environment):
         cb: QtWidgets.QComboBox = self.widget
         cb.setCurrentText(environment.settings.get(self.envKey))
+
+class DeadlinePoolComboBoxEnvironmentEntry(ComboBoxEnvironmentEntry):
+    def loadValue(self, environment: Environment):
+        value = environment.settings.get(self.envKey)
+        cb: QtWidgets.QComboBox = self.widget
+        hasValue = False
+        for i in range(cb.count()):
+            if cb.itemText(i) == value:
+                hasValue = True
+                break
+        
+        if not hasValue and value:
+            cb.addItem(value)
+        
+        if value:
+            cb.setCurrentText(value)
+        else:
+            cb.setCurrentIndex(0)
 
 class NamingEnvironmentEntry(LineEditEnvironmentEntry):
     def saveValue(self, environment: Environment):

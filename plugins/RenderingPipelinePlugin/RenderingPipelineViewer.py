@@ -1,7 +1,8 @@
 import typing
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
+from MetadataManagerCore.third_party_integrations.deadline import deadline_service
 from RenderingPipelinePlugin.CustomSubmissionTaskViewer import CustomSubmissionTaskViewer
-from RenderingPipelinePlugin.EnvironmentEntry import CheckBoxEnvironmentEntry, ComboBoxEnvironmentEntry, EnvironmentEntry, LineEditEnvironmentEntry, NamingEnvironmentEntry, ProjectFileEnvironmentEntry, ProjectSubFolderEnvironmentEntry
+from RenderingPipelinePlugin.EnvironmentEntry import CheckBoxEnvironmentEntry, ComboBoxEnvironmentEntry, DeadlinePoolComboBoxEnvironmentEntry, DeadlineTimeoutEnvironmentEntry, EnvironmentEntry, LineEditEnvironmentEntry, NamingEnvironmentEntry, ProjectFileEnvironmentEntry, ProjectSubFolderEnvironmentEntry
 from RenderingPipelinePlugin.MetadataManagerTaskView import MetadataManagerTaskView
 from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
 from RenderingPipelinePlugin.TaskExecutionOrderView import TaskExecutionOrderView
@@ -100,18 +101,18 @@ class RenderingPipelineViewer(object):
         qt_util.connectFileSelection(self.dialog, self.dialog.productTableEdit, self.dialog.productTableButton, filter='Table File (*.xlsx;*.xls;*.csv)')
         qt_util.connectFileSelection(self.dialog, self.dialog.renderSettingsEdit, self.dialog.renderSettingsButton)
 
-        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlinePriority, self.dialog.deadlinePriorityEdit))
+        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlinePriority, self.dialog.deadlinePriorityEdit, valueType=int))
         self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.Max3dsVersion, self.dialog.versionOf3dsMaxComboBox, PipelineType.Max3ds, self.dialog.pipelineTypeComboBox))
         self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.BlenderVersion, self.dialog.blenderVersionComboBox, PipelineType.Blender, self.dialog.pipelineTypeComboBox))
         self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.UnrealEngineVersion, self.dialog.unrealEngineVersionComboBox, PipelineType.UnrealEngine, self.dialog.pipelineTypeComboBox))
         self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.NukeVersion, self.dialog.nukeVersionComboBox))
 
-        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineInputSceneTimeout, self.dialog.inputSceneDeadlineTimeout))
-        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineRenderSceneTimeout, self.dialog.renderSceneDeadlineTimeout))
-        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineRenderingTimeout, self.dialog.renderingDeadlineTimeout))
-        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineNukeTimeout, self.dialog.nukeDeadlineTimeout))
-        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineBlenderCompositingTimeout, self.dialog.blenderCompositingDeadlineTimeout))
-        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineDeliveryTimeout, self.dialog.deliveryDeadlineTimeout))
+        self.environmentEntries.append(DeadlineTimeoutEnvironmentEntry(PipelineKeys.DeadlineInputSceneTimeout, self.dialog.inputSceneDeadlineTimeout, valueType=int))
+        self.environmentEntries.append(DeadlineTimeoutEnvironmentEntry(PipelineKeys.DeadlineRenderSceneTimeout, self.dialog.renderSceneDeadlineTimeout, valueType=int))
+        self.environmentEntries.append(DeadlineTimeoutEnvironmentEntry(PipelineKeys.DeadlineRenderingTimeout, self.dialog.renderingDeadlineTimeout, valueType=int))
+        self.environmentEntries.append(DeadlineTimeoutEnvironmentEntry(PipelineKeys.DeadlineNukeTimeout, self.dialog.nukeDeadlineTimeout, valueType=int))
+        self.environmentEntries.append(DeadlineTimeoutEnvironmentEntry(PipelineKeys.DeadlineBlenderCompositingTimeout, self.dialog.blenderCompositingDeadlineTimeout, valueType=int))
+        self.environmentEntries.append(DeadlineTimeoutEnvironmentEntry(PipelineKeys.DeadlineDeliveryTimeout, self.dialog.deliveryDeadlineTimeout, valueType=int))
 
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.BaseScenesFolder, self.dialog.baseScenesFolderEdit, self, self.dialog.baseScenesFolderButton))
         self.environmentEntries.append(ProjectSubFolderEnvironmentEntry(PipelineKeys.InputScenesFolder, self.dialog.inputScenesFolderEdit, self, self.dialog.inputScenesFolderButton))
@@ -154,8 +155,10 @@ class RenderingPipelineViewer(object):
 
         self.dialog.perspectiveCodesEdit.editingFinished.connect(self.perspectiveCodesEditingFinished)
 
+        self.fetchedPoolNames = False
+        self.serviceRegistry.deadlineService.onConnected.once(lambda: threading_util.runInThread(self.fetchDeadlinePoolNames))
         threading_util.runInThread(self.fetchDeadlinePoolNames)
-
+        
         self.refreshAvailablePipelineMenu()
         self.updateTabs()
         self.registerFilters()
@@ -351,19 +354,43 @@ class RenderingPipelineViewer(object):
         qt_util.runInMainThread(self.onDeadlinePoolNamesFetched, poolNames)
 
     def onDeadlinePoolNamesFetched(self, poolNames: List[str]):
-        self.setupDeadlinePoolComboBox(self.dialog.deadlineInputScenePoolComboBox, poolNames, PipelineKeys.DeadlineInputScenePool)
-        self.setupDeadlinePoolComboBox(self.dialog.deadlineRenderScenePoolComboBox, poolNames, PipelineKeys.DeadlineRenderScenePool)
-        self.setupDeadlinePoolComboBox(self.dialog.deadlineRenderingPoolComboBox, poolNames, PipelineKeys.DeadlineRenderingPool)
-        self.setupDeadlinePoolComboBox(self.dialog.deadlineNukePoolComboBox, poolNames, PipelineKeys.DeadlineNukePool)
-        self.setupDeadlinePoolComboBox(self.dialog.deadlineBlenderCompositingPoolComboBox, poolNames, PipelineKeys.DeadlineBlenderCompositingPool)
-        self.setupDeadlinePoolComboBox(self.dialog.deadlineDeliveryPoolComboBox, poolNames, PipelineKeys.DeadlineDeliveryPool)
+        if self.fetchedPoolNames:
+            return
 
-    def setupDeadlinePoolComboBox(self, comboBox: QtWidgets.QComboBox, poolNames: List[str], envKey: str):
-        self.environmentEntries.append(ComboBoxEnvironmentEntry(envKey, comboBox))
+        if 'none' in poolNames:
+            poolNames.remove('none')
+
+        poolNames.insert(0, 'none')
+            
+        self.updateDeadlinePoolComboBox(self.dialog.deadlineInputScenePoolComboBox, poolNames, PipelineKeys.DeadlineInputScenePool)
+        self.updateDeadlinePoolComboBox(self.dialog.deadlineRenderScenePoolComboBox, poolNames, PipelineKeys.DeadlineRenderScenePool)
+        self.updateDeadlinePoolComboBox(self.dialog.deadlineRenderingPoolComboBox, poolNames, PipelineKeys.DeadlineRenderingPool)
+        self.updateDeadlinePoolComboBox(self.dialog.deadlineNukePoolComboBox, poolNames, PipelineKeys.DeadlineNukePool)
+        self.updateDeadlinePoolComboBox(self.dialog.deadlineBlenderCompositingPoolComboBox, poolNames, PipelineKeys.DeadlineBlenderCompositingPool)
+        self.updateDeadlinePoolComboBox(self.dialog.deadlineDeliveryPoolComboBox, poolNames, PipelineKeys.DeadlineDeliveryPool)
 
         if poolNames:
-            for poolName in poolNames:
-                comboBox.addItem(poolName)
+            self.fetchedPoolNames = True
+
+    def updateDeadlinePoolComboBox(self, comboBox: QtWidgets.QComboBox, poolNames: List[str], envKey: str):
+        existingEnvEntry = None
+        for envEntry in self.environmentEntries:
+            if envEntry.envKey == envKey:
+                existingEnvEntry = envEntry
+                break
+
+        if not existingEnvEntry:
+            self.environmentEntries.append(DeadlinePoolComboBoxEnvironmentEntry(envKey, comboBox))
+
+        if poolNames:
+            existingItems = set(comboBox.itemText(i) for i in range(comboBox.count()))
+            curText = comboBox.currentText()
+            for name in poolNames:
+                if not name in existingItems:
+                    comboBox.addItem(name)
+
+            if curText:
+                comboBox.setCurrentText(curText)
 
     def onDeleteClick(self):
         # Confirm by user:

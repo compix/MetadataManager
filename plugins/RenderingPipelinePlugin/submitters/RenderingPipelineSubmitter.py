@@ -26,7 +26,7 @@ class RenderingPipelineSubmitter(Submitter):
 
     def setTimeout(self, jobInfoDict: dict, documentWithSettings: dict, timeoutKey: str):
         timeout = documentWithSettings.get(timeoutKey)
-        if timeout != None and timeout.strip() != '':
+        if timeout != None and timeout.strip() != '' and timeout != 'None':
             try:
                 jobInfoDict['TaskTimeoutMinutes'] = int(timeout)
             except Exception as e:
