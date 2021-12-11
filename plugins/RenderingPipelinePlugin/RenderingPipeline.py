@@ -359,6 +359,8 @@ class RenderingPipeline(object):
 
         collectionName = self.dbCollectionName
 
+        droppedTempCollection = False
+
         if replaceExistingCollection:
             tempCollectionName = f'{self.dbCollectionName}_{uuid.uuid4().hex[:6]}'
             try:
@@ -434,12 +436,17 @@ class RenderingPipeline(object):
             if replaceExistingCollection:
                 self.dbManager.dropCollection(self.dbCollectionName + Keys.OLD_VERSIONS_COLLECTION_SUFFIX)
                 self.dbManager.dropCollection(tempCollectionName)
+                droppedTempCollection = True
+
+            self.dbManager.addMissingHeaderInfos(self.dbCollectionName, header)
         except Exception as e:
             logger.error(str(e))
             if logHandler:
                 logHandler(str(e))
 
             # Undo
-            if replaceExistingCollection:
+            if replaceExistingCollection and not droppedTempCollection:
                 self.dbManager.dropCollection(collectionName)
                 self.dbManager.db[tempCollectionName].rename(collectionName)
+
+            raise e
