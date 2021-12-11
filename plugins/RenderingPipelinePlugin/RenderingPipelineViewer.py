@@ -7,6 +7,7 @@ from RenderingPipelinePlugin.MetadataManagerTaskView import MetadataManagerTaskV
 from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
 from RenderingPipelinePlugin.TaskExecutionOrderView import TaskExecutionOrderView
 from RenderingPipelinePlugin.submitters.SubmitterInfo import getOrderedSubmitterInfos
+from RenderingPipelinePlugin.ui_elements import FileSelectionElement
 from RenderingPipelinePlugin.unreal_engine import UnrealEnginePipelineKeys
 from node_exec import windows_nodes
 from viewers.EnvironmentViewer import EnvironmentViewer
@@ -94,12 +95,37 @@ class RenderingPipelineViewer(object):
         
         self.currentHeader = []
         
-        qt_util.connectFolderSelection(self.dialog, self.dialog.baseProjectFolderEdit, self.dialog.baseProjectFolderButton)
-        qt_util.connectFileSelection(self.dialog, self.dialog.renderSceneCreationScriptEdit, self.dialog.renderSceneCreationScriptButton)
-        qt_util.connectFileSelection(self.dialog, self.dialog.inputSceneCreationScriptEdit, self.dialog.inputSceneCreationScriptButton)
-        qt_util.connectFileSelection(self.dialog, self.dialog.nukeScriptEdit, self.dialog.nukeScriptButton)
-        qt_util.connectFileSelection(self.dialog, self.dialog.blenderCompositingScriptEdit, self.dialog.blenderCompositingScriptButton)
-        qt_util.connectFileSelection(self.dialog, self.dialog.renderSettingsEdit, self.dialog.renderSettingsButton)
+        self.baseProjectFolderElement = FileSelectionElement(self.dialog, None, isFolder=True)
+        self.formLayout: QtWidgets.QFormLayout = self.dialog.formLayout
+        self.formLayout.insertRow(1, "Base Project Folder", self.baseProjectFolderElement.layout)
+        self.inputSceneCreationScriptElement = FileSelectionElement(self.dialog, None)
+        self.renderSceneCreationScriptElement = FileSelectionElement(self.dialog, None)
+        self.nukeScriptElement = FileSelectionElement(self.dialog, None)
+        self.blenderCompositingScriptElement = FileSelectionElement(self.dialog, None)
+        self.renderSettingsElement = FileSelectionElement(self.dialog, None)
+
+        self.formLayout.insertRow(6, "Input Scene Creation Script", self.inputSceneCreationScriptElement.layout)
+        self.formLayout.insertRow(7, "Render Scene Creation Script", self.renderSceneCreationScriptElement.layout)
+        self.formLayout.insertRow(8, "Nuke Script", self.nukeScriptElement.layout)
+        self.formLayout.insertRow(10, "Blender Compositing Script", self.blenderCompositingScriptElement.layout)
+        self.formLayout.insertRow(11, "Render Settings", self.renderSettingsElement.layout)
+
+        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.BaseFolder, self.baseProjectFolderElement.edit))
+
+        self.environmentEntries.append(ProjectFileEnvironmentEntry(PipelineKeys.InputSceneCreationScript, 
+            self.inputSceneCreationScriptElement.edit, self, self.inputSceneCreationScriptElement.selectButton))
+
+        self.environmentEntries.append(ProjectFileEnvironmentEntry(PipelineKeys.RenderSceneCreationScript, 
+            self.renderSceneCreationScriptElement.edit, self, self.renderSceneCreationScriptElement.selectButton))
+
+        self.environmentEntries.append(ProjectFileEnvironmentEntry(PipelineKeys.NukeScript, 
+            self.nukeScriptElement.edit, self, self.nukeScriptElement.selectButton))
+
+        self.environmentEntries.append(ProjectFileEnvironmentEntry(PipelineKeys.BlenderCompositingScript, 
+            self.blenderCompositingScriptElement.edit, self, self.blenderCompositingScriptElement.selectButton))
+
+        self.environmentEntries.append(ProjectFileEnvironmentEntry(PipelineKeys.RenderSettings, 
+            self.renderSettingsElement.edit, self, self.renderSettingsElement.selectButton))
 
         self.productTableEnvEntry = ProjectFileEnvironmentEntry(PipelineKeys.ProductTable, self.dialog.productTableEdit, self,
             self.dialog.productTableButton, fileFilter='Table File (*.xlsx;*.xls;*.csv)')
@@ -184,6 +210,10 @@ class RenderingPipelineViewer(object):
 
         self.dialog.selectProductTableInExplorerButton.clicked.connect(self.onSelectProductTableInExplorerClick)
         self.dialog.refreshTableHeaderButton.clicked.connect(self.onRefreshTableHeaderClick)
+
+    @property
+    def baseProjectFolderPath(self):
+        return self.baseProjectFolderElement.edit.text()
 
     def onSelectProductTableInExplorerClick(self):
         try:
@@ -444,16 +474,11 @@ class RenderingPipelineViewer(object):
             self.dialog.statusLabel.setText(f'The following table header keys are used internally by the pipeline and thus should not be present: {notAllowedHeaderKeys}')
             return
 
-        baseProjectFolder = self.dialog.baseProjectFolderEdit.text()
+        baseProjectFolder = self.baseProjectFolderElement.edit.text()
         pipelineType = self.dialog.pipelineTypeComboBox.currentText()
         pipelineClassName = self.dialog.pipelineClassComboBox.currentText()
-        renderSceneCreationScript = self.dialog.renderSceneCreationScriptEdit.text()
-        inputSceneCreationScript = self.dialog.inputSceneCreationScriptEdit.text()
-        nukeScript = self.dialog.nukeScriptEdit.text()
-        blenderCompositingScript = self.dialog.blenderCompositingScriptEdit.text()
         productTable = self.productTableEnvEntry.getAbsoluteFilename()
         sheetName = self.dialog.productTableSheetNameComboBox.currentText()
-        renderSettingsFile = self.dialog.renderSettingsEdit.text()
         replaceGermanChars = self.dialog.replaceGermanCharactersCheckBox.isChecked()
         perspectiveCodesStr = self.dialog.perspectiveCodesEdit.text()
         renderingExtension = self.dialog.renderingExtensionComboBox.currentText()
@@ -494,15 +519,9 @@ class RenderingPipelineViewer(object):
 
         self.environment.settings[PipelineKeys.OrderedSubmitterInfos] = self.taskExecutionOrderView.getSubmitterInfosAsDict()
 
-        self.environment.settings[PipelineKeys.BaseFolder] = baseProjectFolder
         self.environment.settings[PipelineKeys.PipelineType] = pipelineType
         self.environment.settings[PipelineKeys.PipelineClass] = pipelineClassName
-        self.environment.settings[PipelineKeys.RenderSceneCreationScript] = renderSceneCreationScript
-        self.environment.settings[PipelineKeys.InputSceneCreationScript] = inputSceneCreationScript
-        self.environment.settings[PipelineKeys.NukeScript] = nukeScript
-        self.environment.settings[PipelineKeys.BlenderCompositingScript] = blenderCompositingScript
         self.environment.settings[PipelineKeys.ProductTableSheetName] = sheetName
-        self.environment.settings[PipelineKeys.RenderSettings] = renderSettingsFile
         self.environment.settings[PipelineKeys.ReplaceGermanCharacters] = replaceGermanChars
         self.environment.settings[PipelineKeys.RenderingExtension] = renderingExtension
         self.environment.settings[PipelineKeys.PostOutputExtensions] = postOutputExtensionsStr
@@ -587,10 +606,11 @@ class RenderingPipelineViewer(object):
         self.dialog.productTableSheetNameComboBox.clear()
         productTablePath = self.productTableEnvEntry.getAbsoluteFilename()
 
-        sheetNames = table_util.getSheetNames(productTablePath)
-        if sheetNames:
-            for sheetName in sheetNames:
-                self.dialog.productTableSheetNameComboBox.addItem(sheetName)
+        if os.path.exists(productTablePath):
+            sheetNames = table_util.getSheetNames(productTablePath)
+            if sheetNames:
+                for sheetName in sheetNames:
+                    self.dialog.productTableSheetNameComboBox.addItem(sheetName)
 
     def onProductTableSheetNameChanged(self, txt: str):
         self.updateExtractedTableHeader()
@@ -628,15 +648,9 @@ class RenderingPipelineViewer(object):
         self.customSubmissionTaskViewer.load(self.environment)
 
         if pipeline:
-            self.dialog.baseProjectFolderEdit.setText(environmentSettings.get(PipelineKeys.BaseFolder, ''))
             self.dialog.pipelineTypeComboBox.setCurrentText(environmentSettings.get(PipelineKeys.PipelineType, ''))
             self.dialog.pipelineClassComboBox.setCurrentText(environmentSettings.get(PipelineKeys.PipelineClass, ''))
-            self.dialog.renderSceneCreationScriptEdit.setText(environmentSettings.get(PipelineKeys.RenderSceneCreationScript, ''))
-            self.dialog.inputSceneCreationScriptEdit.setText(environmentSettings.get(PipelineKeys.InputSceneCreationScript, ''))
-            self.dialog.nukeScriptEdit.setText(environmentSettings.get(PipelineKeys.NukeScript, ''))
-            self.dialog.blenderCompositingScriptEdit.setText(environmentSettings.get(PipelineKeys.BlenderCompositingScript, ''))
             self.dialog.productTableSheetNameComboBox.setCurrentText(environmentSettings.get(PipelineKeys.ProductTableSheetName, ''))
-            self.dialog.renderSettingsEdit.setText(environmentSettings.get(PipelineKeys.RenderSettings, ''))
             self.dialog.replaceGermanCharactersCheckBox.setChecked(environmentSettings.get(PipelineKeys.ReplaceGermanCharacters, True))
             self.dialog.perspectiveCodesEdit.setText(environmentSettings.get(PipelineKeys.PerspectiveCodes, ''))
             self.dialog.renderingExtensionComboBox.setCurrentText(environmentSettings.get(PipelineKeys.RenderingExtension, ''))

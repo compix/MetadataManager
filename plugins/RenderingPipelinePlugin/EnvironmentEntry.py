@@ -7,28 +7,47 @@ import re
 
 from dist.MetadataManager.plugins.RenderingPipelinePlugin.NamingConvention import extractNameFromNamingConvention
 
-def connectRelativeProjectFolderSelection(dialog, lineEdit: QtWidgets.QLineEdit, button: QtWidgets.QPushButton, initialDir=""):
+def getInitialDir(filename: str, baseProjectFolder: str, isFolder=False):
+    if not os.path.isabs(filename):
+        filename = os.path.join(baseProjectFolder, filename)
+
+    if isFolder:
+        return filename
+    else:
+        return os.path.dirname(filename)
+
+def connectRelativeProjectFolderSelection(renderingPipelineViewer, lineEdit: QtWidgets.QLineEdit, button: QtWidgets.QPushButton):
     def onSelect():
-        dirName = QtWidgets.QFileDialog.getExistingDirectory(dialog, "Open", initialDir)
+        baseProjectFolder = renderingPipelineViewer.baseProjectFolderPath
+        initialDir = getInitialDir(lineEdit.text(), baseProjectFolder)
+        dirName = QtWidgets.QFileDialog.getExistingDirectory(renderingPipelineViewer.dialog, "Open", initialDir)
         if dirName != None and dirName != "":
-            baseProjectFolder = dialog.baseProjectFolderEdit.text()
             if os.path.normpath(dirName).startswith(os.path.normpath(baseProjectFolder)):
                 dirName = os.path.relpath(dirName, baseProjectFolder)
 
             lineEdit.setText(dirName)
     
+    try:
+        button.clicked.disconnect()
+    except:
+        pass
     button.clicked.connect(onSelect)
 
-def connectRelativeProjectFileSelection(dialog, lineEdit: QtWidgets.QLineEdit, button: QtWidgets.QPushButton, filter=""):
+def connectRelativeProjectFileSelection(renderingPipelineViewer, lineEdit: QtWidgets.QLineEdit, button: QtWidgets.QPushButton, filter=""):
     def onSelect():
-        filename,_ = QtWidgets.QFileDialog.getOpenFileName(dialog, "Open", "", filter=filter)
+        baseProjectFolder = renderingPipelineViewer.baseProjectFolderPath
+        initialDir = getInitialDir(lineEdit.text(), baseProjectFolder)
+        filename,_ = QtWidgets.QFileDialog.getOpenFileName(renderingPipelineViewer.dialog, "Open", initialDir, filter=filter)
         if filename:
-            baseProjectFolder = dialog.baseProjectFolderEdit.text()
             if os.path.normpath(filename).startswith(os.path.normpath(baseProjectFolder)):
                 filename = os.path.relpath(filename, baseProjectFolder)
 
             lineEdit.setText(filename)
     
+    try:
+        button.clicked.disconnect()
+    except:
+        pass
     button.clicked.connect(onSelect)
 
 def stripBaseFolder(v: str):
@@ -160,12 +179,12 @@ class ProjectSubFolderEnvironmentEntry(LineEditEnvironmentEntry):
                  folderSelectButton: QtWidgets.QPushButton, pipelineType: PipelineType = None, pipelineComboBox: QtWidgets.QComboBox = None) -> None:
         super().__init__(envKey, lineEdit, pipelineType=pipelineType, pipelineComboBox=pipelineComboBox)
 
-        connectRelativeProjectFolderSelection(renderingPipelineViewer.dialog, lineEdit, folderSelectButton)
+        connectRelativeProjectFolderSelection(renderingPipelineViewer, lineEdit, folderSelectButton)
 
         self.renderingPipelineViewer = renderingPipelineViewer
 
     def saveValue(self, environment: Environment):
-        baseProjectFolder = self.renderingPipelineViewer.dialog.baseProjectFolderEdit.text()
+        baseProjectFolder = self.renderingPipelineViewer.baseProjectFolderPath
         folder = self.widget.text()
         fullpath = folder
         if os.path.isabs(fullpath):
@@ -189,12 +208,12 @@ class ProjectFileEnvironmentEntry(LineEditEnvironmentEntry):
                  fileSelectButton: QtWidgets.QPushButton, pipelineType: PipelineType = None, pipelineComboBox: QtWidgets.QComboBox = None, fileFilter="") -> None:
         super().__init__(envKey, lineEdit, pipelineType=pipelineType, pipelineComboBox=pipelineComboBox)
 
-        connectRelativeProjectFileSelection(renderingPipelineViewer.dialog, lineEdit, fileSelectButton, filter=fileFilter)
+        connectRelativeProjectFileSelection(renderingPipelineViewer, lineEdit, fileSelectButton, filter=fileFilter)
 
         self.renderingPipelineViewer = renderingPipelineViewer
 
     def saveValue(self, environment: Environment):
-        baseProjectFolder = self.renderingPipelineViewer.dialog.baseProjectFolderEdit.text()
+        baseProjectFolder = self.renderingPipelineViewer.baseProjectFolderPath
         filename = self.widget.text()
         fullpath = filename
         if os.path.isabs(fullpath):
@@ -214,7 +233,7 @@ class ProjectFileEnvironmentEntry(LineEditEnvironmentEntry):
         edit.setText(stripBaseFolder(environment.settings.get(self.envKey, '')))
 
     def getAbsoluteFilename(self):
-        baseProjectFolder = self.renderingPipelineViewer.dialog.baseProjectFolderEdit.text()
+        baseProjectFolder = self.renderingPipelineViewer.baseProjectFolderPath
         filename = self.widget.text()
         if os.path.isabs(filename):
             return filename.replace('\\', '/')
