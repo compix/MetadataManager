@@ -403,6 +403,9 @@ class RenderingPipelineViewer(object):
         if self.fetchedPoolNames:
             return
 
+        if poolNames is None:
+            poolNames = []
+
         if 'none' in poolNames:
             poolNames.remove('none')
 
