@@ -35,12 +35,14 @@ class FileSelectionElement(UIElement):
         
         if showSelectInExplorerButton:
             self.selectInExplorerButton = QtWidgets.QPushButton()
+            self.selectInExplorerButton.setToolTip('Select in explorer.')
             self.selectInExplorerButton.setIcon(QIcon(':/icons/select.png'))
             self.addToLayout(self.selectInExplorerButton)
 
             self.selectInExplorerButton.clicked.connect(self.onSelectInExplorerButtonClicked)
             
         self.selectButton = QtWidgets.QPushButton()
+        self.selectButton.setToolTip('Choose file.')
         self.addToLayout(self.selectButton)
         if isFolder:
             self.selectButton.clicked.connect(self.onSelectFolder)
