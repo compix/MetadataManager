@@ -7,7 +7,7 @@ verify_ssl = true
 
 [packages]
 pyside2 = "*"
-pymongo = "*"
+pymongo = "==3.12.*"
 numpy = "*"
 watchdog = "*"
 xmltodict = "*"
@@ -17,6 +17,7 @@ pyinstaller = "*"
 requests = "*"
 openpyxl = "*"
 pika = "*"
+photoshop-python-api = "*"
 
 [requires]
 python_version = "3.7"
