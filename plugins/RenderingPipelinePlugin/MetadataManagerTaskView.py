@@ -101,7 +101,11 @@ class MetadataManagerTaskView(object):
 
     def load(self, infoDict: dict):
         settings = MetadataManagerSubmissionTaskSettings.fromDict(infoDict)
-        self.actionsComboBox.setCurrentText(settings.actionId)
+        for i in range(self.actionsComboBox.count()):
+            if self.actionsComboBox.itemData(i) == settings.actionId:
+                self.actionsComboBox.setCurrentIndex(i)
+                break
+            
         self.widget.nameEdit.setText(settings.name)
 
         for key, value in settings.outputFilenamesDict.items():
