@@ -9,6 +9,7 @@ import os
 import tempfile
 import json
 import uuid
+import getpass
 
 DEADLINE_SERVICE : DeadlineService = None
 DEADLINE_IDENTIFIER = "Deadline"
@@ -42,6 +43,8 @@ def submitJob(jobInfoDict, pluginInfoDict, auxiliaryFilenames=None, quiet=True, 
 
     if auxiliaryFilenames == None:
         auxiliaryFilenames = []
+
+    jobInfoDict['UserName'] = getpass.getuser()
 
     if jobDependencies != None and (isinstance(jobDependencies, str) or len(jobDependencies) > 0):
         jobInfoDict = jobInfoDict.copy()
