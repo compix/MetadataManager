@@ -3,6 +3,7 @@ from PySide2 import QtWidgets
 from RenderingPipelinePlugin.RenderingPipelineManager import RenderingPipelineManager
 from RenderingPipelinePlugin.RenderingPipelineViewer import RenderingPipelineViewer
 from plugin.Plugin import Plugin
+import RenderingPipelinePlugin.visual_scripting_nodes.rendering_pipeline_nodes
 
 class RenderingPipelinePlugin(Plugin):
     def __init__(self) -> None:
