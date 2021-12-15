@@ -317,7 +317,7 @@ class RenderingPipeline(object):
     def setRowSkipConditions(self, rowSkipConditions: Callable[[dict],bool]):
         self.rowSkipConditions = rowSkipConditions
 
-    def processHeader(self, header: List[str]):
+    def processHeader(self, header: List[str], headerIndices: List[str]):
         pass
 
     def processDocumentDict(self, documentDict: dict, logHandler: Callable[[str],None] = None):
@@ -325,6 +325,9 @@ class RenderingPipeline(object):
 
     def postProcessDocumentDict(self, documentDict: dict, logHandler: Callable[[str],None] = None):
         return True
+
+    def zipRowAndHeader(self, row: List[str], header: List[str], headerIndices: List[str]):
+        return {header[i]: row[i] for i in headerIndices}
 
     def readProductTable(self, productTablePath: str = None, productTableSheetname: str = None, environmentSettings: dict = None, 
                          onProgressUpdate: Callable[[float, str],None] = None, replaceExistingCollection=False, logHandler: Callable[[str],None] = None):
@@ -344,8 +347,14 @@ class RenderingPipeline(object):
         if not table:
             raise RuntimeError(f'Could not read table {productTablePath}' + (f' with sheet name {productTableSheetname}.' if productTableSheetname else '.'))
 
-        header = [h if h != None else '' for h in table.getHeader()]
-        self.processHeader(header)
+        header = []
+        headerIndices = []
+        for i,h in enumerate(table.getHeader()):
+            if h:
+                header.append(h)
+                headerIndices.append(i)
+
+        self.processHeader(header, headerIndices)
 
         # In case of rendering name duplicates, create mappings/links to the document with the first-assigned rendering.
         renderingToDocumentMap: Dict[str,dict] = dict()
@@ -376,7 +385,7 @@ class RenderingPipeline(object):
             for row in table.getRowsWithoutHeader():
                 # Convert values to string for consistency
                 row = [str(v) if v != None else v for v in row]
-                documentDict = table.getRowAsDict(header, row)
+                documentDict = self.zipRowAndHeader(row, header, headerIndices)
 
                 if any(rowSkipCondition(documentDict) for rowSkipCondition in self.rowSkipConditions):
                     continue
