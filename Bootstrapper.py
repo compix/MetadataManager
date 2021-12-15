@@ -42,6 +42,7 @@ import VisualScriptingExtensions.document_action_nodes
 import VisualScriptingExtensions.action_nodes
 import VisualScriptingExtensions.versioning_nodes
 import VisualScriptingExtensions.third_party_extensions.deadline_nodes
+import VisualScriptingExtensions.third_party_extensions.photoshop_nodes
 import VisualScriptingExtensions.environment_nodes
 
 class Bootstrapper(object):
@@ -179,7 +180,7 @@ class Bootstrapper(object):
         self.serviceRegistry.actionManager = ActionManager()
         self.serviceRegistry.services.append(self.serviceRegistry.actionManager)
         
-        self.serviceRegistry.environmentManager = EnvironmentManager()
+        self.serviceRegistry.environmentManager = EnvironmentManager(handleSharedChangeEvents=self.mode != ApplicationMode.Console)
         self.serviceRegistry.services.append(self.serviceRegistry.environmentManager)
 
         self.serviceRegistry.dbManager = self.dbManager
