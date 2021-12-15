@@ -8,6 +8,8 @@ from Bootstrapper import Bootstrapper
 import logging
 import subprocess
 
+logging.getLogger('comtypes').setLevel('WARNING')
+
 logger = logging.getLogger(__name__)
 
 # Make sure the PySide2 plugin can be found:
