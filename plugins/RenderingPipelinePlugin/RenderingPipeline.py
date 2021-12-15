@@ -317,7 +317,7 @@ class RenderingPipeline(object):
     def setRowSkipConditions(self, rowSkipConditions: Callable[[dict],bool]):
         self.rowSkipConditions = rowSkipConditions
 
-    def processHeader(self, header: List[str], headerIndices: List[str]):
+    def processHeader(self, header: List[str], rowIndices: List[str]):
         pass
 
     def processDocumentDict(self, documentDict: dict, logHandler: Callable[[str],None] = None):
@@ -326,8 +326,8 @@ class RenderingPipeline(object):
     def postProcessDocumentDict(self, documentDict: dict, logHandler: Callable[[str],None] = None):
         return True
 
-    def zipRowAndHeader(self, row: List[str], header: List[str], headerIndices: List[str]):
-        return {header[i]: row[i] for i in headerIndices}
+    def zipRowAndHeader(self, row: List[str], header: List[str], rowIndices: List[str]):
+        return {header[hi]: row[i] for hi, i in enumerate(rowIndices) if i < len(row)}
 
     def readProductTable(self, productTablePath: str = None, productTableSheetname: str = None, environmentSettings: dict = None, 
                          onProgressUpdate: Callable[[float, str],None] = None, replaceExistingCollection=False, logHandler: Callable[[str],None] = None):
@@ -348,13 +348,13 @@ class RenderingPipeline(object):
             raise RuntimeError(f'Could not read table {productTablePath}' + (f' with sheet name {productTableSheetname}.' if productTableSheetname else '.'))
 
         header = []
-        headerIndices = []
+        rowIndices = []
         for i,h in enumerate(table.getHeader()):
             if h:
                 header.append(h)
-                headerIndices.append(i)
+                rowIndices.append(i)
 
-        self.processHeader(header, headerIndices)
+        self.processHeader(header, rowIndices)
 
         # In case of rendering name duplicates, create mappings/links to the document with the first-assigned rendering.
         renderingToDocumentMap: Dict[str,dict] = dict()
@@ -385,7 +385,7 @@ class RenderingPipeline(object):
             for row in table.getRowsWithoutHeader():
                 # Convert values to string for consistency
                 row = [str(v) if v != None else v for v in row]
-                documentDict = self.zipRowAndHeader(row, header, headerIndices)
+                documentDict = self.zipRowAndHeader(row, header, rowIndices)
 
                 if any(rowSkipCondition(documentDict) for rowSkipCondition in self.rowSkipConditions):
                     continue
