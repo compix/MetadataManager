@@ -4,8 +4,9 @@ import photoshop.api as ps
 from photoshop.api._document import Document
 from photoshop.api._artlayer import ArtLayer
 from photoshop.api._layerSet import LayerSet
+from photoshop.api._channel import Channel
 from photoshop.api.enumerations import CopyrightedType, DialogModes, LayerCompressionType, MatteType, RasterizeType, SaveOptions, Urgency, TiffEncodingType, ElementPlacement
-from VisualScripting.node_exec.base_nodes import SliderInput, VariableInputCountNode, defInlineNode, defNode
+from VisualScripting.node_exec.base_nodes import ColorInput, SliderInput, VariableInputCountNode, defInlineNode, defNode
 from enum import Enum, IntEnum
 import re
 
@@ -85,6 +86,15 @@ class LayerSetWrapper(object):
         super().__init__()
 
         self.psLayer = layerSet
+        self.psDoc = doc.psDoc
+        self.psApp = doc.psApp
+        self.doc = doc
+
+class ChannelWrapper(object):
+    def __init__(self, channel: Channel, doc: DocumentWrapper) -> None:
+        super().__init__()
+
+        self.psChannel = channel
         self.psDoc = doc.psDoc
         self.psApp = doc.psApp
         self.doc = doc
@@ -200,12 +210,12 @@ def closePhotoshopDocument(doc: DocumentWrapper):
     ensureActiveDocument(doc)
     doc.psDoc.close()
 
-@defNode('Photoshop RGB Color', returnNames=['RGB'], identifier=PHOTOSHOP_IDENTIFIER)
-def createRGBColor(red = 0, green = 0, blue = 0) -> ps.SolidColor:
+@defNode('Photoshop RGB Color', returnNames=['RGB'], inputInfo={'colorArray': ColorInput()}, identifier=PHOTOSHOP_IDENTIFIER)
+def createRGBColor(colorArray: typing.Tuple[int,int,int,int]=None) -> ps.SolidColor:
     c = ps.SolidColor()
-    c.rgb.red = red
-    c.rgb.green = green
-    c.rgb.blue = blue
+    c.rgb.red = colorArray[0]
+    c.rgb.green = colorArray[1]
+    c.rgb.blue = colorArray[2]
 
     return c
 
@@ -745,6 +755,135 @@ def artLayerUnlink(layer: ArtLayerWrapper, with_layer):
 
     return layer.doc, layer
 
+@defNode("Photoshop Layer Opacity", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def setLayerOpacity(layer: ArtLayerWrapper, opacity: float = 0.0):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.app.opacity = opacity
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Fill Opacity", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def setLayerFillOpaciy(layer: ArtLayerWrapper, opacity: float = 0.0):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.fillOpacity = opacity
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Set Blend Mode", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def setLayerBlendMode(layer: ArtLayerWrapper, blendMode: ps.BlendMode = ps.BlendMode.NormalBlend):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.blendMode = blendMode
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Set Name", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def setLayerName(layer: ArtLayerWrapper, name: str):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.name = name
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Set Filter Mask Density", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def setLayerFilterMaskDensity(layer: ArtLayerWrapper, density: float):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.filterMaskDensity = density
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Set As Background", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def setLayerAsBackground(layer: ArtLayerWrapper, asBackground: bool=True):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.isBackgroundLayer = asBackground
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Set Kind", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def setLayerKind(layer: ArtLayerWrapper, kind: ps.LayerKind=ps.LayerKind.NormalLayer):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.kind = kind
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Get Kind", isExecutable=True, returnNames=["Document", "Art Layer", "Kind"], identifier=PHOTOSHOP_IDENTIFIER)
+def getLayerKind(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    return layer.doc, layer, layer.psLayer.kind
+
+@defNode("Photoshop Layer Set Visible", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def setLayerVisible(layer: ArtLayerWrapper, visible: bool=True):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.visible = visible
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Is Visible", isExecutable=True, returnNames=["Document", "Art Layer", "Visible"], identifier=PHOTOSHOP_IDENTIFIER)
+def getLayerVisible(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    return layer.doc, layer, layer.psLayer.visible
+
+@defNode("Photoshop Layer Lock", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def lockLayer(layer: ArtLayerWrapper, locked: bool=True):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.allLocked = locked
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Is Locked", isExecutable=True, returnNames=["Document", "Art Layer", "Locked"], identifier=PHOTOSHOP_IDENTIFIER)
+def isLayerLocked(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    return layer.doc, layer, layer.psLayer.allLocked
+
+@defNode("Photoshop Layer Lock Position", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def lockLayerPosition(layer: ArtLayerWrapper, locked: bool=True):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.positionLocked = locked
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Lock Pixels", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def lockLayerPixels(layer: ArtLayerWrapper, locked: bool=True):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.pixelsLocked = locked
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Lock Transparent Pixels", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def lockLayerTransparentPixels(layer: ArtLayerWrapper, locked: bool=True):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.transparentPixelsLocked = locked
+
+    return layer.doc, layer
+
+@defNode("Photoshop Select Layer", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectLayer(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    layer.doc.psDoc.activeLayer = layer.psLayer
+
+    return layer.doc, layer
+
+@defNode("Photoshop Select Layer By Name", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectLayerByName(doc: DocumentWrapper, layerName: str):
+    layer = getLayerByName(doc, layerName)
+    layer.doc.psDoc.activeLayer = layer.psLayer
+
+    return layer.doc, layer
+
 @defNode("Photoshop Document Close", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
 def documentClose(doc: DocumentWrapper, saving: SaveOptions = SaveOptions.DoNotSaveChanges):
     ensureActiveDocument(doc)
@@ -880,3 +1019,88 @@ def documentTrim(doc: DocumentWrapper, trim_type, top= True, left= True, bottom=
     doc.psDoc.trim(trim_type, top, left, bottom, right)
 
     return doc
+
+@defNode("Photoshop Get Channel By Name", isExecutable=True, returnNames=["Document", "Channel"], identifier=PHOTOSHOP_IDENTIFIER)
+def getChannelByName(doc: DocumentWrapper, channelName: str):
+    ensureActiveDocument(doc)
+
+    channel = doc.psDoc.eval_javascript(f'app.activeDocument.channels.getByName("{channelName}")')
+
+    return doc, ChannelWrapper(channel, doc)
+
+@defNode("Photoshop Channel Add", isExecutable=True, returnNames=["Document", "Channel"], identifier=PHOTOSHOP_IDENTIFIER)
+def addChannel(doc: DocumentWrapper, channelName: str):
+    ensureActiveDocument(doc)
+
+    channel = Channel(doc.psDoc.channels.app.add())
+    channel.app.name = channelName
+
+    return doc, ChannelWrapper(channel, doc)
+
+@defNode("Photoshop Channel Remove", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def removeChannel(channel: ChannelWrapper):
+    ensureActiveDocument(channel.doc)
+
+    channel.psChannel.remove()
+
+    return channel.doc
+
+@defNode("Photoshop Channel Merge", isExecutable=True, returnNames=["Document", "Channel"], identifier=PHOTOSHOP_IDENTIFIER)
+def mergeChannel(channel: ChannelWrapper):
+    ensureActiveDocument(channel.doc)
+
+    channel.psChannel.merge()
+
+    return channel.doc, channel
+    
+@defNode("Photoshop Channel Duplicate", isExecutable=True, returnNames=["Document", "Channel"], identifier=PHOTOSHOP_IDENTIFIER)
+def duplicateChannel(channel: ChannelWrapper, targetDocument: DocumentWrapper):
+    ensureActiveDocument(channel.doc)
+
+    channel.psChannel.duplicate(targetDocument.psDoc)
+
+    return channel.doc, channel
+
+@defNode("Photoshop Channel Set Opacity", isExecutable=True, returnNames=["Document", "Channel"], identifier=PHOTOSHOP_IDENTIFIER)
+def setChannelOpacity(channel: ChannelWrapper, opacity: float = 0.0):
+    ensureActiveDocument(channel.doc)
+
+    channel.psChannel.opacity = opacity
+
+    return channel.doc, channel
+
+@defNode("Photoshop Channel Set Color", isExecutable=True, returnNames=["Document", "Channel"], identifier=PHOTOSHOP_IDENTIFIER)
+def setChannelColor(channel: ChannelWrapper, color: ps.SolidColor):
+    ensureActiveDocument(channel.doc)
+
+    channel.psChannel.color = color
+
+    return channel.doc, channel
+
+@defNode("Photoshop Channel Set Visibility", isExecutable=True, returnNames=["Document", "Channel"], identifier=PHOTOSHOP_IDENTIFIER)
+def setChannelVisibility(channel: ChannelWrapper, visible: bool=True):
+    ensureActiveDocument(channel.doc)
+
+    channel.psChannel.visible = visible
+
+    return channel.doc, channel
+
+@defNode("Photoshop Channel Set Name", isExecutable=True, returnNames=["Document", "Channel"], identifier=PHOTOSHOP_IDENTIFIER)
+def setChannelName(channel: ChannelWrapper, name: str):
+    ensureActiveDocument(channel.doc)
+
+    channel.psChannel.app.name = name
+
+    return channel.doc, channel
+
+@defNode("Photoshop Channel Select", isExecutable=True, returnNames=["Document", "Channel"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectChannels(channel: ChannelWrapper, addToSelection=False):
+    ensureActiveDocument(channel.doc)
+
+    if channel.doc.psDoc.activeChannels is None or addToSelection:
+        channel.doc.psDoc.activeChannels = [channel.psChannel]
+    else:
+        if not channel.psChannel in channel.doc.psDoc.activeChannels:
+            channel.doc.psDoc.activeChannels += [channel.psChannel]
+
+    return channel.doc, channel
