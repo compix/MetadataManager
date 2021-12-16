@@ -4,7 +4,7 @@ import photoshop.api as ps
 from photoshop.api._document import Document
 from photoshop.api._artlayer import ArtLayer
 from photoshop.api._layerSet import LayerSet
-from photoshop.api.enumerations import CopyrightedType, DialogModes, LayerCompressionType, MatteType, RasterizeType, Urgency, TiffEncodingType, ElementPlacement
+from photoshop.api.enumerations import CopyrightedType, DialogModes, LayerCompressionType, MatteType, RasterizeType, SaveOptions, Urgency, TiffEncodingType, ElementPlacement
 from VisualScripting.node_exec.base_nodes import SliderInput, VariableInputCountNode, defInlineNode, defNode
 from enum import Enum, IntEnum
 import re
@@ -13,7 +13,7 @@ PHOTOSHOP_IDENTIFIER = "Photoshop"
 
 IMPORTS = [
     'from photoshop.api import NewDocumentMode, DocumentFill, BitsPerChannelType',
-    'from photoshop.api.enumerations import CopyrightedType, LayerCompressionType, MatteType, RasterizeType, Urgency, TiffEncodingType, ElementPlacement',
+    'from photoshop.api.enumerations import CopyrightedType, DialogModes, LayerCompressionType, MatteType, RasterizeType, SaveOptions, Urgency, TiffEncodingType, ElementPlacement',
     'from VisualScriptingExtensions.third_party_extensions.photoshop_nodes import ExrColorDepth, ExrTilingType, ExrCompressionMethod, ToLayerPlacement'
 ]
 
@@ -744,3 +744,139 @@ def artLayerUnlink(layer: ArtLayerWrapper, with_layer):
     layer.psLayer.unlink(with_layer)
 
     return layer.doc, layer
+
+@defNode("Photoshop Document Close", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentClose(doc: DocumentWrapper, saving: SaveOptions = SaveOptions.DoNotSaveChanges):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.close(saving)
+
+    return doc
+
+@defNode("Photoshop Document Convert Profile", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentConvertProfile(doc: DocumentWrapper):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.convertProfile()
+
+    return doc
+
+@defNode("Photoshop Document Crop", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentCrop(doc: DocumentWrapper, bounds, angle= None, width= None, height= None):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.crop(bounds, angle, width, height)
+
+    return doc
+
+@defNode("Photoshop Export Document", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentExportDocument(doc: DocumentWrapper, file_path, exportAs= None, options= None):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.exportDocument(file_path, exportAs, options)
+
+    return doc
+
+@defNode("Photoshop Document Flatten", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentFlatten(doc: DocumentWrapper):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.flatten()
+
+    return doc
+
+@defNode("Photoshop Document Merge Visible Layers", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentMergeVisibleLayers(doc: DocumentWrapper):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.mergeVisibleLayers()
+
+    return doc
+
+@defNode("Photoshop Document Paste", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentPaste(doc: DocumentWrapper):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.paste()
+
+    return doc
+
+@defNode("Photoshop Document Print", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentPrint(doc: DocumentWrapper):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.print()
+
+    return doc
+
+@defNode("Photoshop Document Print One Copy", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentPrintOneCopy(doc: DocumentWrapper):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.printOneCopy()
+
+    return doc
+
+@defNode("Photoshop Document Rasterize All Layers", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentRasterizeAllLayers(doc: DocumentWrapper):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.rasterizeAllLayers()
+
+    return doc
+
+@defNode("Photoshop Document Record Measurements", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentRecordMeasurements(doc: DocumentWrapper, source, dataPoints):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.recordMeasurements(source, dataPoints)
+
+    return doc
+
+@defNode("Photoshop Document Resize Image", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentResizeImage(doc: DocumentWrapper, width, height, resolution= 72, automatic= 8):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.resizeImage(width, height, resolution, automatic)
+
+    return doc
+
+@defNode("Photoshop Save Document", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentSave(doc: DocumentWrapper):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.save()
+
+    return doc
+
+@defNode("Photoshop Document Split Channels", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentSplitChannels(doc: DocumentWrapper):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.splitChannels()
+
+    return doc
+
+@defNode("Photoshop Document Suspend History", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentSuspendHistory(doc: DocumentWrapper, historyString, javaScriptString):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.suspendHistory(historyString, javaScriptString)
+
+    return doc
+
+@defNode("Photoshop Document Trap", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentTrap(doc: DocumentWrapper, width):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.trap(width)
+
+    return doc
+
+@defNode("Photoshop Document Trim", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)
+def documentTrim(doc: DocumentWrapper, trim_type, top= True, left= True, bottom= True, right= True):
+    ensureActiveDocument(doc)
+
+    doc.psDoc.trim(trim_type, top, left, bottom, right)
+
+    return doc

@@ -1,6 +1,8 @@
 import os
+import typing
 import photoshop.api as ps
 from photoshop.api._artlayer import ArtLayer
+from photoshop.api._document import Document
 import inspect
 
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -15,16 +17,16 @@ def splitAtUppercaseLetters(name: str) -> str:
 
     return t_name
 
-def generatePhotoshopNodes(filename: str):
-    methods = inspect.getmembers(ArtLayer, predicate=inspect.isroutine)
-    code = ''
+def generatePhotoshopNodes(filename: str, targetClass, addCodeFunc):
+    methods = inspect.getmembers(targetClass, predicate=inspect.isroutine)
+    codeLines = []
     for m in methods:
         funcName = m[0]
 
         if '_' in funcName:
             continue
 
-        funcName_ = funcName[0].upper() + funcName[1:]
+        funcNameUpper = funcName[0].upper() + funcName[1:]
 
         try:
             signature = inspect.signature(m[1])
@@ -51,16 +53,34 @@ def generatePhotoshopNodes(filename: str):
         args = ', '.join(argsArr) if len(argsArr) > 0 else ''
         sigArgs = (', ' + ', '.join(sigArgsArr)) if len(sigArgsArr) > 0 else ''
 
-        code += f'@defNode("Photoshop Layer {splitAtUppercaseLetters(funcName_)}", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)\n'
-        code += f'def artLayer{funcName_}(layer: ArtLayerWrapper{sigArgs}):\n'
-        code += '    ensureActiveDocument(layer.doc)\n'
-        code += '\n'
-        code += f'    layer.psLayer.{funcName}({args})\n'
-        code += '\n'
-        code += '    return layer.doc, layer\n'
-        code += '\n'
+        addCodeFunc(codeLines, sigArgs, args, funcName, funcNameUpper)
+
+    code = ''
+    for l in codeLines:
+        code += l + '\n'
 
     with open(filename, mode='w+') as f:
         f.write(code)
 
-generatePhotoshopNodes(os.path.join(CUR_DIR, 'art_layer_nodes.py'))
+def addArtLayerCode(codeLines: typing.List[str], sigArgs: str, args: str, funcName: str, funcNameUpper: str):
+    codeLines.append(f'@defNode("Photoshop Layer {splitAtUppercaseLetters(funcNameUpper)}", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)')
+    codeLines.append(f'def artLayer{funcNameUpper}(layer: ArtLayerWrapper{sigArgs}):')
+    codeLines.append('    ensureActiveDocument(layer.doc)')
+    codeLines.append('')
+    codeLines.append(f'    layer.psLayer.{funcName}({args})')
+    codeLines.append('')
+    codeLines.append('    return layer.doc, layer')
+    codeLines.append('')
+
+def addDocumentCode(codeLines: typing.List[str], sigArgs: str, args: str, funcName: str, funcNameUpper: str):
+    codeLines.append(f'@defNode("Photoshop Document {splitAtUppercaseLetters(funcNameUpper)}", isExecutable=True, returnNames=["Document"], identifier=PHOTOSHOP_IDENTIFIER)')
+    codeLines.append(f'def document{funcNameUpper}(doc: DocumentWrapper{sigArgs}):')
+    codeLines.append('    ensureActiveDocument(doc)')
+    codeLines.append('')
+    codeLines.append(f'    doc.psDoc.{funcName}({args})')
+    codeLines.append('')
+    codeLines.append('    return doc')
+    codeLines.append('')
+
+#generatePhotoshopNodes(os.path.join(CUR_DIR, 'art_layer_nodes.py'), ArtLayer, addArtLayerCode)
+generatePhotoshopNodes(os.path.join(CUR_DIR, 'document_nodes.py'), Document, addDocumentCode)
