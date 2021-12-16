@@ -3,17 +3,23 @@ import typing
 import photoshop.api as ps
 from photoshop.api._document import Document
 from photoshop.api._artlayer import ArtLayer
-from photoshop.api.enumerations import CopyrightedType, DialogModes, LayerCompressionType, MatteType, RasterizeType, Urgency, TiffEncodingType
-from VisualScripting.node_exec.base_nodes import SliderInput, defNode
-from enum import Enum
+from photoshop.api._layerSet import LayerSet
+from photoshop.api.enumerations import CopyrightedType, DialogModes, LayerCompressionType, MatteType, RasterizeType, Urgency, TiffEncodingType, ElementPlacement
+from VisualScripting.node_exec.base_nodes import SliderInput, VariableInputCountNode, defInlineNode, defNode
+from enum import Enum, IntEnum
+import re
 
 PHOTOSHOP_IDENTIFIER = "Photoshop"
 
 IMPORTS = [
     'from photoshop.api import NewDocumentMode, DocumentFill, BitsPerChannelType',
-    'from photoshop.api.enumerations import CopyrightedType, LayerCompressionType, MatteType, RasterizeType, Urgency, TiffEncodingType',
-    'from VisualScriptingExtensions.third_party_extensions.photoshop_nodes import ExrColorDepth, ExrTilingType, ExrCompressionMethod'
+    'from photoshop.api.enumerations import CopyrightedType, LayerCompressionType, MatteType, RasterizeType, Urgency, TiffEncodingType, ElementPlacement',
+    'from VisualScriptingExtensions.third_party_extensions.photoshop_nodes import ExrColorDepth, ExrTilingType, ExrCompressionMethod, ToLayerPlacement'
 ]
+
+class ToLayerPlacement(IntEnum):
+    PlaceAfter = 4
+    PlaceBefore = 3
 
 class ExrColorDepth(Enum):
     FLOAT = """LOAT"""
@@ -74,13 +80,51 @@ class ArtLayerWrapper(object):
         self.psApp = doc.psApp
         self.doc = doc
 
+class LayerSetWrapper(object):
+    def __init__(self, layerSet: LayerSet, doc: DocumentWrapper) -> None:
+        super().__init__()
+
+        self.psLayer = layerSet
+        self.psDoc = doc.psDoc
+        self.psApp = doc.psApp
+        self.doc = doc
+
+class EvaluateJavascriptNode(VariableInputCountNode):
+    __identifier__ = PHOTOSHOP_IDENTIFIER
+    NODE_NAME = 'Photoshop Evaluate Javascript'
+
+    def __init__(self):
+        super(EvaluateJavascriptNode, self).__init__()
+
+        self.add_exec_input('Execute')
+        self.add_input("doc")
+        self.add_input("script")
+        
+        self.add_exec_output('Execute')
+        self.add_output("Document")
+        self.add_output("return")
+
+    @staticmethod
+    def execute(doc: DocumentWrapper, script: str, *argv):
+        ensureActiveDocument(doc)
+
+        for i, arg in enumerate(argv):
+            argName = f'in{i}'
+
+            if isinstance(arg, str):
+                arg = '{!r}'.format(arg)
+
+            script = re.sub(r"\b%s\b" % argName, arg, script)
+
+        return doc, doc.psDoc.eval_javascript(script)
+
 def ensureActiveDocument(doc: DocumentWrapper):
     if doc.psApp.activeDocument != doc.psDoc:
         doc.psApp.activeDocument = doc.psDoc
 
 @defNode('Create Photoshop App', isExecutable=True, returnNames=['app'], identifier=PHOTOSHOP_IDENTIFIER)
-def createApp() -> ps.Application:
-    return ps.Application(version='CS6')
+def createApp(version: str=None) -> ps.Application:
+    return ps.Application(version=version)
 
 @defNode('Photoshop Close All Documents', isExecutable=True, returnNames=['app'], identifier=PHOTOSHOP_IDENTIFIER)
 def closeAllDocuments(app: ps.Application):
@@ -358,10 +402,345 @@ def placeImage(doc: DocumentWrapper, filename: str, layerName: str = None, raste
 
     return doc, ArtLayerWrapper(layer, doc)
 
-@defNode('Photoshop Rasterize Layer', isExecutable=True, returnNames=['Document', 'Art Layer'], identifier=PHOTOSHOP_IDENTIFIER)
+@defNode('Photoshop Layer Rasterize', isExecutable=True, returnNames=['Document', 'Art Layer'], identifier=PHOTOSHOP_IDENTIFIER)
 def rasterizeLayer(layer: ArtLayerWrapper, rasterizeType: RasterizeType = RasterizeType.EntireLayer) -> typing.Tuple[DocumentWrapper, ArtLayerWrapper]:
     ensureActiveDocument(layer.doc)
 
     layer.psLayer.rasterize(rasterizeType)
+
+    return layer.doc, layer
+
+@defNode('Photoshop Get Layer By Name', returnNames=['Document', 'Art Layer'], identifier=PHOTOSHOP_IDENTIFIER)
+def getLayerByName(doc: DocumentWrapper, layerName: str):
+    ensureActiveDocument(doc)
+    
+    layer = f'app.activeDocument.artLayers.getByName("{layerName}")'
+    return doc, doc.psDoc.eval_javascript(layer)
+
+@defNode('Photoshop Create Layer Set', isExecutable=True, returnNames=['Document', 'Layer Set'], identifier=PHOTOSHOP_IDENTIFIER)
+def createLayerSet(doc: DocumentWrapper, name: str=None):
+    layerSet = doc.psDoc.layerSets.add()
+    if name:
+        layerSet.name = name
+        
+    return doc, LayerSetWrapper(layerSet, doc)
+
+@defNode('Photoshop Move To Layer Set', isExecutable=True, returnNames=['Document', 'Source', 'Target'], identifier=PHOTOSHOP_IDENTIFIER)
+def moveToLayerSet(source, target: LayerSetWrapper, placementType: ElementPlacement = ElementPlacement.PlaceInside):
+    ensureActiveDocument(source.doc)
+
+    source.psLayer.move(target.psLayer, placementType)
+
+    return source.doc, source, target
+
+@defNode('Photoshop Move To Layer', isExecutable=True, returnNames=['Document', 'Source', 'Target'], identifier=PHOTOSHOP_IDENTIFIER)
+def moveToLayer(source, target: ArtLayerWrapper, placementType: ToLayerPlacement = ToLayerPlacement.PlaceAfter):
+    ensureActiveDocument(source.doc)
+    
+    source.psLayer.move(target.psLayer, placementType)
+
+    return source.doc, source, target
+
+@defNode("Photoshop Layer Add", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerAdd(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.add()
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Adjust Brightness Contrast", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerAdjustBrightnessContrast(layer: ArtLayerWrapper, brightness, contrast):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.adjustBrightnessContrast(brightness, contrast)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Adjust Color Balance", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerAdjustColorBalance(layer: ArtLayerWrapper, shadows, midtones, highlights, preserveLuminosity):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.adjustColorBalance(shadows, midtones, highlights, preserveLuminosity)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Adjust Curves", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerAdjustCurves(layer: ArtLayerWrapper, curveShape):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.adjustCurves(curveShape)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Adjust Levels", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerAdjustLevels(layer: ArtLayerWrapper, inputRangeStart, inputRangeEnd, inputRangeGamma, outputRangeStart, outputRangeEnd):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.adjustLevels(inputRangeStart, inputRangeEnd, inputRangeGamma, outputRangeStart, outputRangeEnd)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Add Noise", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyAddNoise(layer: ArtLayerWrapper, amount, distribution, monochromatic):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyAddNoise(amount, distribution, monochromatic)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Average", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyAverage(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyAverage()
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Blur", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyBlur(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyBlur()
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Blur More", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyBlurMore(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyBlurMore()
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Clouds", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyClouds(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyClouds()
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Custom Filter", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyCustomFilter(layer: ArtLayerWrapper, characteristics, scale, offset):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyCustomFilter(characteristics, scale, offset)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply De Interlace", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyDeInterlace(layer: ArtLayerWrapper, eliminateFields, createFields):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyDeInterlace(eliminateFields, createFields)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Despeckle", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyDespeckle(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyDespeckle()
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Difference Clouds", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyDifferenceClouds(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyDifferenceClouds()
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Diffuse Glow", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyDiffuseGlow(layer: ArtLayerWrapper, graininess, amount, clear_amount):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyDiffuseGlow(graininess, amount, clear_amount)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Displace", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyDisplace(layer: ArtLayerWrapper, horizontalScale, verticalScale, displacementType, undefinedAreas, displacementMapFile):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyDisplace(horizontalScale, verticalScale, displacementType, undefinedAreas, displacementMapFile)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Dust And Scratches", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyDustAndScratches(layer: ArtLayerWrapper, radius, threshold):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyDustAndScratches(radius, threshold)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Gaussian Blur", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyGaussianBlur(layer: ArtLayerWrapper, radius):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyGaussianBlur(radius)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Glass Effect", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyGlassEffect(layer: ArtLayerWrapper, distortion, smoothness, scaling, invert, texture, textureFile):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyGlassEffect(distortion, smoothness, scaling, invert, texture, textureFile)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply High Pass", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyHighPass(layer: ArtLayerWrapper, radius):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyHighPass(radius)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Lens Blur", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyLensBlur(layer: ArtLayerWrapper, source, focalDistance, invertDepthMap, shape, radius, bladeCurvature, rotation, brightness, threshold, amount, distribution, monochromatic):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyLensBlur(source, focalDistance, invertDepthMap, shape, radius, bladeCurvature, rotation, brightness, threshold, amount, distribution, monochromatic)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Lens Flare", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyLensFlare(layer: ArtLayerWrapper, brightness, flareCenter, lensType):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyLensFlare(brightness, flareCenter, lensType)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Maximum", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyMaximum(layer: ArtLayerWrapper, radius):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyMaximum(radius)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Median Noise", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyMedianNoise(layer: ArtLayerWrapper, radius):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyMedianNoise(radius)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Minimum", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyMinimum(layer: ArtLayerWrapper, radius):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyMinimum(radius)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Motion Blur", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyMotionBlur(layer: ArtLayerWrapper, angle, radius):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyMotionBlur(angle, radius)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply NTSC", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyNTSC(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyNTSC()
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Ocean Ripple", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyOceanRipple(layer: ArtLayerWrapper, size, magnitude):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyOceanRipple(size, magnitude)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Offset", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyOffset(layer: ArtLayerWrapper, horizontal, vertical, undefinedAreas):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyOffset(horizontal, vertical, undefinedAreas)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Apply Pinch", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerApplyPinch(layer: ArtLayerWrapper, amount):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.applyPinch(amount)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Duplicate", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerDuplicate(layer: ArtLayerWrapper, relativeObject= None, insertionLocation= None):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.duplicate(relativeObject, insertionLocation)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Invert", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerInvert(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.invert()
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Link", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerLink(layer: ArtLayerWrapper, with_layer):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.link(with_layer)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Merge", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerMerge(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.merge()
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Move", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerMove(layer: ArtLayerWrapper, relativeObject, insertionLocation):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.move(relativeObject, insertionLocation)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Posterize", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerPosterize(layer: ArtLayerWrapper, levels):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.posterize(levels)
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Remove", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerRemove(layer: ArtLayerWrapper):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.remove()
+
+    return layer.doc, layer
+
+@defNode("Photoshop Layer Unlink", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
+def artLayerUnlink(layer: ArtLayerWrapper, with_layer):
+    ensureActiveDocument(layer.doc)
+
+    layer.psLayer.unlink(with_layer)
 
     return layer.doc, layer

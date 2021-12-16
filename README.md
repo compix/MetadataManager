@@ -20,11 +20,9 @@
       > pip install -U pipenv
 
 ## Deploy
-Use pyinstaller inside .env:
-```powershell
-cd .env
-pyinstaller ../metadata_viewer.spec
-pyinstaller ../launcher/launcher.spec
+```shell
+pyinstaller metadata_viewer.spec
+pyinstaller launcher/launcher.spec
 ```
 
 ## Update Qt Resource File
