@@ -1104,3 +1104,175 @@ def selectChannels(channel: ChannelWrapper, addToSelection=False):
             channel.doc.psDoc.activeChannels += [channel.psChannel]
 
     return channel.doc, channel
+
+@defNode("Photoshop Layer Set Set All Locked", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetSetAllLocked(layerSet: LayerSetWrapper, allLocked):
+    ensureActiveDocument(layerSet.doc)
+    layerSet.psLayer.allLocked = allLocked
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Get All Locked", isExecutable=True, returnNames=["Document", "Layer Set", "AllLocked"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetGetAllLocked(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    return layerSet.doc, layerSet, layerSet.psLayer.allLocked
+
+@defNode("Photoshop Layer Set Get Art Layers", isExecutable=True, returnNames=["Document", "Layer Set", "ArtLayers"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetGetArtLayers(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    return layerSet.doc, layerSet, layerSet.psLayer.artLayers
+
+@defNode("Photoshop Layer Set Set Blend Mode", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetSetBlendMode(layerSet: LayerSetWrapper, blendMode: ps.BlendMode = ps.BlendMode.NormalBlend):
+    ensureActiveDocument(layerSet.doc)
+    layerSet.psLayer.blendMode = blendMode
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Get Blend Mode", isExecutable=True, returnNames=["Document", "Layer Set", "BlendMode"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetGetBlendMode(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    return layerSet.doc, layerSet, layerSet.psLayer.blendMode
+
+@defNode("Photoshop Layer Set Get Bounds", isExecutable=True, returnNames=["Document", "Layer Set", "Bounds"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetGetBounds(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    return layerSet.doc, layerSet, layerSet.psLayer.bounds
+
+@defNode("Photoshop Layer Set Duplicate", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetDuplicate(layerSet: LayerSetWrapper, relativeObject= None, insertionLocation= None):
+    ensureActiveDocument(layerSet.doc)
+
+    layerSet.psLayer.duplicate(relativeObject, insertionLocation)
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Set Enabled Channels", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetSetEnabledChannels(layerSet: LayerSetWrapper, enabledChannels):
+    ensureActiveDocument(layerSet.doc)
+    layerSet.psLayer.enabledChannels = enabledChannels
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Get Enabled Channels", isExecutable=True, returnNames=["Document", "Layer Set", "EnabledChannels"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetGetEnabledChannels(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    return layerSet.doc, layerSet, layerSet.psLayer.enabledChannels
+
+@defNode("Photoshop Layer Set Get Layer Sets", isExecutable=True, returnNames=["Document", "Layer Set", "LayerSets"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetGetLayerSets(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    return layerSet.doc, layerSet, layerSet.psLayer.layerSets
+
+@defNode("Photoshop Layer Set Get Layers", isExecutable=True, returnNames=["Document", "Layer Set", "Layers"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetGetLayers(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    return layerSet.doc, layerSet, layerSet.psLayer.layers
+
+@defNode("Photoshop Layer Set Link", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetLink(layerSet: LayerSetWrapper, with_layer):
+    ensureActiveDocument(layerSet.doc)
+
+    layerSet.psLayer.link(with_layer)
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Get Linked Layers", isExecutable=True, returnNames=["Document", "Layer Set", "LinkedLayers"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetGetLinkedLayers(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    return layerSet.doc, layerSet, layerSet.psLayer.linkedLayers
+
+@defNode("Photoshop Layer Set Merge", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetMerge(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    layerSet.psLayer.merge()
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Set Name", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetSetName(layerSet: LayerSetWrapper, name):
+    ensureActiveDocument(layerSet.doc)
+    layerSet.psLayer.name = name
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Get Name", isExecutable=True, returnNames=["Document", "Layer Set", "Name"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetGetName(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    return layerSet.doc, layerSet, layerSet.psLayer.name
+
+@defNode("Photoshop Layer Set Set Opacity", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetSetOpacity(layerSet: LayerSetWrapper, opacity):
+    ensureActiveDocument(layerSet.doc)
+    layerSet.psLayer.opacity = opacity
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Get Opacity", isExecutable=True, returnNames=["Document", "Layer Set", "Opacity"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetGetOpacity(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    return layerSet.doc, layerSet, layerSet.psLayer.opacity
+
+@defNode("Photoshop Layer Set Remove", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetRemove(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    layerSet.psLayer.remove()
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Resize", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetResize(layerSet: LayerSetWrapper, horizontal= None, vertical= None, anchor: AnchorPosition= None):
+    ensureActiveDocument(layerSet.doc)
+
+    layerSet.psLayer.resize(horizontal, vertical, anchor)
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Rotate", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetRotate(layerSet: LayerSetWrapper, angle, anchor= None):
+    ensureActiveDocument(layerSet.doc)
+
+    layerSet.psLayer.rotate(angle, anchor)
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Translate", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetTranslate(layerSet: LayerSetWrapper, delta_x, delta_y):
+    ensureActiveDocument(layerSet.doc)
+
+    layerSet.psLayer.translate(delta_x, delta_y)
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Unlink", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetUnlink(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    layerSet.psLayer.unlink()
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Set Visible", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetSetVisible(layerSet: LayerSetWrapper, visible):
+    ensureActiveDocument(layerSet.doc)
+    layerSet.psLayer.visible = visible
+
+    return layerSet.doc, layerSet
+
+@defNode("Photoshop Layer Set Get Visible", isExecutable=True, returnNames=["Document", "Layer Set", "Visible"], identifier=PHOTOSHOP_IDENTIFIER)
+def layerSetGetVisible(layerSet: LayerSetWrapper):
+    ensureActiveDocument(layerSet.doc)
+
+    return layerSet.doc, layerSet, layerSet.psLayer.visible

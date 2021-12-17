@@ -3,6 +3,7 @@ import typing
 import photoshop.api as ps
 from photoshop.api._artlayer import ArtLayer
 from photoshop.api._document import Document
+from photoshop.api._layerSet import LayerSet
 import inspect
 
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -17,10 +18,13 @@ def splitAtUppercaseLetters(name: str) -> str:
 
     return t_name
 
+def isRoutineOrProperty(o):
+    return inspect.isroutine(o) or isinstance(o, property)
+
 def generatePhotoshopNodes(filename: str, targetClass, addCodeFunc):
-    methods = inspect.getmembers(targetClass, predicate=inspect.isroutine)
+    methodsAndProperties = inspect.getmembers(targetClass, predicate=isRoutineOrProperty)
     codeLines = []
-    for m in methods:
+    for m in methodsAndProperties:
         funcName = m[0]
 
         if '_' in funcName:
@@ -31,29 +35,32 @@ def generatePhotoshopNodes(filename: str, targetClass, addCodeFunc):
         try:
             signature = inspect.signature(m[1])
         except:
-            continue
+            pass
+
+        isProperty = isinstance(m[1], property)
 
         argsArr = []
         sigArgsArr = []
-        for k, v in signature.parameters.items():
-            if k == 'self':
-                continue
+        if not isProperty:
+            for k, v in signature.parameters.items():
+                if k == 'self':
+                    continue
 
-            arg = k
-            argsArr.append(arg)
+                arg = k
+                argsArr.append(arg)
 
-            if v.annotation != inspect.Parameter.empty:
-                arg += ': ' + str(v.annotation.__name__)
-            
-            if v.default != inspect.Parameter.empty:
-                arg += '= ' + str(v.default)
+                if v.annotation != inspect.Parameter.empty:
+                    arg += ': ' + str(v.annotation.__name__)
+                
+                if v.default != inspect.Parameter.empty:
+                    arg += '= ' + str(v.default)
 
-            sigArgsArr.append(arg)
+                sigArgsArr.append(arg)
         
         args = ', '.join(argsArr) if len(argsArr) > 0 else ''
         sigArgs = (', ' + ', '.join(sigArgsArr)) if len(sigArgsArr) > 0 else ''
 
-        addCodeFunc(codeLines, sigArgs, args, funcName, funcNameUpper)
+        addCodeFunc(codeLines, sigArgs, args, funcName, funcNameUpper, isProperty)
 
     code = ''
     for l in codeLines:
@@ -82,5 +89,31 @@ def addDocumentCode(codeLines: typing.List[str], sigArgs: str, args: str, funcNa
     codeLines.append('    return doc')
     codeLines.append('')
 
+def addLayerSetCode(codeLines: typing.List[str], sigArgs: str, args: str, funcName: str, funcNameUpper: str, isProperty: bool):
+    if isProperty:
+        codeLines.append(f'@defNode("Photoshop Layer Set Set {splitAtUppercaseLetters(funcNameUpper)}", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)')
+        codeLines.append(f'def layerSetSet{funcNameUpper}(layerSet: LayerSetWrapper, {funcName}):')
+        codeLines.append('    ensureActiveDocument(layerSet.doc)')
+        codeLines.append(f'    layerSet.psLayer.{funcName} = {funcName}')
+        codeLines.append('')
+        codeLines.append(f'    return layerSet.doc, layerSet')
+        codeLines.append('')
+        codeLines.append(f'@defNode("Photoshop Layer Set Get {splitAtUppercaseLetters(funcNameUpper)}", isExecutable=True, returnNames=["Document", "Layer Set", "{funcNameUpper}"], identifier=PHOTOSHOP_IDENTIFIER)')
+        codeLines.append(f'def layerSetGet{funcNameUpper}(layerSet: LayerSetWrapper):')
+        codeLines.append('    ensureActiveDocument(layerSet.doc)')
+        codeLines.append('')
+        codeLines.append(f'    return layerSet.doc, layerSet, layerSet.psLayer.{funcName}')
+        codeLines.append('')
+    else:
+        codeLines.append(f'@defNode("Photoshop Layer Set {splitAtUppercaseLetters(funcNameUpper)}", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)')
+        codeLines.append(f'def layerSet{funcNameUpper}(layerSet: LayerSetWrapper{sigArgs}):')
+        codeLines.append('    ensureActiveDocument(layerSet.doc)')
+        codeLines.append('')
+        codeLines.append(f'    layerSet.psLayer.{funcName}({args})')
+        codeLines.append('')
+        codeLines.append('    return layerSet.doc, layerSet')
+        codeLines.append('')
+
 #generatePhotoshopNodes(os.path.join(CUR_DIR, 'art_layer_nodes.py'), ArtLayer, addArtLayerCode)
-generatePhotoshopNodes(os.path.join(CUR_DIR, 'document_nodes.py'), Document, addDocumentCode)
+#generatePhotoshopNodes(os.path.join(CUR_DIR, 'document_nodes.py'), Document, addDocumentCode)
+generatePhotoshopNodes(os.path.join(CUR_DIR, 'layer_set_nodes.py'), LayerSet, addLayerSetCode)
