@@ -5,7 +5,9 @@ from photoshop.api._document import Document
 from photoshop.api._artlayer import ArtLayer
 from photoshop.api._layerSet import LayerSet
 from photoshop.api._channel import Channel
-from photoshop.api.enumerations import CopyrightedType, DialogModes, LayerCompressionType, MatteType, RasterizeType, SaveOptions, Urgency, TiffEncodingType, ElementPlacement
+from photoshop.api._selection import Selection
+from photoshop.api.enumerations import AnchorPosition, ColorBlendMode, CopyrightedType, DialogModes, LayerCompressionType
+from photoshop.api.enumerations import MatteType, RasterizeType, SaveOptions, SelectionType, Urgency, TiffEncodingType, ElementPlacement
 from VisualScripting.node_exec.base_nodes import ColorInput, SliderInput, VariableInputCountNode, defInlineNode, defNode
 from enum import Enum, IntEnum
 import re
@@ -14,7 +16,8 @@ PHOTOSHOP_IDENTIFIER = "Photoshop"
 
 IMPORTS = [
     'from photoshop.api import NewDocumentMode, DocumentFill, BitsPerChannelType',
-    'from photoshop.api.enumerations import CopyrightedType, DialogModes, LayerCompressionType, MatteType, RasterizeType, SaveOptions, Urgency, TiffEncodingType, ElementPlacement',
+    'from photoshop.api.enumerations import AnchorPosition, ColorBlendMode, CopyrightedType, DialogModes, LayerCompressionType',
+    'from photoshop.api.enumerations import MatteType, RasterizeType, SaveOptions, SelectionType, Urgency, TiffEncodingType, ElementPlacement',
     'from VisualScriptingExtensions.third_party_extensions.photoshop_nodes import ExrColorDepth, ExrTilingType, ExrCompressionMethod, ToLayerPlacement'
 ]
 
@@ -99,6 +102,15 @@ class ChannelWrapper(object):
         self.psApp = doc.psApp
         self.doc = doc
 
+class SelectionWrapper(object):
+    def __init__(self, selection: Selection, doc: DocumentWrapper) -> None:
+        super().__init__()
+
+        self.psSelection = selection
+        self.psDoc = doc.psDoc
+        self.psApp = doc.psApp
+        self.doc = doc
+
 class EvaluateJavascriptNode(VariableInputCountNode):
     __identifier__ = PHOTOSHOP_IDENTIFIER
     NODE_NAME = 'Photoshop Evaluate Javascript'
@@ -132,7 +144,7 @@ def ensureActiveDocument(doc: DocumentWrapper):
     if doc.psApp.activeDocument != doc.psDoc:
         doc.psApp.activeDocument = doc.psDoc
 
-@defNode('Create Photoshop App', isExecutable=True, returnNames=['app'], identifier=PHOTOSHOP_IDENTIFIER)
+@defNode('Photoshop Create App', isExecutable=True, returnNames=['app'], identifier=PHOTOSHOP_IDENTIFIER)
 def createApp(version: str=None) -> ps.Application:
     return ps.Application(version=version)
 
@@ -143,7 +155,7 @@ def closeAllDocuments(app: ps.Application):
 
     return app
 
-@defNode('Add Photoshop Document', isExecutable=True, returnNames=['Document'], identifier=PHOTOSHOP_IDENTIFIER, imports=IMPORTS)
+@defNode('Photoshop Add Document', isExecutable=True, returnNames=['Document'], identifier=PHOTOSHOP_IDENTIFIER, imports=IMPORTS)
 def addDocument(app: ps.Application, 
         width: int = 960,
         height: int = 540,
@@ -158,7 +170,29 @@ def addDocument(app: ps.Application,
     doc = DocumentWrapper(app.documents.add(width, height, resolution, name, mode, initialFill, pixelAspectRatio, bitsPerChannel, colorProfileName), app)
     return doc
 
-@defNode('Duplicate Photoshop Document', isExecutable=True, returnNames=['Old Document', 'New Document'], identifier=PHOTOSHOP_IDENTIFIER)
+@defNode('Photoshop Close Document', isExecutable=True, identifier=PHOTOSHOP_IDENTIFIER)
+def closePhotoshopDocument(doc: DocumentWrapper):
+    ensureActiveDocument(doc)
+    doc.psDoc.close()
+
+@defNode('Photoshop Get Document By Name', isExecutable=True, returnNames=['Document'], identifier=PHOTOSHOP_IDENTIFIER)
+def getPhotoshopDocumentByName(app: ps.Application, name: str):
+    doc = None
+
+    for d in app.documents:
+        if d.name == name:
+            doc = d
+            break
+
+    return DocumentWrapper(doc, app) if doc else None
+
+@defNode('Photoshop Get Active Document', isExecutable=True, returnNames=['Document'], identifier=PHOTOSHOP_IDENTIFIER)
+def getPhotoshopActiveDocument(app: ps.Application):
+    doc = app.activeDocument
+    return DocumentWrapper(doc, app) if doc else None
+
+
+@defNode('Photoshop Duplicate Document', isExecutable=True, returnNames=['Old Document', 'New Document'], identifier=PHOTOSHOP_IDENTIFIER)
 def duplicateDocument(doc: DocumentWrapper, name=None, mergeLayerOnly=False) -> typing.Tuple[DocumentWrapper, DocumentWrapper]:
     ensureActiveDocument(doc)
     newDoc = DocumentWrapper(doc.psDoc.duplicate(name, mergeLayerOnly), doc.psApp)
@@ -205,11 +239,6 @@ def setMetadata(doc: DocumentWrapper, author: str = None, authorPosition: str = 
 
     return doc
 
-@defNode('Close Photoshop Document', isExecutable=True, identifier=PHOTOSHOP_IDENTIFIER)
-def closePhotoshopDocument(doc: DocumentWrapper):
-    ensureActiveDocument(doc)
-    doc.psDoc.close()
-
 @defNode('Photoshop RGB Color', returnNames=['RGB'], inputInfo={'colorArray': ColorInput()}, identifier=PHOTOSHOP_IDENTIFIER)
 def createRGBColor(colorArray: typing.Tuple[int,int,int,int]=None) -> ps.SolidColor:
     c = ps.SolidColor()
@@ -235,6 +264,16 @@ def createTextLayer(doc: DocumentWrapper, text: str, size: int = 40, color: ps.S
         textLayer.textItem.position = [posX or 0, posY or 0]
 
     return doc, textLayer
+
+@defNode('Photoshop PSD Save Options', returnNames=['Options'], identifier=PHOTOSHOP_IDENTIFIER)
+def psdSaveOptions(saveAlphaChannels=True, saveAnnotations=True, embedColorProfile=True, saveLayers=True, saveSpotColors=True) -> ps.PhotoshopSaveOptions:
+    options = ps.PhotoshopSaveOptions()
+    options.alphaChannels = saveAlphaChannels
+    options.annotations = saveAnnotations
+    options.embedColorProfile = embedColorProfile
+    options.layers = saveLayers
+    options.spotColors = saveSpotColors
+    return options
 
 @defNode('Photoshop JPEG Save Options', returnNames=['Options'], identifier=PHOTOSHOP_IDENTIFIER, inputInfo={'quality': SliderInput(0,12)})
 def jpegSaveOptions(quality=5, embedColorProfile=True, matte: MatteType=MatteType.NoMatte) -> ps.JPEGSaveOptions:
@@ -880,7 +919,8 @@ def selectLayer(layer: ArtLayerWrapper):
 @defNode("Photoshop Select Layer By Name", isExecutable=True, returnNames=["Document", "Art Layer"], identifier=PHOTOSHOP_IDENTIFIER)
 def selectLayerByName(doc: DocumentWrapper, layerName: str):
     layer = getLayerByName(doc, layerName)
-    layer.doc.psDoc.activeLayer = layer.psLayer
+    if layer:
+        layer.doc.psDoc.activeLayer = layer.psLayer
 
     return layer.doc, layer
 
@@ -1026,7 +1066,7 @@ def getChannelByName(doc: DocumentWrapper, channelName: str):
 
     channel = doc.psDoc.eval_javascript(f'app.activeDocument.channels.getByName("{channelName}")')
 
-    return doc, ChannelWrapper(channel, doc)
+    return doc, ChannelWrapper(channel, doc) if channel else None
 
 @defNode("Photoshop Channel Add", isExecutable=True, returnNames=["Document", "Channel"], identifier=PHOTOSHOP_IDENTIFIER)
 def addChannel(doc: DocumentWrapper, channelName: str):
@@ -1105,14 +1145,14 @@ def selectChannels(channel: ChannelWrapper, addToSelection=False):
 
     return channel.doc, channel
 
-@defNode("Photoshop Layer Set Set All Locked", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
+@defNode("Photoshop Layer Set Lock", isExecutable=True, returnNames=["Document", "Layer Set"], identifier=PHOTOSHOP_IDENTIFIER)
 def layerSetSetAllLocked(layerSet: LayerSetWrapper, allLocked):
     ensureActiveDocument(layerSet.doc)
     layerSet.psLayer.allLocked = allLocked
 
     return layerSet.doc, layerSet
 
-@defNode("Photoshop Layer Set Get All Locked", isExecutable=True, returnNames=["Document", "Layer Set", "AllLocked"], identifier=PHOTOSHOP_IDENTIFIER)
+@defNode("Photoshop Layer Set Is Locked", isExecutable=True, returnNames=["Document", "Layer Set", "AllLocked"], identifier=PHOTOSHOP_IDENTIFIER)
 def layerSetGetAllLocked(layerSet: LayerSetWrapper):
     ensureActiveDocument(layerSet.doc)
 
@@ -1271,8 +1311,210 @@ def layerSetSetVisible(layerSet: LayerSetWrapper, visible):
 
     return layerSet.doc, layerSet
 
-@defNode("Photoshop Layer Set Get Visible", isExecutable=True, returnNames=["Document", "Layer Set", "Visible"], identifier=PHOTOSHOP_IDENTIFIER)
+@defNode("Photoshop Layer Set Is Visible", isExecutable=True, returnNames=["Document", "Layer Set", "Visible"], identifier=PHOTOSHOP_IDENTIFIER)
 def layerSetGetVisible(layerSet: LayerSetWrapper):
     ensureActiveDocument(layerSet.doc)
 
     return layerSet.doc, layerSet, layerSet.psLayer.visible
+
+@defNode("Photoshop Get Selection", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def getSelection(doc: DocumentWrapper):
+    ensureActiveDocument(doc)
+
+    return doc, SelectionWrapper(doc.psDoc.selection, doc) if doc.psDoc.selection else None
+
+@defNode("Photoshop Selection Get Bounds", isExecutable=True, returnNames=["Document", "Selection", "Bounds"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionGetBounds(selection: SelectionWrapper):
+    ensureActiveDocument(selection.doc)
+
+    return selection.doc, selection, selection.psSelection.bounds
+
+@defNode("Photoshop Selection Clear", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionClear(selection: SelectionWrapper):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.clear()
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Contract", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionContract(selection: SelectionWrapper):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.contract()
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Copy", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionCopy(selection: SelectionWrapper):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.copy()
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Cut", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionCut(selection: SelectionWrapper):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.cut()
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Deselect", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionDeselect(selection: SelectionWrapper):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.deselect()
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Expand", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionExpand(selection: SelectionWrapper, by):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.expand(by)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Feather", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionFeather(selection: SelectionWrapper, by):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.feather(by)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Fill", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionFill(selection: SelectionWrapper, color: ps.SolidColor, mode: ColorBlendMode= None, opacity= None, preserve_transparency: bool= None):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.fill(color, mode, opacity, preserve_transparency)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Grow", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionGrow(selection: SelectionWrapper, tolerance, anti_alias):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.grow(tolerance, anti_alias)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Invert", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionInvert(selection: SelectionWrapper):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.invert()
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Load", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionLoad(selection: SelectionWrapper, from_channel, combination, inverting):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.load(from_channel, combination, inverting)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Make Work Path", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionMakeWorkPath(selection: SelectionWrapper, tolerance):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.makeWorkPath(tolerance)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Resize", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionResize(selection: SelectionWrapper, horizontal, vertical, anchor):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.resize(horizontal, vertical, anchor)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Resize Boundary", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionResizeBoundary(selection: SelectionWrapper, horizontal, vertical, anchor):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.resizeBoundary(horizontal, vertical, anchor)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Rotate", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionRotate(selection: SelectionWrapper, angle, anchor):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.rotate(angle, anchor)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Rotate Boundary", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionRotateBoundary(selection: SelectionWrapper, angle, anchor):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.rotateBoundary(angle, anchor)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Select Border", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionSelectBorder(selection: SelectionWrapper, width):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.selectBorder(width)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Similar", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionSimilar(selection: SelectionWrapper, tolerance, antiAlias):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.similar(tolerance, antiAlias)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Smooth", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionSmooth(selection: SelectionWrapper, radius):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.smooth(radius)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Get Solid", isExecutable=True, returnNames=["Document", "Selection", "Solid"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionGetSolid(selection: SelectionWrapper):
+    ensureActiveDocument(selection.doc)
+
+    return selection.doc, selection, selection.psSelection.solid
+
+@defNode("Photoshop Selection Store", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionStore(selection: SelectionWrapper, into, combination: SelectionType= SelectionType.ReplaceSelection):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.store(into, combination)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Stroke", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionStroke(selection: SelectionWrapper, strokeColor, width, location, mode, opacity, preserveTransparency):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.stroke(strokeColor, width, location, mode, opacity, preserveTransparency)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Translate", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionTranslate(selection: SelectionWrapper, deltaX, deltaY):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.translate(deltaX, deltaY)
+
+    return selection.doc, selection
+
+@defNode("Photoshop Selection Translate Boundary", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)
+def selectionTranslateBoundary(selection: SelectionWrapper, deltaX, deltaY):
+    ensureActiveDocument(selection.doc)
+
+    selection.psSelection.translateBoundary(deltaX, deltaY)
+
+    return selection.doc, selection

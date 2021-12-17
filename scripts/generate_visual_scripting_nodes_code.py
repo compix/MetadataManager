@@ -4,6 +4,7 @@ import photoshop.api as ps
 from photoshop.api._artlayer import ArtLayer
 from photoshop.api._document import Document
 from photoshop.api._layerSet import LayerSet
+from photoshop.api._selection import Selection
 import inspect
 
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -114,6 +115,32 @@ def addLayerSetCode(codeLines: typing.List[str], sigArgs: str, args: str, funcNa
         codeLines.append('    return layerSet.doc, layerSet')
         codeLines.append('')
 
+def addSelectionCode(codeLines: typing.List[str], sigArgs: str, args: str, funcName: str, funcNameUpper: str, isProperty: bool):
+    if isProperty:
+        codeLines.append(f'@defNode("Photoshop Selection Set {splitAtUppercaseLetters(funcNameUpper)}", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)')
+        codeLines.append(f'def selectionSet{funcNameUpper}(selection: SelectionWrapper, {funcName}):')
+        codeLines.append('    ensureActiveDocument(selection.doc)')
+        codeLines.append(f'    selection.psSelection.{funcName} = {funcName}')
+        codeLines.append('')
+        codeLines.append(f'    return selection.doc, selection')
+        codeLines.append('')
+        codeLines.append(f'@defNode("Photoshop Selection Get {splitAtUppercaseLetters(funcNameUpper)}", isExecutable=True, returnNames=["Document", "Selection", "{funcNameUpper}"], identifier=PHOTOSHOP_IDENTIFIER)')
+        codeLines.append(f'def selectionGet{funcNameUpper}(selection: SelectionWrapper):')
+        codeLines.append('    ensureActiveDocument(selection.doc)')
+        codeLines.append('')
+        codeLines.append(f'    return selection.doc, selection, selection.psSelection.{funcName}')
+        codeLines.append('')
+    else:
+        codeLines.append(f'@defNode("Photoshop Selection {splitAtUppercaseLetters(funcNameUpper)}", isExecutable=True, returnNames=["Document", "Selection"], identifier=PHOTOSHOP_IDENTIFIER)')
+        codeLines.append(f'def selection{funcNameUpper}(selection: SelectionWrapper{sigArgs}):')
+        codeLines.append('    ensureActiveDocument(selection.doc)')
+        codeLines.append('')
+        codeLines.append(f'    selection.psSelection.{funcName}({args})')
+        codeLines.append('')
+        codeLines.append('    return selection.doc, selection')
+        codeLines.append('')
+
 #generatePhotoshopNodes(os.path.join(CUR_DIR, 'art_layer_nodes.py'), ArtLayer, addArtLayerCode)
 #generatePhotoshopNodes(os.path.join(CUR_DIR, 'document_nodes.py'), Document, addDocumentCode)
-generatePhotoshopNodes(os.path.join(CUR_DIR, 'layer_set_nodes.py'), LayerSet, addLayerSetCode)
+#generatePhotoshopNodes(os.path.join(CUR_DIR, 'layer_set_nodes.py'), LayerSet, addLayerSetCode)
+generatePhotoshopNodes(os.path.join(CUR_DIR, 'selection_nodes.py'), Selection, addSelectionCode)
