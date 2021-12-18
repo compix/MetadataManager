@@ -45,6 +45,13 @@ class RenderingPipelineManager(object):
 
         return None
 
+    def getPipelineFromCollectionName(self, collectionName: str) -> RenderingPipeline:
+        for pipeline in self.pipelines:
+            if pipeline.dbCollectionName == collectionName:
+                return pipeline
+
+        return None
+
     @property
     def pipelineNames(self):
         return [pipeline.name for pipeline in self.pipelines]

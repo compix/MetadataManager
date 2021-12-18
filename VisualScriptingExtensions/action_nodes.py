@@ -38,6 +38,10 @@ class ActionNode(ExecuteNode):
         fixedTagsString = ','.join(nonEmptyTags)
         return f'[{fixedTagsString}]'
 
+    @property
+    def constantArgs(self):
+        return []
+
     @staticmethod
     def execute(action=None):
         return action
