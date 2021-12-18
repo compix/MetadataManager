@@ -19,9 +19,11 @@ class PreviewViewer(DockWidget):
 
         self.preview = PhotoViewer(self.widget)
         self.preview.toggleDragMode()
+        self.isPlaying = True
+        self.playIcon = QtGui.QIcon(':/icons/play_icon.png')
+        self.pauseIcon = QtGui.QIcon(':/icons/pause_icon.png')
         self.widget.previewFrame.layout().addWidget(self.preview)
-        self.widget.playButton.clicked.connect(self.onPlay)
-        self.widget.pauseButton.clicked.connect(self.onPause)
+        self.widget.playToggleButton.clicked.connect(self.onTogglePlay)
         self.widget.nextFrameButton.clicked.connect(self.onNextFrame)
         self.widget.previousFrameButton.clicked.connect(self.onPreviousFrame)
         self.widget.selectBackgroundColorButton.clicked.connect(self.selectBackgroundColor)
@@ -39,11 +41,14 @@ class PreviewViewer(DockWidget):
     def onAnimationSpeedSliderChanged(self, value):
         self.animationTimer.setInterval(self.widget.animationSpeedSlider.maximum() - value + 1)
 
-    def onPlay(self):
-        self.animationTimer.start()
-
-    def onPause(self):
-        self.animationTimer.stop()
+    def onTogglePlay(self):
+        self.isPlaying = not self.isPlaying
+        if self.isPlaying:
+            self.widget.playToggleButton.setIcon(self.pauseIcon)
+            self.animationTimer.start()
+        else:
+            self.widget.playToggleButton.setIcon(self.playIcon)
+            self.animationTimer.stop()
 
     def onNextFrame(self):
         self.showNextFrame()
@@ -82,7 +87,7 @@ class PreviewViewer(DockWidget):
             self.frames = anim_util.extractExistingFrameFilenames(path)
 
             if len(self.frames) > 0:
-                if self.displayPreview(self.frames[self.curFrameIdx]):
+                if self.displayPreview(self.frames[self.curFrameIdx]) and self.isPlaying:
                     self.animationTimer.start()
         else:
             self.displayPreview(path)

@@ -100,13 +100,13 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QPushButton" name="playButton">
+          <widget class="QPushButton" name="playToggleButton">
            <property name="text">
             <string/>
            </property>
            <property name="icon">
             <iconset resource="../resource_files/resources.qrc">
-             <normaloff>:/icons/play_icon.png</normaloff>:/icons/play_icon.png</iconset>
+             <normaloff>:/icons/pause_icon.png</normaloff>:/icons/pause_icon.png</iconset>
            </property>
           </widget>
          </item>
@@ -129,17 +129,6 @@
            <property name="icon">
             <iconset resource="../resource_files/resources.qrc">
              <normaloff>:/icons/fast_forward_icon.png</normaloff>:/icons/fast_forward_icon.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pauseButton">
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../resource_files/resources.qrc">
-             <normaloff>:/icons/pause_icon.png</normaloff>:/icons/pause_icon.png</iconset>
            </property>
           </widget>
          </item>
