@@ -1,5 +1,5 @@
 from RenderingPipelinePlugin.NamingConvention import replaceGermanCharacters
-from RenderingPipelinePlugin import PipelineKeys
+from RenderingPipelinePlugin import PipelineKeys, PipelineSubKeys
 from typing import List
 import typing
 import logging
@@ -31,6 +31,17 @@ class RenderingPipelineSubmitter(Submitter):
                 jobInfoDict['TaskTimeoutMinutes'] = int(timeout)
             except Exception as e:
                 logger.error(str(e))
+
+    def setNodesBlackWhitelist(self, jobInfoDict: dict, documentWithSettings: dict, envKey: str):
+        info: dict = documentWithSettings.get(envKey)
+        if info:
+            nodes = info.get(PipelineSubKeys.DeadlineNodesBlackWhitelist, [])
+            if len(nodes) > 0:
+                isWhitelist = info.get(PipelineSubKeys.DeadlineWhitelist, False)
+                if isWhitelist:
+                    jobInfoDict['Whitelist'] = ','.join(nodes)
+                else:
+                    jobInfoDict['Blacklist'] = ','.join(nodes)
 
     def createJobInfoDictionary(self, pluginName: str, name: str, batchName: str, priority: int, pool: str, dependentJobIds: List[str]=None):
         d = {"Plugin": pluginName, 

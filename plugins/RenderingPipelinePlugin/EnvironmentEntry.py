@@ -1,6 +1,6 @@
 from PySide2 import QtWidgets
 import os
-from RenderingPipelinePlugin import PipelineKeys
+from RenderingPipelinePlugin import PipelineKeys, PipelineSubKeys
 from MetadataManagerCore.environment.Environment import Environment
 from RenderingPipelinePlugin.PipelineType import PipelineType
 import re
@@ -239,3 +239,21 @@ class ProjectFileEnvironmentEntry(LineEditEnvironmentEntry):
             return filename.replace('\\', '/')
         else:
             return os.path.join(baseProjectFolder, filename).replace('\\', '/')
+
+class DeadlineNodeBlackWhitelistEnvironmentEntry(EnvironmentEntry):
+    def __init__(self, envKey: str, lineEdit: QtWidgets.QLineEdit, whitelistCheckBox: QtWidgets.QCheckBox, pipelineType: PipelineType = None, 
+                 pipelineComboBox: QtWidgets.QComboBox = None) -> None:
+        super().__init__(envKey, lineEdit, pipelineType=pipelineType, pipelineComboBox=pipelineComboBox)
+
+        self.whitelistCheckBox = whitelistCheckBox
+
+    def saveValue(self, environment: Environment):
+        d = environment.settings.setdefault(self.envKey, dict())
+        d[PipelineSubKeys.DeadlineWhitelist] = self.whitelistCheckBox.isChecked()
+        d[PipelineSubKeys.DeadlineNodesBlackWhitelist] = [n.strip() for n in self.widget.text().split(',')]
+
+    def loadValue(self, environment: Environment):
+        e = environment.settings.get(self.envKey, dict())
+        self.whitelistCheckBox.setChecked(e.get(PipelineSubKeys.DeadlineWhitelist, False))
+        nodes = e.get(PipelineSubKeys.DeadlineNodesBlackWhitelist, [])
+        self.widget.setText(','.join(nodes))

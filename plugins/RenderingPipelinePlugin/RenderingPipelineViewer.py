@@ -2,12 +2,12 @@ import typing
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
 from MetadataManagerCore.third_party_integrations.deadline import deadline_service
 from RenderingPipelinePlugin.CustomSubmissionTaskViewer import CustomSubmissionTaskViewer
-from RenderingPipelinePlugin.EnvironmentEntry import CheckBoxEnvironmentEntry, ComboBoxEnvironmentEntry, DeadlinePoolComboBoxEnvironmentEntry, DeadlineTimeoutEnvironmentEntry, EnvironmentEntry, LineEditEnvironmentEntry, NamingEnvironmentEntry, ProjectFileEnvironmentEntry, ProjectSubFolderEnvironmentEntry
+from RenderingPipelinePlugin.EnvironmentEntry import CheckBoxEnvironmentEntry, ComboBoxEnvironmentEntry, DeadlineNodeBlackWhitelistEnvironmentEntry, DeadlinePoolComboBoxEnvironmentEntry, DeadlineTimeoutEnvironmentEntry, EnvironmentEntry, LineEditEnvironmentEntry, NamingEnvironmentEntry, ProjectFileEnvironmentEntry, ProjectSubFolderEnvironmentEntry
 from RenderingPipelinePlugin.MetadataManagerTaskView import MetadataManagerTaskView
 from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
 from RenderingPipelinePlugin.TaskExecutionOrderView import TaskExecutionOrderView
 from RenderingPipelinePlugin.submitters.SubmitterInfo import getOrderedSubmitterInfos
-from RenderingPipelinePlugin.ui_elements import FileSelectionElement
+from RenderingPipelinePlugin.ui_elements import DeadlineNodeBlackWhitelistElement, FileSelectionElement
 from RenderingPipelinePlugin.unreal_engine import UnrealEnginePipelineKeys
 from node_exec import windows_nodes
 from viewers.EnvironmentViewer import EnvironmentViewer
@@ -182,6 +182,14 @@ class RenderingPipelineViewer(object):
         self.environmentEntries.append(LineEditEnvironmentEntry(UnrealEnginePipelineKeys.WindowResolutionX, self.dialog.ueWindowResolutionX, valueType=int))
         self.environmentEntries.append(LineEditEnvironmentEntry(UnrealEnginePipelineKeys.WindowResolutionY, self.dialog.ueWindowResolutionY, valueType=int))
 
+        # Deadline white/blacklists
+        self.addDeadlineInfoEntry('Input Scene Creation', PipelineKeys.DeadlineInputSceneCreationInfo)
+        self.addDeadlineInfoEntry('Render Scene Creation', PipelineKeys.DeadlineRenderSceneCreationInfo)
+        self.addDeadlineInfoEntry('Rendering ', PipelineKeys.DeadlineRenderingInfo)
+        self.addDeadlineInfoEntry('Nuke', PipelineKeys.DeadlineNukeInfo)
+        self.addDeadlineInfoEntry('Blender Compositing', PipelineKeys.DeadlineBlenderCompositingInfo)
+        self.addDeadlineInfoEntry('Delivery', PipelineKeys.DeadlineDeliveryInfo)
+
         self.dialog.ueOverrideWindowResolutionCheckBox.stateChanged.connect(lambda: self.dialog.ueWindowResolutionFrame.setEnabled(self.dialog.ueOverrideWindowResolutionCheckBox.isChecked()))
 
         self.perspectiveToNamingConventionEnvEntries: Dict[str,List[EnvironmentEntry]] = dict()
@@ -215,6 +223,12 @@ class RenderingPipelineViewer(object):
 
         self.dialog.selectProductTableInExplorerButton.clicked.connect(self.onSelectProductTableInExplorerClick)
         self.dialog.refreshTableHeaderButton.clicked.connect(self.onRefreshTableHeaderClick)
+
+    def addDeadlineInfoEntry(self, label: str, envKey: str):
+        blackWhitelistElement = DeadlineNodeBlackWhitelistElement(QtWidgets.QHBoxLayout())
+        self.deadlineNodesBlackWhitelistForm: QtWidgets.QFormLayout = self.dialog.deadlineNodesBlackWhitelistForm
+        self.deadlineNodesBlackWhitelistForm.addRow(f'{label} Nodes', blackWhitelistElement.layout)
+        self.environmentEntries.append(DeadlineNodeBlackWhitelistEnvironmentEntry(envKey, blackWhitelistElement.nodesLineEdit, blackWhitelistElement.whitelistCheckBox))
 
     def reconnectDeadlineService(self):
         qt_util.runInMainThread(self.deadlineReconnectButton.startLoading)

@@ -33,6 +33,7 @@ class BlenderCompositingSubmitter(RenderingPipelineSubmitter):
         pipelineInfoDict[PipelineKeys.Frames] = frames
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineBlenderCompositingTimeout)
+        self.setNodesBlackWhitelist(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineBlenderCompositingInfo)
 
         extraPluginInfoDict = {
             "BaseScene": self.pipeline.namingConvention.getBlenderCompositingSceneFilename(documentWithSettings) if documentWithSettings.get(PipelineKeys.BlenderCompositingSceneNaming) else ''
@@ -43,4 +44,5 @@ class BlenderCompositingSubmitter(RenderingPipelineSubmitter):
 
     @staticmethod
     def checkRequirements(envSettings: dict) -> SubmitterPipelineKeyRequirementsResponse:
-        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.BlenderCompositingScript, messages=['A blender compositing script is not specified.'])
+        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.BlenderCompositingScript, 
+                                                        messages=['A blender compositing script is not specified.'])

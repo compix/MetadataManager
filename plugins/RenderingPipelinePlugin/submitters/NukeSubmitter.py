@@ -29,6 +29,7 @@ class NukeSubmitter(RenderingPipelineSubmitter):
             jobInfoDict[f'OutputFilename{i}'] = os.path.basename(filename)
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineNukeTimeout)
+        self.setNodesBlackWhitelist(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineNukeInfo)
 
         sceneFilename = self.pipeline.namingConvention.getNukeSceneFilename(documentWithSettings)
         scriptFilename = documentWithSettings.get(PipelineKeys.NukeScript)
@@ -40,4 +41,5 @@ class NukeSubmitter(RenderingPipelineSubmitter):
 
     @staticmethod
     def checkRequirements(envSettings: dict) -> SubmitterPipelineKeyRequirementsResponse:
-        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.NukeScript, messages=['A nuke script is not specified.'])
+        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.NukeScript, 
+                                                        messages=['A nuke script is not specified.'], isFile=True)

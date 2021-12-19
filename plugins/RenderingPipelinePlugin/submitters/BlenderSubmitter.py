@@ -27,6 +27,7 @@ class BlenderInputSceneCreationSubmitter(RenderingPipelineSubmitter):
         os.makedirs(jobInfoDict['OutputDirectory0'], exist_ok=True)
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineInputSceneTimeout)
+        self.setNodesBlackWhitelist(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineInputSceneCreationInfo)
 
         extraPluginInfoDict = {
             "BaseScene": self.pipeline.namingConvention.getBaseSceneFilename(documentWithSettings)
@@ -37,7 +38,8 @@ class BlenderInputSceneCreationSubmitter(RenderingPipelineSubmitter):
 
     @staticmethod
     def checkRequirements(envSettings: dict) -> SubmitterPipelineKeyRequirementsResponse:
-        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.InputSceneCreationScript, messages=['An input scene creation script is not specified.'])
+        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.InputSceneCreationScript, 
+                                                        messages=['An input scene creation script is not specified.'], isFile=True)
 
 class BlenderRenderSceneCreationSubmitter(RenderingPipelineSubmitter):
     defaultActive = True
@@ -66,6 +68,7 @@ class BlenderRenderSceneCreationSubmitter(RenderingPipelineSubmitter):
         pipelineInfoDict[PipelineKeys.Frames] = frames
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderSceneTimeout)
+        self.setNodesBlackWhitelist(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderSceneCreationInfo)
 
         extraPluginInfoDict = {
             "BaseScene": self.pipeline.namingConvention.getBaseSceneFilename(documentWithSettings) if documentWithSettings.get(PipelineKeys.BaseSceneNaming) else ''
@@ -76,7 +79,8 @@ class BlenderRenderSceneCreationSubmitter(RenderingPipelineSubmitter):
 
     @staticmethod
     def checkRequirements(envSettings: dict) -> SubmitterPipelineKeyRequirementsResponse:
-        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.RenderSceneCreationScript, messages=['A render scene creation script is not specified.'])
+        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.RenderSceneCreationScript, 
+                                                        messages=['A render scene creation script is not specified.'], isFile=True)
 
 class BlenderRenderingSubmitter(RenderingPipelineSubmitter):
     defaultActive = True
@@ -103,6 +107,7 @@ class BlenderRenderingSubmitter(RenderingPipelineSubmitter):
         os.makedirs(jobInfoDict['OutputDirectory0'], exist_ok=True)
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderingTimeout)
+        self.setNodesBlackWhitelist(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderingInfo)
 
         sceneFilename = self.pipeline.namingConvention.getRenderSceneFilename(documentWithSettings)
         pluginInfoDict = deadline_nodes.createBlenderPluginInfoDictionary(sceneFilename, os.path.splitext(filename)[0])

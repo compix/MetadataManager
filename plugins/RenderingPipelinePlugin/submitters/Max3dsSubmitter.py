@@ -27,12 +27,14 @@ class Max3dsInputSceneCreationSubmitter(RenderingPipelineSubmitter):
         os.makedirs(jobInfoDict['OutputDirectory0'], exist_ok=True)
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineInputSceneTimeout)
+        self.setNodesBlackWhitelist(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineInputSceneCreationInfo)
 
         return deadline_nodes.submit_3dsMaxPipelineJob(sceneCreationScript, pipelineInfoDict, jobInfoDict, documentWithSettings.get(PipelineKeys.Max3dsVersion))
 
     @staticmethod
     def checkRequirements(envSettings: dict) -> SubmitterPipelineKeyRequirementsResponse:
-        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.InputSceneCreationScript, messages=['An input scene creation script is not specified.'])
+        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.InputSceneCreationScript, 
+                                                        messages=['An input scene creation script is not specified.'], isFile=True)
 
 class Max3dsRenderSceneCreationSubmitter(RenderingPipelineSubmitter):
     defaultActive = True
@@ -58,12 +60,14 @@ class Max3dsRenderSceneCreationSubmitter(RenderingPipelineSubmitter):
         os.makedirs(jobInfoDict['OutputDirectory0'], exist_ok=True)
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderSceneTimeout)
+        self.setNodesBlackWhitelist(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderSceneCreationInfo)
 
         return deadline_nodes.submit_3dsMaxPipelineJob(sceneCreationScript, pipelineInfoDict, jobInfoDict, documentWithSettings.get(PipelineKeys.Max3dsVersion))
 
     @staticmethod
     def checkRequirements(envSettings: dict) -> SubmitterPipelineKeyRequirementsResponse:
-        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.RenderSceneCreationScript, messages=['A render scene creation script is not specified.'])
+        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.RenderSceneCreationScript, 
+                                                        messages=['A render scene creation script is not specified.'], isFile=True)
 
 class Max3dsRenderingSubmitter(RenderingPipelineSubmitter):
     defaultActive = True
@@ -90,6 +94,7 @@ class Max3dsRenderingSubmitter(RenderingPipelineSubmitter):
         os.makedirs(jobInfoDict['OutputDirectory0'], exist_ok=True)
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderingTimeout)
+        self.setNodesBlackWhitelist(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderingInfo)
 
         sceneFilename = self.pipeline.namingConvention.getRenderSceneFilename(documentWithSettings)
         pluginInfoDict = deadline_nodes.create3dsMaxPluginInfoDictionary(sceneFilename, Version=documentWithSettings.get(PipelineKeys.Max3dsVersion))

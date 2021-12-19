@@ -43,6 +43,7 @@ class UnrealEngineInputSceneCreationSubmitter(RenderingPipelineSubmitter):
         os.makedirs(jobInfoDict['OutputDirectory0'], exist_ok=True)
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineInputSceneTimeout)
+        self.setNodesBlackWhitelist(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineInputSceneCreationInfo)
 
         extraPluginInfoDict = createUnrealEnginePipelinePluginInfoDictionaryFromSettings(documentWithSettings)
 
@@ -51,7 +52,8 @@ class UnrealEngineInputSceneCreationSubmitter(RenderingPipelineSubmitter):
 
     @staticmethod
     def checkRequirements(envSettings: dict) -> SubmitterPipelineKeyRequirementsResponse:
-        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.InputSceneCreationScript, messages=['An input scene creation script is not specified.'])
+        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.InputSceneCreationScript, 
+                                                        messages=['An input scene creation script is not specified.'], isFile=True)
 
 class UnrealEngineRenderSceneCreationSubmitter(RenderingPipelineSubmitter):
     defaultActive = True
@@ -81,15 +83,17 @@ class UnrealEngineRenderSceneCreationSubmitter(RenderingPipelineSubmitter):
         pipelineInfoDict[PipelineKeys.Frames] = frames
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderSceneTimeout)
+        self.setNodesBlackWhitelist(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderSceneCreationInfo)
 
         extraPluginInfoDict = createUnrealEnginePipelinePluginInfoDictionaryFromSettings(documentWithSettings)
 
         return deadline_nodes.submitUnrealEngineScriptJob(sceneCreationScript, pipelineInfoDict, jobInfoDict, 
-                                                            unrealEngineVersion=documentWithSettings.get(PipelineKeys.UnrealEngineVersion), extraPluginInfoDict=extraPluginInfoDict)
+                                                            unrealEngineVersion=documentWithSettings.get(PipelineKeys.RenderSceneCreationScript), extraPluginInfoDict=extraPluginInfoDict)
 
     @staticmethod
     def checkRequirements(envSettings: dict) -> SubmitterPipelineKeyRequirementsResponse:
-        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.RenderSceneCreationScript, messages=['A render scene creation script is not specified.'])
+        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.RenderSceneCreationScript, 
+                                                        messages=['A render scene creation script is not specified.'], isFile=True)
 
 class UnrealEngineRenderingSubmitter(RenderingPipelineSubmitter):
     defaultActive = True
@@ -116,6 +120,7 @@ class UnrealEngineRenderingSubmitter(RenderingPipelineSubmitter):
         os.makedirs(jobInfoDict['OutputDirectory0'], exist_ok=True)
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderingTimeout)
+        self.setNodesBlackWhitelist(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineRenderingInfo)
 
         extraPluginInfoDict = createUnrealEnginePipelinePluginInfoDictionaryFromSettings(documentWithSettings)
         extraPluginInfoDict["Map"] = self.pipeline.namingConvention.getRenderSceneFilename(documentWithSettings)

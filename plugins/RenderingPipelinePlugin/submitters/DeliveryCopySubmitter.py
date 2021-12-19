@@ -24,6 +24,7 @@ class DeliveryCopySubmitter(RenderingPipelineSubmitter):
             jobInfoDict[f'OutputFilename{i}'] = os.path.basename(filename)
 
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineDeliveryTimeout)
+        self.setNodesBlackWhitelist(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineDeliveryInfo)
 
         actionId = f'{self.pipeline.name}_CopyForDeliveryDocumentAction'
 
@@ -33,4 +34,5 @@ class DeliveryCopySubmitter(RenderingPipelineSubmitter):
 
     @staticmethod
     def checkRequirements(envSettings: dict) -> SubmitterPipelineKeyRequirementsResponse:
-        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.DeliveryNaming, perspectiveDependent=True, messages=['Delivery naming convention not specified.'])
+        return SubmitterPipelineKeyRequirementsResponse(envSettings, PipelineKeys.DeliveryNaming, perspectiveDependent=True, 
+                                                        messages=['Delivery naming convention not specified.'])

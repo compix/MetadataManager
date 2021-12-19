@@ -1,6 +1,8 @@
 from typing import List
 import typing
 from RenderingPipelinePlugin import PipelineKeys
+from dist.MetadataManager.plugins.RenderingPipelinePlugin import RenderingPipelineUtil
+import os
 
 if typing.TYPE_CHECKING:
     from RenderingPipelinePlugin.submitters.SubmitterInfo import SubmitterInfo
@@ -13,17 +15,24 @@ class SubmitterRequirementsResponse(object):
         self.messages = messages or []
 
 class SubmitterPipelineKeyRequirementsResponse(object):
-    def __init__(self, envSettings: dict, envKey: str, perspectiveDependent: bool = False, messages: List[str]=None) -> None:
+    def __init__(self, envSettings: dict, envKey: str, perspectiveDependent: bool = False, messages: List[str]=None, isFile=False) -> None:
         super().__init__()
 
         if perspectiveDependent:
-            value = PipelineKeys.getKeyWithPerspective(envKey, envSettings.get(PipelineKeys.Perspective, ''))
-            if not value:
-                value = envSettings.get(envKey, '')    
+            perspectiveCodes = RenderingPipelineUtil.getPerspectiveCodes(envSettings)
+            for c in perspectiveCodes:
+                envKey = PipelineKeys.getKeyWithPerspective(envKey, c)
+                value = envSettings.get(envKey, '')
+                self.satisfied = value.strip() != ''
+                if self.satisfied:
+                    break
         else:
             value = envSettings.get(envKey, '')
-            
-        self.satisfied = value.strip() != ''
+            if not isFile:
+                self.satisfied = value.strip() != ''
+            else:
+                self.satisfied = os.path.isfile(value)
+
         self.messages = messages
 
 class Submitter(object):

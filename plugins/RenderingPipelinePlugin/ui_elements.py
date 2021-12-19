@@ -77,3 +77,12 @@ class ComboBoxElement(UIElement):
         if items:
             self.comboBox.addItems(items)
         self.addToLayout(self.comboBox)
+
+class DeadlineNodeBlackWhitelistElement(UIElement):
+    def __init__(self, layout: QtWidgets.QLayout=None) -> None:
+        super().__init__(layout)
+
+        self.nodesLineEdit = QtWidgets.QLineEdit()
+        self.whitelistCheckBox = QtWidgets.QCheckBox('As Whitelist')
+        self.addToLayout(self.nodesLineEdit)
+        self.addToLayout(self.whitelistCheckBox)
