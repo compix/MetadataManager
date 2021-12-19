@@ -1,5 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import sys
+from MetadataManagerCore.actions.ActionType import ActionType
 
 from viewers.HostProcessViewer import HostProcessViewer
 from viewers.service.ServiceManagerViewer import ServiceManagerViewer
@@ -78,12 +79,28 @@ class MainWindowManager(QtCore.QObject):
     def menuBar(self) -> QtWidgets.QMenuBar:
         return self.window.menubar
 
+    def refreshTableViewContextMenu(self):
+        self.tableViewContextMenu.clear()
+        for task in self.actionsViewer.actionTasks:
+            if task.action.actionType == ActionType.DocumentAction:
+                action = QtWidgets.QAction(task.action.displayName, self.tableView)
+                self.tableViewContextMenu.addAction(action)
+                action.triggered.connect(task)
+
     def initTable(self):
         self.tableModel = TableModel(self.window, [], [], [])
         self.window.tableView.setModel(self.tableModel)
 
         selModel = self.window.tableView.selectionModel()
         selModel.selectionChanged.connect(self.onTableSelectionChanged)
+
+        self.tableView: QtWidgets.QTableView = self.window.tableView
+        self.tableView.customContextMenuRequested.connect(self.contextMenuEvent)
+        self.tableViewContextMenu = QtWidgets.QMenu(self.tableView)
+
+    def contextMenuEvent(self):
+        self.refreshTableViewContextMenu()
+        self.tableViewContextMenu.exec_(QtGui.QCursor.pos())
 
     def copyTableSelection(self):
             selection = self.window.tableView.selectedIndexes()
