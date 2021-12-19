@@ -18,6 +18,7 @@ from RenderingPipelinePlugin.filters.MappingFilter import MappingFilter
 from ServiceRegistry import ServiceRegistry
 from MetadataManagerCore import Keys
 from typing import Dict, List
+from qt_extensions.LoadingButtonWrapper import LoadingButtonWrapper
 
 from RenderingPipelinePlugin.PipelineType import PipelineType
 from RenderingPipelinePlugin.RenderingPipelineManager import RenderingPipelineManager, RenderingPipelinesCollectionName
@@ -59,6 +60,8 @@ class RenderingPipelineViewer(object):
         self.dbManager = self.renderingPipelineManager.dbManager
         self.pipelineSelectionMenu = None
         self.pipelineNameActions = []
+        self.loadingIcon = QtGui.QMovie(':/icons/eclipse_loading.gif')
+        self.refreshIcon = QtGui.QIcon(':/icons/refresh.png')
 
         self.renderingPipelineManager.onPipelineClassRegistrationEvent.subscribe(lambda _: self.onPipelineClassRegistered())
         self.initIconMap()
@@ -186,6 +189,8 @@ class RenderingPipelineViewer(object):
         self.dialog.perspectiveCodesEdit.editingFinished.connect(self.perspectiveCodesEditingFinished)
 
         self.fetchedPoolNames = False
+        self.deadlineReconnectButton = LoadingButtonWrapper(self.dialog.deadlineReconnectButton)
+        self.dialog.deadlineReconnectButton.clicked.connect(lambda: threading_util.runInThread(self.reconnectDeadlineService))
         self.serviceRegistry.deadlineService.onConnected.once(lambda: threading_util.runInThread(self.fetchDeadlinePoolNames))
         threading_util.runInThread(self.fetchDeadlinePoolNames)
         
@@ -210,6 +215,11 @@ class RenderingPipelineViewer(object):
 
         self.dialog.selectProductTableInExplorerButton.clicked.connect(self.onSelectProductTableInExplorerClick)
         self.dialog.refreshTableHeaderButton.clicked.connect(self.onRefreshTableHeaderClick)
+
+    def reconnectDeadlineService(self):
+        qt_util.runInMainThread(self.deadlineReconnectButton.startLoading)
+        self.serviceRegistry.deadlineService.connect()
+        qt_util.runInMainThread(self.deadlineReconnectButton.stopLoading)
 
     @property
     def baseProjectFolderPath(self):
@@ -396,6 +406,7 @@ class RenderingPipelineViewer(object):
             self.appInfo.settings.setValue('SelectedRenderingPipeline', pipeline.name)
 
     def fetchDeadlinePoolNames(self):
+        print('Fetched')
         poolNames = getDeadlinePoolNames(quiet=True)
         qt_util.runInMainThread(self.onDeadlinePoolNamesFetched, poolNames)
 
@@ -403,8 +414,12 @@ class RenderingPipelineViewer(object):
         if self.fetchedPoolNames:
             return
 
+        self.dialog.deadlineConnectionStatusFrame.setVisible(not self.serviceRegistry.deadlineService.webserviceConnectionEstablished)
+
         if poolNames is None:
             poolNames = []
+        else:
+            self.fetchedPoolNames = True
 
         if 'none' in poolNames:
             poolNames.remove('none')
@@ -417,9 +432,6 @@ class RenderingPipelineViewer(object):
         self.updateDeadlinePoolComboBox(self.dialog.deadlineNukePoolComboBox, poolNames, PipelineKeys.DeadlineNukePool)
         self.updateDeadlinePoolComboBox(self.dialog.deadlineBlenderCompositingPoolComboBox, poolNames, PipelineKeys.DeadlineBlenderCompositingPool)
         self.updateDeadlinePoolComboBox(self.dialog.deadlineDeliveryPoolComboBox, poolNames, PipelineKeys.DeadlineDeliveryPool)
-
-        if poolNames:
-            self.fetchedPoolNames = True
 
     def updateDeadlinePoolComboBox(self, comboBox: QtWidgets.QComboBox, poolNames: List[str], envKey: str):
         existingEnvEntry = None

@@ -27,7 +27,7 @@
       <enum>QTabWidget::North</enum>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="generalTab">
       <attribute name="title">
@@ -1144,6 +1144,51 @@
                     </widget>
                    </item>
                   </layout>
+                 </item>
+                 <item alignment="Qt::AlignRight">
+                  <widget class="QFrame" name="deadlineConnectionStatusFrame">
+                   <property name="frameShape">
+                    <enum>QFrame::NoFrame</enum>
+                   </property>
+                   <property name="frameShadow">
+                    <enum>QFrame::Raised</enum>
+                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout">
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item alignment="Qt::AlignLeft">
+                     <widget class="QLabel" name="deadlineConnectionStatusLabel">
+                      <property name="styleSheet">
+                       <string notr="true">color: orange</string>
+                      </property>
+                      <property name="text">
+                       <string>No connection to the deadline service. Please make sure the deadline web service is running.</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="deadlineReconnectButton">
+                      <property name="text">
+                       <string> Reconnect</string>
+                      </property>
+                      <property name="icon">
+                       <iconset resource="../../../assets/resource_files/resources.qrc">
+                        <normaloff>:/icons/refresh.png</normaloff>:/icons/refresh.png</iconset>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -2359,7 +2404,6 @@
   <tabstop>renderScenesFolderButton</tabstop>
   <tabstop>inputScenesFolderButton</tabstop>
   <tabstop>extractedProductTableWidget</tabstop>
-  <tabstop>scrollArea_3</tabstop>
   <tabstop>deadlinePriorityEdit</tabstop>
   <tabstop>deadlineInputScenePoolComboBox</tabstop>
   <tabstop>deadlineRenderScenePoolComboBox</tabstop>
