@@ -433,7 +433,7 @@ class DocumentSearchFilterViewer(QtCore.QObject):
         
         if doc:
             preview = doc.get(Keys.preview)
-            if '#' in preview:
+            if preview and '#' in preview:
                 hasPreview = len(anim_util.extractExistingFrameFilenames(preview)) > 0
             else:
                 hasPreview = preview and os.path.exists(preview)
