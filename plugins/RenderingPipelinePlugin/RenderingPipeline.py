@@ -9,6 +9,7 @@ from RenderingPipelinePlugin.submitters.MetadataManagerTaskSubmitter import Meta
 from RenderingPipelinePlugin.submitters.NukeSubmitter import NukeSubmitter
 from RenderingPipelinePlugin.submitters.SubmitterInfo import SubmitterInfo, getOrderedSubmitterInfos
 from RenderingPipelinePlugin.submitters.UnrealEngineSubmitter import UnrealEngineInputSceneCreationSubmitter, UnrealEngineRenderSceneCreationSubmitter, UnrealEngineRenderingSubmitter
+from table.Table import Table
 from viewers.ViewerRegistry import ViewerRegistry
 from qt_extensions import qt_util
 from MetadataManagerCore.Event import Event
@@ -329,6 +330,76 @@ class RenderingPipeline(object):
     def zipRowAndHeader(self, row: List[str], header: List[str], rowIndices: List[str]):
         return {header[hi]: row[i] for hi, i in enumerate(rowIndices) if i < len(row)}
 
+    def processRows(self, table: Table, collectionName: str, header: typing.List[str], rowIndices: typing.List[int], environmentSettings: dict = None,
+                    onProgressUpdate: Callable[[float, str],None] = None, logHandler: Callable[[str],None] = None):
+
+        # In case of rendering name duplicates, create mappings/links to the document with the first-assigned rendering.
+        renderingToDocumentMap: Dict[str,dict] = dict()
+
+        sidSet = set()
+        rowIdx = 1
+        rowCount = table.nrows
+
+        for row in table.getRowsWithoutHeader():
+            # Convert values to string for consistency
+            row = [str(v) if v != None else v for v in row]
+            documentDict = self.zipRowAndHeader(row, header, rowIndices)
+
+            if any(rowSkipCondition(documentDict) for rowSkipCondition in self.rowSkipConditions):
+                continue
+
+            if not self.processDocumentDict(documentDict, logHandler):
+                continue
+            
+            if PipelineKeys.Perspective in documentDict:
+                perspectiveCodes = [documentDict[PipelineKeys.Perspective]]
+            else:
+                perspectiveCodes = RenderingPipelineUtil.getPerspectiveCodes(environmentSettings)
+
+                if len(perspectiveCodes) == 0:
+                    perspectiveCodes.append('')
+
+            postOutputExt = self.getPreferredPreviewExtension(environmentSettings)
+
+            for perspectiveCode in perspectiveCodes:
+                documentDict[PipelineKeys.Perspective] = perspectiveCode
+
+                documentWithSettings = self.combineDocumentWithSettings(documentDict, environmentSettings)
+
+                sid = self.getSID(documentWithSettings, row)
+                documentDict[Keys.systemIDKey] = sid
+                documentWithSettings[Keys.systemIDKey] = sid
+
+                if not self.postProcessDocumentDict(documentDict, logHandler):
+                    continue
+
+                if sid in sidSet:
+                    m = f'Duplicate sid {sid} found at row {rowIdx}. This row will be skipped.'
+                    logger.warning(m)
+                    if logHandler:
+                        logHandler(m)
+                    continue
+                else:
+                    sidSet.add(sid)
+
+                    renderingName = extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.RenderingNaming), documentWithSettings)
+                    mappedDocument = renderingToDocumentMap.get(renderingName)
+
+                    documentDict[Keys.preview] = self.namingConvention.getPostFilename(documentWithSettings, postOutputExt)
+
+                    if mappedDocument:
+                        documentDict[PipelineKeys.Mapping] = mappedDocument.get(Keys.systemIDKey)
+                    else:
+                        renderingToDocumentMap[renderingName] = documentDict
+                        documentDict[PipelineKeys.Mapping] = None
+
+                    self.dbManager.insertOrModifyDocument(collectionName, sid, documentDict, checkForModifications=False)
+
+            rowIdx += 1
+
+            if onProgressUpdate:
+                onProgressUpdate(float(rowIdx) / rowCount)
+
     def readProductTable(self, productTablePath: str = None, productTableSheetname: str = None, environmentSettings: dict = None, 
                          onProgressUpdate: Callable[[float, str],None] = None, replaceExistingCollection=False, logHandler: Callable[[str],None] = None):
         """Generates a database collection with rendering entries from the given table.
@@ -356,13 +427,6 @@ class RenderingPipeline(object):
 
         self.processHeader(header, rowIndices)
 
-        # In case of rendering name duplicates, create mappings/links to the document with the first-assigned rendering.
-        renderingToDocumentMap: Dict[str,dict] = dict()
-
-        sidSet = set()
-        rowIdx = 1
-        rowCount = table.nrows
-
         if onProgressUpdate:
             onProgressUpdate(0, 'Reading product table...')
 
@@ -382,65 +446,7 @@ class RenderingPipeline(object):
                 raise RuntimeError(f'Failed to rename collection {collectionName} to temporary collection {tempCollectionName}. Maybe it already exists?')
 
         try:
-            for row in table.getRowsWithoutHeader():
-                # Convert values to string for consistency
-                row = [str(v) if v != None else v for v in row]
-                documentDict = self.zipRowAndHeader(row, header, rowIndices)
-
-                if any(rowSkipCondition(documentDict) for rowSkipCondition in self.rowSkipConditions):
-                    continue
-
-                if not self.processDocumentDict(documentDict, logHandler):
-                    continue
-                
-                if PipelineKeys.Perspective in documentDict:
-                    perspectiveCodes = [documentDict[PipelineKeys.Perspective]]
-                else:
-                    perspectiveCodes = RenderingPipelineUtil.getPerspectiveCodes(environmentSettings)
-
-                    if len(perspectiveCodes) == 0:
-                        perspectiveCodes.append('')
-
-                postOutputExt = self.getPreferredPreviewExtension(environmentSettings)
-
-                for perspectiveCode in perspectiveCodes:
-                    documentDict[PipelineKeys.Perspective] = perspectiveCode
-
-                    documentWithSettings = self.combineDocumentWithSettings(documentDict, environmentSettings)
-
-                    sid = self.getSID(documentWithSettings, row)
-                    documentDict[Keys.systemIDKey] = sid
-                    documentWithSettings[Keys.systemIDKey] = sid
-
-                    if not self.postProcessDocumentDict(documentDict, logHandler):
-                        continue
-
-                    if sid in sidSet:
-                        m = f'Duplicate sid {sid} found at row {rowIdx}. This row will be skipped.'
-                        logger.warning(m)
-                        if logHandler:
-                            logHandler(m)
-                        continue
-                    else:
-                        sidSet.add(sid)
-
-                        renderingName = extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.RenderingNaming), documentWithSettings)
-                        mappedDocument = renderingToDocumentMap.get(renderingName)
-
-                        documentDict[Keys.preview] = self.namingConvention.getPostFilename(documentWithSettings, postOutputExt)
-
-                        if mappedDocument:
-                            documentDict[PipelineKeys.Mapping] = mappedDocument.get(Keys.systemIDKey)
-                        else:
-                            renderingToDocumentMap[renderingName] = documentDict
-                            documentDict[PipelineKeys.Mapping] = None
-
-                        self.dbManager.insertOrModifyDocument(collectionName, sid, documentDict, checkForModifications=False)
-
-                rowIdx += 1
-
-                if onProgressUpdate:
-                    onProgressUpdate(float(rowIdx) / rowCount)
+            self.processRows(table, collectionName, header, rowIndices, environmentSettings, onProgressUpdate, logHandler)
 
             if replaceExistingCollection:
                 self.dbManager.dropCollection(self.dbCollectionName + Keys.OLD_VERSIONS_COLLECTION_SUFFIX)
