@@ -5,9 +5,9 @@ from VisualScripting.node_exec.base_nodes import BaseCustomNode, ComboBoxInput, 
 from RenderingPipelinePlugin import PipelineKeys
 from MetadataManagerCore.animation import anim_util
 from VisualScriptingExtensions.document_action_nodes import DocumentActionNode
-from dist.MetadataManager.plugins.RenderingPipelinePlugin import RenderingPipelineUtil
-from dist.MetadataManager.plugins.RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
-from dist.MetadataManager.plugins.RenderingPipelinePlugin.RenderingPipelineManager import RenderingPipelineManager
+from RenderingPipelinePlugin import RenderingPipelineUtil
+from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
+from RenderingPipelinePlugin.RenderingPipelineManager import RenderingPipelineManager
 
 IDENTIFIER = 'Rendering Pipeline'
 

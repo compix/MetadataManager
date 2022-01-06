@@ -1,7 +1,7 @@
 from typing import List
 import typing
 from RenderingPipelinePlugin import PipelineKeys
-from dist.MetadataManager.plugins.RenderingPipelinePlugin import RenderingPipelineUtil
+from RenderingPipelinePlugin import RenderingPipelineUtil
 import os
 
 if typing.TYPE_CHECKING:

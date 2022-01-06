@@ -5,7 +5,7 @@ from MetadataManagerCore.environment.Environment import Environment
 from RenderingPipelinePlugin.PipelineType import PipelineType
 import re
 
-from dist.MetadataManager.plugins.RenderingPipelinePlugin.NamingConvention import extractNameFromNamingConvention
+from RenderingPipelinePlugin.NamingConvention import extractNameFromNamingConvention
 
 def getInitialDir(filename: str, baseProjectFolder: str, isFolder=False):
     if not os.path.isabs(filename):
