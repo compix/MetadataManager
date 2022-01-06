@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 if typing.TYPE_CHECKING:
     from ServiceRegistry import ServiceRegistry
+    from viewers.ViewerRegistry import ViewerRegistry
 
 class PluginInfo(object):
     def __init__(self, pluginFolder: str) -> None:
@@ -46,7 +47,7 @@ class PluginManager(object):
         super().__init__()
 
         self.pluginsFolders = pluginsFolders
-        self.viewerRegistry = None
+        self.viewerRegistry: 'ViewerRegistry' = None
         self.serviceRegistry = serviceRegistry
         self.appInfo = appInfo
 
@@ -106,7 +107,7 @@ class PluginManager(object):
                 except Exception as e:
                     logger.error(str(e))
 
-    def setViewerRegistry(self, viewerRegistry):
+    def setViewerRegistry(self, viewerRegistry: 'ViewerRegistry'):
         self.viewerRegistry = viewerRegistry
 
     @property
