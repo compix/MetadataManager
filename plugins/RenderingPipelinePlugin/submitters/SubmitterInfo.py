@@ -21,7 +21,7 @@ class SubmitterInfo(object):
         self.taskSettings: MetadataManagerSubmissionTaskSettings = None
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, SubmitterInfo) and self.name == other.name
+        return isinstance(other, SubmitterInfo) and self.name == other.name and self.taskView == other.taskView
 
     def toDict(self):
         return {

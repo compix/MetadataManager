@@ -111,7 +111,6 @@ class TaskExecutionOrderView(object):
                 btn.setChecked(False)
 
     def onSubmissionTaskViewAdded(self, taskView: MetadataManagerTaskView):
-        self.submitterInfos.append(taskView.name)
         self.addTaskExecutionOrderEntry(SubmitterInfo(taskView.name, MetadataManagerTaskSubmitter), taskView)
 
     def onSubmissionTaskViewNameChanged(self, taskView: MetadataManagerTaskView):
@@ -121,9 +120,13 @@ class TaskExecutionOrderView(object):
                 btn.submitterInfo.name = taskView.name
 
     def onSubmissionTaskViewDeleted(self, taskView: MetadataManagerTaskView):
-        try:
-            idx = self.submitterInfos.index(SubmitterInfo(taskView.name, MetadataManagerTaskSubmitter))
-        except:
+        idx = None
+        for i, info in enumerate(self.submitterInfos):
+            if info.taskView == taskView:
+                idx = i
+                break
+        
+        if idx == None:
             return
 
         self.submitterInfos.pop(idx)
