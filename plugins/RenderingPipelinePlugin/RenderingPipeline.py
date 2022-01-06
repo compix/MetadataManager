@@ -330,6 +330,17 @@ class RenderingPipeline(object):
     def zipRowAndHeader(self, row: List[str], header: List[str], rowIndices: List[str]):
         return {header[hi]: row[i] for hi, i in enumerate(rowIndices) if i < len(row)}
 
+    def getPerspectiveCodes(self, documentDict: dict, environmentSettings: dict):
+        if PipelineKeys.Perspective in documentDict:
+            perspectiveCodes = [documentDict[PipelineKeys.Perspective]]
+        else:
+            perspectiveCodes = RenderingPipelineUtil.getPerspectiveCodes(environmentSettings)
+
+            if len(perspectiveCodes) == 0:
+                perspectiveCodes.append('')
+
+        return perspectiveCodes
+
     def processRows(self, table: Table, collectionName: str, header: typing.List[str], rowIndices: typing.List[int], environmentSettings: dict = None,
                     onProgressUpdate: Callable[[float, str],None] = None, logHandler: Callable[[str],None] = None):
 
@@ -351,13 +362,7 @@ class RenderingPipeline(object):
             if not self.processDocumentDict(documentDict, logHandler):
                 continue
             
-            if PipelineKeys.Perspective in documentDict:
-                perspectiveCodes = [documentDict[PipelineKeys.Perspective]]
-            else:
-                perspectiveCodes = RenderingPipelineUtil.getPerspectiveCodes(environmentSettings)
-
-                if len(perspectiveCodes) == 0:
-                    perspectiveCodes.append('')
+            perspectiveCodes = self.getPerspectiveCodes(documentDict, environmentSettings)
 
             postOutputExt = self.getPreferredPreviewExtension(environmentSettings)
 
