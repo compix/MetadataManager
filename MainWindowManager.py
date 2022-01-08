@@ -6,7 +6,7 @@ from viewers.HostProcessViewer import HostProcessViewer
 from viewers.service.ServiceManagerViewer import ServiceManagerViewer
 from PySide2 import QtCore, QtWidgets, QtUiTools, QtGui
 from enum import Enum
-from MetadataManagerCore.mongodb_manager import MongoDBManager
+from MetadataManagerCore.mongodb_manager import CollectionHeaderKeyInfo, MongoDBManager
 from qt_extensions import qt_util
 from TableModel import TableModel
 from MetadataManagerCore import Keys
@@ -88,6 +88,7 @@ class MainWindowManager(QtCore.QObject):
                 action.triggered.connect(task)
 
     def initTable(self):
+        self.currentVisualHeaderIndices = None
         self.tableModel = TableModel(self.window, [], [], [])
         self.window.tableView.setModel(self.tableModel)
 
@@ -97,31 +98,61 @@ class MainWindowManager(QtCore.QObject):
         self.tableView: QtWidgets.QTableView = self.window.tableView
         self.tableView.customContextMenuRequested.connect(self.contextMenuEvent)
         self.tableViewContextMenu = QtWidgets.QMenu(self.tableView)
+        self.tableView.horizontalHeader().setSectionsMovable(True)
+        self.tableView.horizontalHeader().sectionMoved.connect(self.onSectionMoved)
+
+    def onSectionMoved(self, logicalIndex, oldVisualIndex, newVisualIndex):
+        # Save order in db
+        selectedCollectionNames = self.collectionViewer.getSelectedCollectionNames()
+        if len(selectedCollectionNames) != 1:
+            return
+
+        collectionName = selectedCollectionNames[0]
+        headerInfos = self.dbManager.extractCollectionHeaderInfo(selectedCollectionNames)
+        handledKeys = set()
+        keyToHeaderInfo = {
+            i.key:i for i in headerInfos
+        }
+
+        newHeaderKeyInfos = []
+        for i in range(len(self.tableModel.header)):
+            logicalIdx = self.tableView.horizontalHeader().logicalIndex(i)
+            key = self.tableModel.displayedKeys[logicalIdx]
+            headerInfo = keyToHeaderInfo.get(key)
+            if headerInfo:
+                newHeaderKeyInfos.append(headerInfo)
+                handledKeys.add(key)
+        
+        for i in headerInfos:
+            if not i.key in handledKeys:
+                newHeaderKeyInfos.append(i)
+
+        self.dbManager.setCollectionHeaderInfo(collectionName, newHeaderKeyInfos)
 
     def contextMenuEvent(self):
         self.refreshTableViewContextMenu()
         self.tableViewContextMenu.exec_(QtGui.QCursor.pos())
 
     def copyTableSelection(self):
-            selection = self.window.tableView.selectedIndexes()
-            if selection:
-                rows = sorted(index.row() for index in selection)
-                columns = sorted(index.column() for index in selection)
-                rowcount = rows[-1] - rows[0] + 1
-                colcount = columns[-1] - columns[0] + 1
-                table = [[''] * colcount for _ in range(rowcount)]
-                for index in selection:
-                    row = index.row() - rows[0]
-                    column = index.column() - columns[0]
-                    table[row][column] = str(index.data()) if index.data() else ''
+        selection = self.window.tableView.selectedIndexes()
+        if selection:
+            rows = sorted(index.row() for index in selection)
+            columns = sorted(index.column() for index in selection)
+            rowcount = rows[-1] - rows[0] + 1
+            colcount = columns[-1] - columns[0] + 1
+            table = [[''] * colcount for _ in range(rowcount)]
+            for index in selection:
+                row = index.row() - rows[0]
+                column = index.column() - columns[0]
+                table[row][column] = str(index.data()) if index.data() else ''
 
-                csv = ""
-                for row in table:
-                    csv += '\t'.join(row) + '\n'
+            csv = ""
+            for row in table:
+                csv += '\t'.join(row) + '\n'
 
-                cb = QtWidgets.QApplication.clipboard()
-                cb.clear(mode=cb.Clipboard)
-                cb.setText(csv, mode=cb.Clipboard)
+            cb = QtWidgets.QApplication.clipboard()
+            cb.clear(mode=cb.Clipboard)
+            cb.setText(csv, mode=cb.Clipboard)
 
     def initViewers(self):
         self.visualScriptingViewer = VisualScriptingViewer(self.serviceRegistry.visualScripting)
@@ -150,8 +181,6 @@ class MainWindowManager(QtCore.QObject):
 
         self.hostProcessViewer = HostProcessViewer(self.window, self.serviceRegistry.hostProcessController)
 
-        self.addPreviewToAllEntries()
-        
         self.pluginManagerViewer = PluginManagerViewer(self.window, self.serviceRegistry.pluginManager, self.bootstrapper.requestRestart)
         self.serviceRegistry.pluginManager.setViewerRegistry(self.viewerRegistry)
 
@@ -177,7 +206,7 @@ class MainWindowManager(QtCore.QObject):
         self.window.actionLight.triggered.connect(lambda : self.setStyle(Style.Light))
 
     def updateTableModelHeader(self):
-        headerInfos = self.dbManager.extractCollectionHeaderInfo(self.collectionViewer.yieldSelectedCollectionNames())
+        headerInfos = self.dbManager.extractCollectionHeaderInfo(self.collectionViewer.getSelectedCollectionNames())
         displayedHeaderInfos = [i for i in headerInfos if i.displayed]
         self.tableModel.updateHeader([i.displayName for i in displayedHeaderInfos], [i.key for i in displayedHeaderInfos])
 
@@ -255,12 +284,6 @@ class MainWindowManager(QtCore.QObject):
             if item != None:
                 self.previewViewer.showPreview(item.get(Keys.preview))
                 self.inspector.showItem(uid)
-
-    def addPreviewToAllEntries(self):
-        for collectionName in self.collectionViewer.yieldSelectedCollectionNames():
-            collection = self.dbManager.db[collectionName]
-            for item in collection.find({}):
-                collection.update_one({"_id":item["_id"]}, {"$set": {"preview":"C:/Users/compix/Desktop/surprised_pikachu.png"}})
 
     def extractSystemValues(self, item):
         vals = []

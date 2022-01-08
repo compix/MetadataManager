@@ -396,6 +396,11 @@ class DocumentSearchFilterViewer(QtCore.QObject):
 
         qt_util.runInMainThread(self.setLoading, True)
 
+        headerInfos = self.dbManager.extractCollectionHeaderInfo(self.collectionViewer.getSelectedCollectionNames())
+        displayedHeaderInfos = [i for i in headerInfos if i.displayed]
+        self.documentTableModel.displayedKeys = [i.key for i in displayedHeaderInfos]
+        self.documentTableModel.header = [i.displayName for i in displayedHeaderInfos]
+
         qt_util.runInMainThread(self.documentTableModel.clear)
         qt_util.runInMainThread(lambda: self.mainWindow.itemCountLabel.setText("Item Count: Computing..."))
 
