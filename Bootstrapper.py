@@ -254,6 +254,7 @@ class Bootstrapper(object):
     def setupMainWindowManager(self):
         self.mainWindowManager = MainWindowManager(self.app, self.appInfo, self.serviceRegistry, self)
         self.serviceRegistry.pluginManager.load(QtCore.QSettings(self.appInfo.company, self.appInfo.appName), self.dbManager)
+        self.mainWindowManager.pluginManagerViewer.loadPluginsFolders()
 
         self.mainWindowManager.show()
 

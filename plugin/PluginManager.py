@@ -43,10 +43,11 @@ class PluginInfo(object):
         return os.path.basename(self.pluginFolder)
 
 class PluginManager(object):
-    def __init__(self, pluginsFolders: List[str], serviceRegistry: 'ServiceRegistry', appInfo: AppInfo) -> None:
+    def __init__(self, defaultPluginsFolders: List[str], serviceRegistry: 'ServiceRegistry', appInfo: AppInfo) -> None:
         super().__init__()
 
-        self.pluginsFolders = pluginsFolders
+        self.pluginsFolders = set()
+        self.defaultPluginsFolders = [folder.replace('\\', '/') for folder in defaultPluginsFolders]
         self.viewerRegistry: 'ViewerRegistry' = None
         self.serviceRegistry = serviceRegistry
         self.appInfo = appInfo
@@ -58,8 +59,10 @@ class PluginManager(object):
         self.pluginActiveStatus = dict()
         self.pluginAutoActivateStatus = dict()
         self.onPluginAutoactivateStatusChanged = Event()
+        self.onPluginAdded = Event()
+        self.onPluginRemoved = Event()
 
-        for pluginsFolder in pluginsFolders:
+        for pluginsFolder in defaultPluginsFolders:
             self.addPluginsFolder(pluginsFolder)
 
     def setPluginAutoactivateState(self, pluginName: str, autoactivate: bool):
@@ -72,27 +75,93 @@ class PluginManager(object):
         return self.pluginAutoActivateStatus.get(pluginName, True)
 
     def addPluginsFolder(self, pluginsFolder: str):
+        pluginsFolder = pluginsFolder.replace('\\', '/')
+        if pluginsFolder in self.pluginsFolders:
+            return False
+
         if not os.path.exists(pluginsFolder):
             logger.error(f'The plugins folder {pluginsFolder} does not exist.')
-            return
+            return False
 
         # The plugins folder must contain a __init__.py
         if not os.path.exists(os.path.join(pluginsFolder, '__init__.py')):
             logger.error(f'The plugins folder {pluginsFolder} does not have an __init__.py file.')
-            return
+            return False
         
         sys.path.append(pluginsFolder)
+        self.pluginsFolders.add(pluginsFolder)
 
         # Go through the subdirectories of the plugins folder to add the plugin info
         for root,dirs,_ in os.walk(pluginsFolder):
             for pluginFolder in dirs:
                 if pluginFolder == '__pycache__':
                     continue
+
+                if pluginFolder in self.pluginInfoMap:
+                    logger.warning(f'The plugin {pluginFolder} was already added.')
+                    continue
                 
                 fullPluginFolderPath = os.path.join(root, pluginFolder)
                 self.pluginInfoMap[pluginFolder] = PluginInfo(fullPluginFolderPath)
+                self.onPluginAdded(pluginFolder)
 
             break
+
+        if not pluginsFolder in self.defaultPluginsFolders:
+            self.saveDbState(self.serviceRegistry.dbManager)
+
+        return True
+
+    def refreshAvailablePlugins(self):
+        pluginNames = set()
+        for pluginFolder in self.pluginsFolders:
+            for root,dirs,_ in os.walk(pluginFolder):
+                for pluginFolder in dirs:
+                    if pluginFolder == '__pycache__':
+                        continue
+
+                    pluginNames.add(pluginFolder)
+
+                    if pluginFolder in self.pluginInfoMap:
+                        continue
+                    
+                    fullPluginFolderPath = os.path.join(root, pluginFolder)
+                    self.pluginInfoMap[pluginFolder] = PluginInfo(fullPluginFolderPath)
+                    self.onPluginAdded(pluginFolder)
+
+                break
+
+        deletedPluginNames = set(self.pluginInfoMap.keys()) - pluginNames
+        for deletedPluginName in deletedPluginNames:
+            del self.pluginInfoMap[deletedPluginName]
+            self.onPluginRemoved(deletedPluginName)
+
+    def removePluginsFolder(self, pluginsFolder: str):
+        pluginsFolder = pluginsFolder.replace('\\', '/')
+        if not pluginsFolder in self.pluginsFolders:
+            return
+        
+        self.pluginsFolders.remove(pluginsFolder)
+        sys.path.remove(pluginsFolder)
+
+        # Go through the subdirectories of the plugins folder to remove the plugin info
+        for _,dirs,_ in os.walk(pluginsFolder):
+            for pluginFolder in dirs:
+                if pluginFolder == '__pycache__':
+                    continue
+                
+                if not pluginFolder in self.pluginInfoMap:
+                    continue
+
+                del self.pluginInfoMap[pluginFolder]
+                self.onPluginRemoved(pluginFolder)
+
+            break
+
+        self.saveDbState(self.serviceRegistry.dbManager)
+
+    def getNonDefaultPluginsFolders(self):
+        return [folder for folder in self.pluginsFolders if not folder in self.defaultPluginsFolders]
 
     def getPluginInstanceByName(self, name: str):
         return self.pluginInfoMap.get(name, PluginInfo(None)).pluginInstance
@@ -183,6 +252,13 @@ class PluginManager(object):
             pluginInfo.pluginLoadingError = pluginLoadingError
             pluginInfo.pluginActive = False
 
+    def saveDbState(self, dbManager: MongoDBManager):
+        dbState = {
+            'plugin_autoactivate_status': self.pluginAutoActivateStatus,
+            'plugins_folders': self.getNonDefaultPluginsFolders()
+        }
+        dbManager.stateCollection.update_one({'_id': "plugin_manager"}, {'$set': dbState}, upsert=True)
+
     def save(self, settings, dbManager: MongoDBManager):
         """
         Serializes the state in settings and/or in the database.
@@ -195,8 +271,7 @@ class PluginManager(object):
             'plugin_active_status': {pluginInfo.pluginName:pluginInfo.pluginActive for pluginInfo in self.pluginInfoMap.values()}
         })
 
-        dbState = {'plugin_autoactivate_status': self.pluginAutoActivateStatus}
-        dbManager.stateCollection.update_one({'_id': "plugin_manager"}, {'$set': dbState}, upsert=True)
+        self.saveDbState(dbManager)
 
     def load(self, settings, dbManager: MongoDBManager):
         """
@@ -214,6 +289,10 @@ class PluginManager(object):
 
         if infoDict == None:
             infoDict = dict()
+
+        pluginsFolders = dbInfoDict.get('plugins_folders', set())
+        for pluginsFolder in pluginsFolders:
+            self.addPluginsFolder(pluginsFolder)
 
         self.pluginActiveStatus = infoDict.get('plugin_active_status', dict())
         if dbInfoDict:
