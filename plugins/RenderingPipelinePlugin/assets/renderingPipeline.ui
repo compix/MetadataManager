@@ -43,9 +43,9 @@
           <property name="geometry">
            <rect>
             <x>0</x>
-            <y>0</y>
+            <y>-797</y>
             <width>865</width>
-            <height>1368</height>
+            <height>1455</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -1013,6 +1013,64 @@
             </widget>
            </item>
            <item>
+            <widget class="QGroupBox" name="replacedNamingConventionCharactersGroup">
+             <property name="title">
+              <string>Replaced Naming Convention Characters</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_45">
+              <item>
+               <widget class="QFrame" name="replacedCharactersFrame">
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_46"/>
+               </widget>
+              </item>
+              <item alignment="Qt::AlignRight">
+               <widget class="QFrame" name="frame_20">
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_2">
+                 <property name="spacing">
+                  <number>6</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QPushButton" name="addReplacedCharacterButton">
+                   <property name="text">
+                    <string>Add</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="../../../assets/resource_files/resources.qrc">
+                     <normaloff>:/icons/plus.png</normaloff>:/icons/plus.png</iconset>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
             <widget class="QGroupBox" name="groupBox_11">
              <property name="title">
               <string>Custom Environment Variables</string>
@@ -1095,8 +1153,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>882</width>
-            <height>658</height>
+            <width>578</width>
+            <height>513</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -1401,8 +1459,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>882</width>
-            <height>658</height>
+            <width>151</width>
+            <height>218</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -1549,8 +1607,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>882</width>
-            <height>658</height>
+            <width>250</width>
+            <height>353</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1863,8 +1921,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>882</width>
-            <height>658</height>
+            <width>326</width>
+            <height>409</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_33">
@@ -2152,8 +2210,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>882</width>
-            <height>658</height>
+            <width>151</width>
+            <height>84</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_38">

@@ -30,6 +30,15 @@ def extractNameFromNamingConvention(namingConvention: str, documentWithSettings:
         else:
             name += c
     
+    try:
+        charsToReplace = documentWithSettings.get(PipelineKeys.CharactersToReplaceInNamingConvention)
+        if isinstance(charsToReplace, list):
+            for targetNaming, charToReplace, replacementChar in charsToReplace:
+                if targetNaming == 'All' or documentWithSettings.get(targetNaming) == namingConvention:
+                    name = name.replace(charToReplace, replacementChar)
+    except:
+        pass
+
     if documentWithSettings.get(PipelineKeys.ReplaceGermanCharacters, ''):
         name = replaceGermanCharacters(name)
 

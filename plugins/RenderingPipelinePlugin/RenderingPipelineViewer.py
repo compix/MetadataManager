@@ -1,6 +1,7 @@
 import typing
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
 from MetadataManagerCore.third_party_integrations.deadline import deadline_service
+from RenderingPipelinePlugin.CharacterReplacementView import CharacterReplacementView
 from RenderingPipelinePlugin.CustomSubmissionTaskViewer import CustomSubmissionTaskViewer
 from RenderingPipelinePlugin.EnvironmentEntry import CheckBoxEnvironmentEntry, ComboBoxEnvironmentEntry, DeadlineNodeBlackWhitelistEnvironmentEntry, DeadlinePoolComboBoxEnvironmentEntry, DeadlineTimeoutEnvironmentEntry, EnvironmentEntry, LineEditEnvironmentEntry, NamingEnvironmentEntry, ProjectFileEnvironmentEntry, ProjectSubFolderEnvironmentEntry
 from RenderingPipelinePlugin.MetadataManagerTaskView import MetadataManagerTaskView
@@ -223,6 +224,8 @@ class RenderingPipelineViewer(object):
 
         self.dialog.selectProductTableInExplorerButton.clicked.connect(self.onSelectProductTableInExplorerClick)
         self.dialog.refreshTableHeaderButton.clicked.connect(self.onRefreshTableHeaderClick)
+
+        self.characterReplacementView = CharacterReplacementView(self.dialog)
 
     def addDeadlineInfoEntry(self, label: str, envKey: str):
         blackWhitelistElement = DeadlineNodeBlackWhitelistElement(QtWidgets.QHBoxLayout())
@@ -558,6 +561,8 @@ class RenderingPipelineViewer(object):
 
         self.environment.settings[PipelineKeys.SceneExtension] = self.getSceneExtensionFromPipelineType(pipelineType)
 
+        self.characterReplacementView.save(self.environment.settings)
+
         try:
             for envEntry in self.environmentEntries:
                 if envEntry.isApplicable():
@@ -697,6 +702,8 @@ class RenderingPipelineViewer(object):
 
             submitterInfos = getOrderedSubmitterInfos(environmentSettings)
             self.taskExecutionOrderView.setSubmitterInfos(submitterInfos)
+
+            self.characterReplacementView.load(environmentSettings)
 
         self.environmentViewer.setEnvironment(self.environment)
 
