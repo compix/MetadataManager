@@ -14,7 +14,7 @@ a = Analysis(['metadata_viewer.py'],
                     ('VisualScripting_SaveData', 'VisualScripting_SaveData'),
                     ('plugins', 'plugins'),
                     ('MetadataManagerCore/third_party_integrations/deadline/plugins', 'MetadataManagerCore/third_party_integrations/deadline/plugins')],
-             hiddenimports=['PySide2.QtXml', 'VisualScripting.NodeGraphQt'],
+             hiddenimports=['PySide2.QtXml', 'VisualScripting.NodeGraphQt', 'openpyxl'],
              hookspath=[spec_root],
              runtime_hooks=[],
              excludes=[],
@@ -49,7 +49,7 @@ def zipDir(path: str, zipFilename: str):
         for f in filenames:
             zipFile.write(f, os.path.relpath(f, path))
 
-distPath = os.path.join(spec_root, '.env', 'dist')
+distPath = os.path.join(spec_root, 'dist')
 zipTargetFolder = os.path.join(distPath, 'MetadataManager')
 print('Zipping ' + zipTargetFolder)
 zipDir(zipTargetFolder, os.path.join(distPath, 'MetadataManager.zip'))

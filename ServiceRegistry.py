@@ -28,4 +28,5 @@ class ServiceRegistry(object):
         self.serviceManager : ServiceManager = None
         self.fileHandlerManager : FileHandlerManager = None
         self.hostProcessController : HostProcessController = None
+        self.mainWindowManager = None
         self.pluginManager: PluginManager = None

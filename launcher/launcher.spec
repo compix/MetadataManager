@@ -34,4 +34,4 @@ exe = EXE(pyz,
           console=True )
 
 import shutil
-shutil.copy(os.path.join(spec_root, 'launcher.json'), os.path.join(spec_root, '..', '.env', 'dist', 'launcher.json'))
+shutil.copy(os.path.join(spec_root, 'launcher.json'), os.path.join(spec_root, '..', 'dist', 'launcher.json'))

@@ -45,4 +45,4 @@ class AppUploader(object):
 if __name__ == '__main__':
     launcherInfo = LauncherInfo(BASE_PATH)
     appUploader = AppUploader(launcherInfo.appRepositoryDirectory)
-    appUploader.uploadApp(os.path.abspath(os.path.join(BASE_PATH, '..', '.env', 'dist', 'MetadataManager.zip')))
+    appUploader.uploadApp(os.path.abspath(os.path.join(BASE_PATH, '..', 'dist', 'MetadataManager.zip')))
