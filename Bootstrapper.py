@@ -192,12 +192,6 @@ class Bootstrapper(object):
         self.serviceRegistry.codeGenerator = CodeGenerator(self.serviceRegistry.actionManager, self.serviceRegistry.documentFilterManager)
         self.serviceRegistry.services.append(self.serviceRegistry.codeGenerator)
 
-        visualScriptingSaveDataFolder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "VisualScripting_SaveData")
-        self.serviceRegistry.visualScripting = ExtendedVisualScripting([visualScriptingSaveDataFolder], self.serviceRegistry.actionManager, 
-                                                                       self.serviceRegistry.documentFilterManager,
-                                                                       self.serviceRegistry.codeGenerator)
-        self.serviceRegistry.services.append(self.serviceRegistry.visualScripting)
-
         self.serviceRegistry.taskProcessor = TaskProcessor()
         actionTaskPicker = ActionTaskPicker(self.serviceRegistry.actionManager, self.serviceRegistry.documentFilterManager)
         self.serviceRegistry.taskProcessor.addTaskPicker(actionTaskPicker)
@@ -217,8 +211,16 @@ class Bootstrapper(object):
         self.serviceRegistry.services.append(self.fileHandlerManager)
 
         pluginFolder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "plugins")
-        self.serviceRegistry.pluginManager = PluginManager([pluginFolder], self.serviceRegistry, self.appInfo)
+        privatePluginFolder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "private", "plugins")
+        self.serviceRegistry.pluginManager = PluginManager([pluginFolder, privatePluginFolder], self.serviceRegistry, self.appInfo)
         self.serviceRegistry.services.append(self.serviceRegistry.pluginManager)
+
+        visualScriptingSaveDataFolder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "VisualScripting_SaveData")
+        visualScriptingPrivateSaveDataFolder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "private", "VisualScripting_SaveData")
+        self.serviceRegistry.visualScripting = ExtendedVisualScripting([visualScriptingSaveDataFolder, visualScriptingPrivateSaveDataFolder], self.serviceRegistry.actionManager, 
+                                                                       self.serviceRegistry.documentFilterManager,
+                                                                       self.serviceRegistry.codeGenerator)
+        self.serviceRegistry.services.append(self.serviceRegistry.visualScripting)
 
         MDApi.ENVIRONMENT_MANAGER = self.serviceRegistry.environmentManager
         MDApi.DB_MANAGER = self.dbManager
@@ -254,8 +256,11 @@ class Bootstrapper(object):
     def setupMainWindowManager(self):
         self.mainWindowManager = MainWindowManager(self.app, self.appInfo, self.serviceRegistry, self)
         self.serviceRegistry.mainWindowManager = self.mainWindowManager
-        self.serviceRegistry.pluginManager.load(QtCore.QSettings(self.appInfo.company, self.appInfo.appName), self.dbManager)
+        
+        settings = QtCore.QSettings(self.appInfo.company, self.appInfo.appName)
+        self.serviceRegistry.pluginManager.load(settings, self.dbManager)
         self.mainWindowManager.pluginManagerViewer.loadPluginsFolders()
+        self.serviceRegistry.visualScripting.load(settings, self.dbManager)
 
         self.mainWindowManager.show()
 
@@ -265,8 +270,12 @@ class Bootstrapper(object):
         
         for service in self.serviceRegistry.services:
             # Skip PluginManager if in GUI mode. It will be loaded after the main window manager is initialized.
-            if isinstance(service, PluginManager) and self.mode == ApplicationMode.GUI:
-                continue
+            if self.mode == ApplicationMode.GUI:
+                if isinstance(service, PluginManager):
+                    continue
+
+                if isinstance(service, ExtendedVisualScripting):
+                    continue
 
             try:
                 service.load
