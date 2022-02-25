@@ -123,3 +123,5 @@ venv.bak/
 .qt_for_python/*
 
 backup/
+
+assets/private/

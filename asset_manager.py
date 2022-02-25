@@ -15,7 +15,14 @@ def getUIFilePath(uiFileName):
 def getDefaultLayoutFilePath(layoutName):
     return path.join(BASE_DEFAULT_LAYOUT_FILES_PATH, layoutName)
 
+def getPrivateFolder():
+    return path.join(BASE_PATH, "private")
+
 def getMainSettingsPath():
+    privateSettingsFilename = path.join(getPrivateFolder(), "settings.ini")
+    if path.exists(privateSettingsFilename):
+        return privateSettingsFilename
+        
     return path.join(BASE_PATH, "settings.ini")
 
 def getLogFilePath():

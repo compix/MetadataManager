@@ -34,4 +34,10 @@ exe = EXE(pyz,
           console=True )
 
 import shutil
-shutil.copy(os.path.join(spec_root, 'launcher.json'), os.path.join(spec_root, '..', 'dist', 'launcher.json'))
+
+privateFolder = os.path.join(spec_root, '..', 'assets', 'private')
+launcherJsonFilename = os.path.join(privateFolder, 'launcher.json')
+if not os.path.exists(launcherJsonFilename):
+    launcherJsonFilename = os.path.join(spec_root, 'launcher.json')
+
+shutil.copy(launcherJsonFilename, os.path.join(spec_root, '..', 'dist', 'launcher.json'))
