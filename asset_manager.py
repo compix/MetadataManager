@@ -5,6 +5,7 @@ from PySide2.QtWidgets import QDialog
 from PySide2.QtCore import Qt
 
 BASE_PLUGIN_PATH = path.join(path.dirname(path.realpath(__file__)), "plugins")
+PRIVATE_PATH = path.join(path.dirname(path.realpath(__file__)), "private")
 BASE_PATH = path.join(path.dirname(path.realpath(__file__)), "assets")
 BASE_UI_FILES_PATH = path.join(BASE_PATH, "ui_files")
 BASE_DEFAULT_LAYOUT_FILES_PATH = path.join(BASE_PATH, "default_layouts")
@@ -15,11 +16,8 @@ def getUIFilePath(uiFileName):
 def getDefaultLayoutFilePath(layoutName):
     return path.join(BASE_DEFAULT_LAYOUT_FILES_PATH, layoutName)
 
-def getPrivateFolder():
-    return path.join(BASE_PATH, "private")
-
 def getMainSettingsPath():
-    privateSettingsFilename = path.join(getPrivateFolder(), "settings.ini")
+    privateSettingsFilename = path.join(PRIVATE_PATH, "settings.ini")
     if path.exists(privateSettingsFilename):
         return privateSettingsFilename
         

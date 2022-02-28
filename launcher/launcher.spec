@@ -35,7 +35,7 @@ exe = EXE(pyz,
 
 import shutil
 
-privateFolder = os.path.join(spec_root, '..', 'assets', 'private')
+privateFolder = os.path.join(spec_root, '..', 'private')
 launcherJsonFilename = os.path.join(privateFolder, 'launcher.json')
 if not os.path.exists(launcherJsonFilename):
     launcherJsonFilename = os.path.join(spec_root, 'launcher.json')

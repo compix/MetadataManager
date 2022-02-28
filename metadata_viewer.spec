@@ -7,13 +7,26 @@ import zipfile
 
 spec_root = os.path.abspath(SPECPATH)
 
+datas = [('VisualScripting/assets', 'VisualScripting/assets'), ('assets', 'assets'), ('custom','custom'),
+         ('VisualScripting_SaveData', 'VisualScripting_SaveData'),
+         ('plugins', 'plugins'),
+         ('MetadataManagerCore/third_party_integrations/deadline/plugins', 'MetadataManagerCore/third_party_integrations/deadline/plugins')]
+
+for _, dirs, files in os.walk('private'):
+    for d in dirs:
+        if not d in ['.git']:
+            datas.append((f'private/{d}', f'private/{d}'))
+
+    for f in files:
+        if not f in  ['.gitignore']:
+            datas.append((f'private/{f}', f'private'))
+
+    break
+
 a = Analysis(['metadata_viewer.py'],
              pathex=[spec_root, os.path.join(spec_root, 'VisualScripting')],
              binaries=[],
-             datas=[('VisualScripting/assets', 'VisualScripting/assets'), ('assets', 'assets'), ('custom','custom'),
-                    ('VisualScripting_SaveData', 'VisualScripting_SaveData'),
-                    ('plugins', 'plugins'),
-                    ('MetadataManagerCore/third_party_integrations/deadline/plugins', 'MetadataManagerCore/third_party_integrations/deadline/plugins')],
+             datas=datas,
              hiddenimports=['PySide2.QtXml', 'VisualScripting.NodeGraphQt', 'openpyxl'],
              hookspath=[spec_root],
              runtime_hooks=[],
