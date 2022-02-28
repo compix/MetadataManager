@@ -76,6 +76,10 @@ class MainWindowManager(QtCore.QObject):
         self.documentSearchFilterViewer.viewItemsOverThreadPool(saveSearchHistoryEntry=False)
 
     @property
+    def tabWidget(self) -> QtWidgets.QTabWidget:
+        return self.window.tabWidget
+
+    @property
     def menuBar(self) -> QtWidgets.QMenuBar:
         return self.window.menubar
 

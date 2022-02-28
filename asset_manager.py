@@ -51,3 +51,6 @@ def loadDialog(relUIPath, fixedSize=True) -> QDialog:
 
 def getPluginUIFilePath(pluginName: str, uiFileName: str):
     return path.join(BASE_PLUGIN_PATH, pluginName, uiFileName)
+
+def getPrivatePluginUIFilePath(pluginName: str, uiFileName: str):
+    return path.join(PRIVATE_PATH, 'plugins', pluginName, uiFileName)
