@@ -43,6 +43,11 @@ class AppUploader(object):
         self.repositoryInfo.updateLatestVersion(uploadedVersionFilename)
         
 if __name__ == '__main__':
-    launcherInfo = LauncherInfo(BASE_PATH)
+    launcherInfoDir = BASE_PATH
+    privateDir = os.path.join(BASE_PATH, '..', 'private')
+    if os.path.exists(os.path.join(privateDir, 'launcher.json')):
+        launcherInfoDir = privateDir
+
+    launcherInfo = LauncherInfo(launcherInfoDir)
     appUploader = AppUploader(launcherInfo.appRepositoryDirectory)
     appUploader.uploadApp(os.path.abspath(os.path.join(BASE_PATH, '..', 'dist', 'MetadataManager.zip')))
