@@ -1,6 +1,6 @@
 from os import path
 from datetime import datetime
-from PySide2 import QtWidgets, QtCore, QtUiTools
+from PySide2 import QtWidgets, QtCore, QtUiTools, QtGui
 from PySide2.QtWidgets import QDialog
 from PySide2.QtCore import Qt
 
@@ -9,6 +9,27 @@ PRIVATE_PATH = path.join(path.dirname(path.realpath(__file__)), "private")
 BASE_PATH = path.join(path.dirname(path.realpath(__file__)), "assets")
 BASE_UI_FILES_PATH = path.join(BASE_PATH, "ui_files")
 BASE_DEFAULT_LAYOUT_FILES_PATH = path.join(BASE_PATH, "default_layouts")
+
+DELETE_ICON: QtGui.QIcon = None
+PLUS_ICON: QtGui.QIcon = None
+
+def getDeleteIcon() -> QtGui.QIcon:
+    global DELETE_ICON
+    
+    if DELETE_ICON:
+        return DELETE_ICON
+
+    DELETE_ICON = QtGui.QIcon(':/icons/delete.png')
+    return DELETE_ICON
+
+def getPlusIcon() -> QtGui.QIcon:
+    global PLUS_ICON
+
+    if PLUS_ICON:
+        return PLUS_ICON
+
+    PLUS_ICON = QtGui.QIcon(':/icons/plus.png')
+    return PLUS_ICON
 
 def getUIFilePath(uiFileName):
     return path.join(BASE_UI_FILES_PATH, uiFileName)
