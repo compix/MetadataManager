@@ -17,8 +17,14 @@ class Inspector(DockWidget):
         form = self.widget.formLayout
         qt_util.clearContainer(form)
         item = self.dbManager.findOneInCollections(uid, self.collectionViewer.getSelectedCollectionNames())
-        if item != None:
-            for key, val in item.items():
+        self.showDictionary(item)
+
+    def showDictionary(self, dataDict: dict):
+        form = self.widget.formLayout
+        qt_util.clearContainer(form)
+
+        if dataDict != None:
+            for key, val in dataDict.items():
                 valueEdit = QtWidgets.QLineEdit(self.widget)
                 valueEdit.setReadOnly(True)
                 valueEdit.setText(str(val) if val else '')
