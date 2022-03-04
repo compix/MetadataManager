@@ -26,8 +26,6 @@ class TagsView(object):
         self.comboBoxFrame.setLayout(self.comboBoxLayout)
         self.comboBoxFrame.layout().setMargin(0)
 
-        self.tagComboBox.lineEdit().mouseReleaseEvent = self.onComboBoxClicked
-
         self.layout.addWidget(self.comboBoxFrame)
 
         self.tagComboBox.addItems(knownTags)
@@ -46,10 +44,6 @@ class TagsView(object):
     def setKnownTags(self, tags: typing.Iterable[str]):
         self.tagComboBox.clear()
         self.tagComboBox.addItems(tags)
-
-    def onComboBoxClicked(self, evt):
-        print('Test')
-        self.tagComboBox.setFocus()
 
     @property
     def tags(self) -> typing.List[str]:
@@ -95,7 +89,7 @@ class TagsView(object):
 
     def onAddTag(self):
         tag = self.tagComboBox.currentText()
-        if not tag or tag in [c.tag for c in self.tagContainers]:
+        if not tag or tag.strip() == '' or tag in [c.tag for c in self.tagContainers]:
             return
         
         self.addTags([tag])
