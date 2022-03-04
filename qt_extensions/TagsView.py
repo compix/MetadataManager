@@ -1,6 +1,6 @@
 import typing
 from qt_extensions.FlowLayout import FlowLayout
-from PySide2 import QtWidgets
+from PySide2 import QtWidgets, QtCore
 import asset_manager
 
 class TagContainer(object):
@@ -20,9 +20,13 @@ class TagsView(object):
         self.comboBoxLayout.addWidget(self.tagComboBox)
         tagAddButton = QtWidgets.QPushButton('')
         tagAddButton.setIcon(asset_manager.getPlusIcon())
+        tagAddButton.setFocusPolicy(QtCore.Qt.NoFocus)
         self.comboBoxLayout.addWidget(tagAddButton)
         self.comboBoxFrame = QtWidgets.QFrame()
         self.comboBoxFrame.setLayout(self.comboBoxLayout)
+        self.comboBoxFrame.layout().setMargin(0)
+
+        self.tagComboBox.lineEdit().mouseReleaseEvent = self.onComboBoxClicked
 
         self.layout.addWidget(self.comboBoxFrame)
 
@@ -32,11 +36,29 @@ class TagsView(object):
 
         self.addTags(currentTags)
 
+    def clear(self):
+        for tc in self.tagContainers:
+            tc.frame.setParent(None)
+            tc.frame.deleteLater()
+
+        self.tagContainers.clear()
+
+    def setKnownTags(self, tags: typing.Iterable[str]):
+        self.tagComboBox.clear()
+        self.tagComboBox.addItems(tags)
+
+    def onComboBoxClicked(self, evt):
+        print('Test')
+        self.tagComboBox.setFocus()
+
     @property
     def tags(self) -> typing.List[str]:
         return [c.tag for c in self.tagContainers]
 
     def addTags(self, tags: typing.List[str]):
+        if not tags:
+            return
+            
         item = self.layout.takeAt(len(self.layout.itemList)-1)
 
         for tag in tags or []:
@@ -49,6 +71,7 @@ class TagsView(object):
             layout.addWidget(delButton)
             frame = QtWidgets.QFrame()
             frame.setLayout(layout)
+            frame.layout().setMargin(0)
 
             self.tagContainers.append(TagContainer(tag, frame))
             self.layout.addWidget(frame)
