@@ -10,26 +10,29 @@ BASE_PATH = path.join(path.dirname(path.realpath(__file__)), "assets")
 BASE_UI_FILES_PATH = path.join(BASE_PATH, "ui_files")
 BASE_DEFAULT_LAYOUT_FILES_PATH = path.join(BASE_PATH, "default_layouts")
 
+CACHED_ICONS = dict()
+
 DELETE_ICON: QtGui.QIcon = None
 PLUS_ICON: QtGui.QIcon = None
 
-def getDeleteIcon() -> QtGui.QIcon:
-    global DELETE_ICON
-    
-    if DELETE_ICON:
-        return DELETE_ICON
+def getCachedIconOrDefault(uri: str) -> QtGui.QIcon:
+    global CACHED_ICONS
+    icon = CACHED_ICONS.get(uri)
+    if icon:
+        return icon
 
-    DELETE_ICON = QtGui.QIcon(':/icons/delete.png')
-    return DELETE_ICON
+    icon = QtGui.QIcon(uri)
+    CACHED_ICONS[uri] = icon
+    return icon
+
+def getDeleteIcon() -> QtGui.QIcon:
+    return getCachedIconOrDefault(':/icons/delete.png')
 
 def getPlusIcon() -> QtGui.QIcon:
-    global PLUS_ICON
+    return getCachedIconOrDefault(':/icons/plus.png')
 
-    if PLUS_ICON:
-        return PLUS_ICON
-
-    PLUS_ICON = QtGui.QIcon(':/icons/plus.png')
-    return PLUS_ICON
+def getNewFileIcon() -> QtGui.QIcon:
+    return getCachedIconOrDefault(':/icons/new.png')
 
 def getUIFilePath(uiFileName):
     return path.join(BASE_UI_FILES_PATH, uiFileName)
