@@ -2,8 +2,9 @@ from PySide2 import QtWidgets, QtCore, QtGui
 import typing
 from PySide2.QtGui import QStandardItemModel, QStandardItem
 
-class StandardListView(object):
+class StandardListView(QtCore.QObject):
     def __init__(self, listView: QtWidgets.QListView) -> None:
+        super().__init__()
         self.listView = listView
 
         self.model = QStandardItemModel()
@@ -18,8 +19,44 @@ class StandardListView(object):
         self.entriesUnique = False
         self.currentEntries: typing.Set[str] = set()
 
+        self.listView.installEventFilter(self)
+
+        self.listView.setDragEnabled(True)
+        self.listView.setDragDropMode(QtWidgets.QAbstractItemView.DropOnly)
+
+    def setAllowFileDrop(self, allow: bool):
+        self.listView.setDragEnabled(allow)
+
     def setEntriesUnique(self, unique: bool):
         self.entriesUnique = unique
+
+    def eventFilter(self, object, event: QtCore.QEvent):
+        if object is self.listView:
+            if event.type() == QtCore.QEvent.DragEnter:
+                mimeData: QtCore.QMimeData = event.mimeData()
+
+                if mimeData.hasUrls():
+                    event.accept()
+                else:
+                    event.ignore()
+
+                return True
+            if event.type() == QtCore.QEvent.Drop:
+                mimeData: QtCore.QMimeData = event.mimeData()
+
+                if mimeData.hasUrls():
+                    for url in mimeData.urls():
+                        self.addRow(url.toLocalFile())
+
+                    event.accept()
+                else:
+                    event.ignore()
+
+                return True
+
+            return False
+
+        return False
 
     @property
     def selectionModel(self) -> QtCore.QItemSelectionModel:
