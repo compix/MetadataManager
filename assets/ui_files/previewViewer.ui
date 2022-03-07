@@ -155,6 +155,34 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="prevPreviewButton">
+           <property name="toolTip">
+            <string>Show previous preview.</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../resource_files/resources.qrc">
+             <normaloff>:/icons/arrowhead-thin-outline-to-the-left.png</normaloff>:/icons/arrowhead-thin-outline-to-the-left.png</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="nextPreviewButton">
+           <property name="toolTip">
+            <string>Show next preview.</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../resource_files/resources.qrc">
+             <normaloff>:/icons/arrow-point-to-right.png</normaloff>:/icons/arrow-point-to-right.png</iconset>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>

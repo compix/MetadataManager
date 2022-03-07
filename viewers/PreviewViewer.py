@@ -1,3 +1,4 @@
+import typing
 from MetadataManagerCore.animation import anim_util
 from MetadataManagerCore.mongodb_manager import MongoDBManager
 from PySide2 import QtWidgets, QtCore, QtUiTools, QtGui
@@ -18,6 +19,8 @@ class PreviewViewer(DockWidget):
         super().__init__("Preview", parentWindow, asset_manager.getUIFilePath("previewViewer.ui"))
 
         self.preview = PhotoViewer(self.widget)
+        self.previewFilenames: typing.List[str] = []
+        self.curPreviewFilenameIdx = 0
         self.preview.toggleDragMode()
         self.isPlaying = True
         self.playIcon = QtGui.QIcon(':/icons/play_icon.png')
@@ -37,6 +40,25 @@ class PreviewViewer(DockWidget):
         self.animationTimer = QtCore.QTimer()
         self.animationTimer.setInterval(self.widget.animationSpeedSlider.maximum() - self.widget.animationSpeedSlider.value() + 1)
         self.animationTimer.timeout.connect(self.onUpdateAnimation)
+
+        self.widget.nextPreviewButton.hide()
+        self.widget.prevPreviewButton.hide()
+        self.widget.nextPreviewButton.clicked.connect(self.onNextPreviewClick)
+        self.widget.prevPreviewButton.clicked.connect(self.onPrevPreviewClick)
+
+    def onNextPreviewClick(self):
+        if self.previewFilenames and len(self.previewFilenames) > 0:
+            prevIdx = self.curPreviewFilenameIdx
+            self.curPreviewFilenameIdx = (self.curPreviewFilenameIdx + 1) % len(self.previewFilenames)
+            if prevIdx != self.curPreviewFilenameIdx:
+                self.showPreview(self.previewFilenames[self.curPreviewFilenameIdx])
+
+    def onPrevPreviewClick(self):
+        if self.previewFilenames and len(self.previewFilenames) > 0:
+            prevIdx = self.curPreviewFilenameIdx
+            self.curPreviewFilenameIdx = (self.curPreviewFilenameIdx - 1 + len(self.previewFilenames)) % len(self.previewFilenames)
+            if prevIdx != self.curPreviewFilenameIdx:
+                self.showPreview(self.previewFilenames[self.curPreviewFilenameIdx])
 
     def onAnimationSpeedSliderChanged(self, value):
         self.animationTimer.setInterval(self.widget.animationSpeedSlider.maximum() - value + 1)
@@ -113,3 +135,22 @@ class PreviewViewer(DockWidget):
     def selectBackgroundColor(self):
         self.backgroundColor = QtWidgets.QColorDialog.getColor()
         self.preview.setBackgroundBrush(self.backgroundColor)
+
+    def showMultiplePreviews(self, previewFilenames: typing.List[str]):
+        self.previewFilenames = previewFilenames
+        self.curPreviewFilenameIdx = 0
+
+        if not previewFilenames or len(self.previewFilenames) == 0:
+            self.showPreview(None)
+            self.widget.nextPreviewButton.hide()
+            self.widget.prevPreviewButton.hide()
+            return
+
+        if len(previewFilenames) > 1:
+            self.widget.nextPreviewButton.show()
+            self.widget.prevPreviewButton.show()
+        else:
+            self.widget.nextPreviewButton.hide()
+            self.widget.prevPreviewButton.hide()
+
+        self.showPreview(previewFilenames[self.curPreviewFilenameIdx])
