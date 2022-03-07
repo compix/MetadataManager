@@ -1,6 +1,7 @@
 from PySide2 import QtWidgets, QtCore, QtGui
 import typing
 from PySide2.QtGui import QStandardItemModel, QStandardItem
+from MetadataManagerCore.Event import Event
 
 class StandardListView(QtCore.QObject):
     def __init__(self, listView: QtWidgets.QListView) -> None:
@@ -23,6 +24,23 @@ class StandardListView(QtCore.QObject):
 
         self.listView.setDragEnabled(True)
         self.listView.setDragDropMode(QtWidgets.QAbstractItemView.DropOnly)
+
+        self.onAddedRowValue = Event()
+        self.onDeletedRowValues = Event()
+
+        self.curFilterText = ''
+        self.curFilter = lambda value, filterText: filterText in value
+
+    def setFilter(self, filterFunction: typing.Callable[[str,str],bool]):
+        self.curFilter = filterFunction
+        self.applyFilter(self.curFilterText)
+
+    def applyFilter(self, filterText: str):
+        self.curFilterText = filterText
+
+        for i in range(self.model.rowCount()):
+            item = self.model.item(i)
+            self.listView.setRowHidden(i, not self.curFilter(item.text(), self.curFilterText))
 
     def setAllowFileDrop(self, allow: bool):
         self.listView.setDragEnabled(allow)
@@ -90,15 +108,30 @@ class StandardListView(QtCore.QObject):
         self.contextMenu.exec_(QtGui.QCursor.pos())
 
     def clear(self):
+        values = self.getAllRowValues()
         self.model.clear()
         self.currentEntries.clear()
 
-    def deleteSelected(self):
-        selectionModel = self.listView.selectionModel()
+        if values and len(values) > 0:
+            self.onDeletedRowValues(values)
 
-        for rowIdx in selectionModel.selectedRows():
-            self.currentEntries.remove(self.model.item(rowIdx.row()).text())
-            self.model.removeRow(rowIdx.row())
+    def deleteSelected(self):
+        selectedValues = []
+        selectionModel = self.listView.selectionModel()
+        
+        selectedIndices = []
+
+        for row in selectionModel.selectedRows():
+            value = self.model.item(row.row()).text()
+            selectedValues.append(value)
+            self.currentEntries.remove(value)
+            selectedIndices.append(row.row())
+        
+        for rowIdx in sorted(selectedIndices, reverse=True):
+            self.model.removeRow(rowIdx)
+        
+        if len(selectedValues) > 0:
+            self.onDeletedRowValues(selectedValues)
 
     def addRow(self, txt: str):
         if self.entriesUnique and txt in self.currentEntries:
@@ -106,6 +139,9 @@ class StandardListView(QtCore.QObject):
 
         self.model.appendRow(QStandardItem(txt))
         self.currentEntries.add(txt)
+        self.onAddedRowValue(txt)
+
+        self.listView.setRowHidden(self.model.rowCount()-1, not self.curFilter(txt, self.curFilterText))
 
     def addRows(self, rows: typing.List[str]):
         for row in rows:
@@ -114,6 +150,15 @@ class StandardListView(QtCore.QObject):
     def setRows(self, rows: typing.List[str]):
         self.clear()
         self.addRows(rows)
+
+    def yieldRowValuesFiltered(self) -> typing.Iterator[str]:
+        for i in range(self.model.rowCount()):
+            if not self.listView.isRowHidden(i):
+                item = self.model.item(i)
+                yield item.text()
+
+    def getRowValuesFiltered(self) -> typing.List[str]:
+        return [v for v in self.yieldRowValuesFiltered()]
 
     def yieldAllRowValues(self) -> typing.Iterator[str]:
         for i in range(self.model.rowCount()):
