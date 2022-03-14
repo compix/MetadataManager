@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icons">
+    <file>material/edit_black_48dp.svg</file>
     <file>upload.png</file>
     <file>arrow-down-sign-to-navigate.png</file>
     <file>arrowhead-thin-outline-to-the-left.png</file>
