@@ -30,6 +30,7 @@ class StandardListView(QtCore.QObject):
 
         self.curFilterText = ''
         self.curFilter = lambda value, filterText: filterText in value
+        self.showDeleteConfirmationDialog = False
 
     def setFilter(self, filterFunction: typing.Callable[[str,str],bool]):
         self.curFilter = filterFunction
@@ -84,7 +85,7 @@ class StandardListView(QtCore.QObject):
         if canClear:
             if not self.clearAllAction:
                 self.clearAllAction = QtWidgets.QAction('Clear')
-                self.clearAllAction.triggered.connect(self.clear)
+                self.clearAllAction.triggered.connect(self.onClearClick)
                 self.contextMenu.addAction(self.clearAllAction)
         else:
             if self.clearAllAction:
@@ -107,15 +108,30 @@ class StandardListView(QtCore.QObject):
     def contextMenuEvent(self):
         self.contextMenu.exec_(QtGui.QCursor.pos())
 
-    def clear(self):
+    def onClearClick(self):
+        if self.showDeleteConfirmationDialog:
+            ret = QtWidgets.QMessageBox.question(self.listView, 
+                f"Delete Confirmation", f"Clear all entries?")
+            if ret != QtWidgets.QMessageBox.Yes:
+                return
+
+        self.clear()
+
+    def clear(self, triggerDeleteEvent=True):
         values = self.getAllRowValues()
         self.model.clear()
         self.currentEntries.clear()
 
-        if values and len(values) > 0:
+        if triggerDeleteEvent and values and len(values) > 0:
             self.onDeletedRowValues(values)
 
     def deleteSelected(self):
+        if self.showDeleteConfirmationDialog:
+            ret = QtWidgets.QMessageBox.question(self.listView, 
+                f"Delete Confirmation", f"Delete selected entries?")
+            if ret != QtWidgets.QMessageBox.Yes:
+                return
+
         selectedValues = []
         selectionModel = self.listView.selectionModel()
         
