@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icons">
+    <file>material/delete_black_48dp.svg</file>
     <file>material/edit_black_48dp.svg</file>
     <file>upload.png</file>
     <file>arrow-down-sign-to-navigate.png</file>
