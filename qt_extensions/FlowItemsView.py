@@ -2,6 +2,7 @@ import typing
 from qt_extensions.FlowLayout import FlowLayout
 from PySide2 import QtWidgets, QtCore
 import asset_manager
+from MetadataManagerCore.Event import Event
 
 class FlowItemContainer(object):
     def __init__(self, item: str, frame: QtWidgets.QFrame) -> None:
@@ -37,16 +38,20 @@ class FlowItemsView(object):
 
         self.addItems(items)
 
+        self.onUpdate = Event()
+
     def clear(self):
         for tc in self.itemContainers:
             tc.frame.setParent(None)
             tc.frame.deleteLater()
 
         self.itemContainers.clear()
+        self.onUpdate()
 
     def setKnownItems(self, items: typing.Iterable[str]):
         self.itemComboBox.clear()
         self.itemComboBox.addItems(items)
+        self.onUpdate()
 
     @property
     def items(self) -> typing.List[str]:
@@ -74,6 +79,7 @@ class FlowItemsView(object):
             self.layout.addWidget(frame)
 
         self.layout.addItem(lastItem)
+        self.onUpdate()
 
     def registerDeleteItem(self, deleteButton: QtWidgets.QPushButton, item: str):
         deleteButton.clicked.connect(lambda: self.onDeleteItem(item))
@@ -89,6 +95,7 @@ class FlowItemsView(object):
             itemContainer = self.itemContainers.pop(idxToDelete)
             self.layout.removeWidget(itemContainer.frame)
             itemContainer.frame.deleteLater()
+            self.onUpdate()
 
     def onAddItem(self):
         item = self.itemComboBox.currentText()
