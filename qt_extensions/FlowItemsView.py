@@ -5,9 +5,10 @@ import asset_manager
 from MetadataManagerCore.Event import Event
 
 class FlowItemContainer(object):
-    def __init__(self, item: str, frame: QtWidgets.QFrame) -> None:
+    def __init__(self, item: str, frame: QtWidgets.QFrame, userData=None) -> None:
         self.item = item
         self.frame = frame
+        self.userData = userData
 
 class FlowItemsView(object):
     """
@@ -48,22 +49,31 @@ class FlowItemsView(object):
         self.itemContainers.clear()
         self.onUpdate()
 
-    def setKnownItems(self, items: typing.Iterable[str]):
+    def setKnownItems(self, items: typing.Iterable[str], userData: typing.List[typing.Any]=None):
         self.itemComboBox.clear()
-        self.itemComboBox.addItems(items)
+        if userData:
+            for i, item in enumerate(items):
+                self.itemComboBox.addItem(item, userData[i])
+        else:
+            self.itemComboBox.addItems(items)
+
         self.onUpdate()
 
     @property
     def items(self) -> typing.List[str]:
         return [c.item for c in self.itemContainers]
 
-    def addItems(self, items: typing.List[str]):
+    @property
+    def userData(self) -> typing.List[typing.Any]:
+        return [c.userData for c in self.itemContainers]
+
+    def addItems(self, items: typing.List[str], userData: typing.List[typing.Any] = None):
         if not items:
             return
             
         lastItem = self.layout.takeAt(len(self.layout.itemList)-1)
 
-        for item in items or []:
+        for i, item in enumerate(items or []):
             label = QtWidgets.QLabel(item)
             delButton = QtWidgets.QPushButton()
             delButton.setIcon(asset_manager.getDeleteIcon())
@@ -75,7 +85,8 @@ class FlowItemsView(object):
             frame.setLayout(layout)
             frame.layout().setMargin(0)
 
-            self.itemContainers.append(FlowItemContainer(item, frame))
+            ud = userData[i] if userData else None
+            self.itemContainers.append(FlowItemContainer(item, frame, ud))
             self.layout.addWidget(frame)
 
         self.layout.addItem(lastItem)
@@ -102,4 +113,4 @@ class FlowItemsView(object):
         if not item or item.strip() == '' or item in [c.item for c in self.itemContainers]:
             return
         
-        self.addItems([item])
+        self.addItems([item], [self.itemComboBox.currentData()])
