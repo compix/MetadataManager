@@ -43,9 +43,9 @@
           <property name="geometry">
            <rect>
             <x>0</x>
-            <y>-797</y>
+            <y>-791</y>
             <width>865</width>
-            <height>1455</height>
+            <height>1449</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -1153,8 +1153,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>578</width>
-            <height>513</height>
+            <width>882</width>
+            <height>658</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -1459,8 +1459,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>151</width>
-            <height>218</height>
+            <width>882</width>
+            <height>658</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -1607,8 +1607,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>250</width>
-            <height>353</height>
+            <width>882</width>
+            <height>658</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1921,8 +1921,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>326</width>
-            <height>409</height>
+            <width>882</width>
+            <height>658</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_33">
@@ -2210,8 +2210,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>151</width>
-            <height>84</height>
+            <width>882</width>
+            <height>658</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_38">
@@ -2416,7 +2416,7 @@
          <item>
           <widget class="QPushButton" name="deleteButton">
            <property name="text">
-            <string> Delete</string>
+            <string> Archive</string>
            </property>
            <property name="icon">
             <iconset resource="../../../assets/resource_files/resources.qrc">

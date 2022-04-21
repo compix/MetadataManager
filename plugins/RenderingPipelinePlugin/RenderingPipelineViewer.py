@@ -485,7 +485,7 @@ class RenderingPipelineViewer(object):
             self.viewerRegistry.collectionViewer.refreshCollections()
             self.viewerRegistry.environmentManagerViewer.refreshEnvironmentsComboBox()
 
-        self.deleteInputConfirmDialog = InputConfirmDialog(pipelineName, onConfirmPipelineDeletion, title='Delete Confirmation', confirmButtonText='Delete')
+        self.deleteInputConfirmDialog = InputConfirmDialog(pipelineName, onConfirmPipelineDeletion, title='Archive Confirmation', confirmButtonText='Archive')
         self.deleteInputConfirmDialog.open()
 
     def onCreateClick(self):

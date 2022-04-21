@@ -14,6 +14,7 @@ from ServiceRegistry import ServiceRegistry
 logger = logging.getLogger(__name__)
 
 RenderingPipelinesCollectionName = 'rendering_pipelines'
+ArchivedRenderingPipelinesCollectionName = 'archived_rendering_pipelines'
 
 class RenderingPipelineManager(object):
     def __init__(self, serviceRegistry: ServiceRegistry, viewerRegistry: ViewerRegistry, appInfo: AppInfo) -> None:
@@ -133,7 +134,7 @@ class RenderingPipelineManager(object):
                     if pipeline:
                         self.pipelines.append(pipeline)
 
-    def deletePipeline(self, pipelineName: str):
+    def deletePipeline(self, pipelineName: str, archive=True):
         pipeline = self.getPipelineFromName(pipelineName)
         if pipeline:
             if pipeline.environment:
@@ -142,8 +143,16 @@ class RenderingPipelineManager(object):
             # Collections may not exist:
             try:
                 self.serviceRegistry.dbManager.dropCollection(pipeline.dbCollectionName)
+            except:
+                pass
+
+            try:
                 self.serviceRegistry.dbManager.dropCollection(pipeline.dbCollectionName + Keys.OLD_VERSIONS_COLLECTION_SUFFIX)
             except:
                 pass
+            
             self.pipelines.remove(pipeline)
             self.dbManager.db[RenderingPipelinesCollectionName].delete_one({'_id': pipelineName})
+            if archive:
+                ac = self.dbManager.db[ArchivedRenderingPipelinesCollectionName]
+                ac.replace_one({'_id': pipelineName}, self.pipelineDict(pipeline), upsert=True)
