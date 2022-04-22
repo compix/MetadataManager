@@ -27,10 +27,20 @@ class StandardListView(QtCore.QObject):
 
         self.onAddedRowValue = Event()
         self.onDeletedRowValues = Event()
+        self.onSelectionChanged = Event()
 
         self.curFilterText = ''
         self.curFilter = lambda value, filterText: filterText in value
         self.showDeleteConfirmationDialog = False
+
+        self.selectionModel.selectionChanged.connect(self._onSelectionChanged)
+
+    def _onSelectionChanged(self, selected: QtCore.QItemSelection, deselected: QtCore.QItemSelection):
+        self.onSelectionChanged(selected, deselected)
+
+    @property
+    def selectionChangedSignal(self):
+        return self.selectionModel.selectionChanged
 
     def setFilter(self, filterFunction: typing.Callable[[str,str],bool]):
         self.curFilter = filterFunction
@@ -149,23 +159,53 @@ class StandardListView(QtCore.QObject):
         if len(selectedValues) > 0:
             self.onDeletedRowValues(selectedValues)
 
-    def addRow(self, txt: str):
+    def yieldRowCustomDataFiltered(self) -> typing.Iterator[str]:
+        for i in range(self.model.rowCount()):
+            if not self.listView.isRowHidden(i):
+                item = self.model.item(i)
+                yield item.data(QtCore.Qt.UserRole)
+
+    def yieldAllRowCustomData(self) -> typing.Iterator[typing.Any]:
+        for i in range(self.model.rowCount()):
+            item = self.model.item(i)
+            yield item.data(QtCore.Qt.UserRole)
+
+    def getAllRowCustomData(self) -> typing.List[typing.Any]:
+        return [v for v in self.yieldAllRowCustomData()]
+
+    def yieldSelectedRowCustomData(self) -> typing.Iterator[typing.Any]:
+        for rowIdx in self.selectionModel.selectedRows():
+            item = self.model.item(rowIdx.row())
+            yield item.data(QtCore.Qt.UserRole)
+
+    def getSelectedRowCustomData(self) -> typing.List[typing.Any]:
+        return [v for v in self.yieldSelectedRowCustomData()]
+
+    def addRow(self, txt: str, customData: typing.Any = None):
         if self.entriesUnique and txt in self.currentEntries:
             return
 
-        self.model.appendRow(QStandardItem(txt))
+        item = QStandardItem(txt)
+        if not customData is None:
+            item.setData(customData, QtCore.Qt.UserRole)
+
+        self.model.appendRow(item)
         self.currentEntries.add(txt)
         self.onAddedRowValue(txt)
 
         self.listView.setRowHidden(self.model.rowCount()-1, not self.curFilter(txt, self.curFilterText))
 
-    def addRows(self, rows: typing.List[str]):
-        for row in rows:
-            self.addRow(row)
+    def addRows(self, rows: typing.List[str], customData: typing.List[typing.Any] = None):
+        if customData:
+            for i, row in enumerate(rows):
+                self.addRow(row, customData[i])
+        else:
+            for row in rows:
+                self.addRow(row)
             
-    def setRows(self, rows: typing.List[str]):
+    def setRows(self, rows: typing.List[str], customData: typing.List[typing.Any] = None):
         self.clear()
-        self.addRows(rows)
+        self.addRows(rows, customData)
 
     def yieldRowValuesFiltered(self) -> typing.Iterator[str]:
         for i in range(self.model.rowCount()):
