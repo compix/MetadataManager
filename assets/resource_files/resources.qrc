@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="icons">
+    <file>material/restore_page_black_48dp.svg</file>
+    <file>material/restore_page_white_48dp.svg</file>
     <file>material/search_white_48dp.svg</file>
     <file>upload.png</file>
     <file>material/add_circle_outline_white_48dp.svg</file>
