@@ -18,7 +18,7 @@ class StandardListView(QtCore.QObject):
         self.deleteSelectedAction: QtWidgets.QAction = None
         self.contextMenu = QtWidgets.QMenu(self.listView)
         self.entriesUnique = False
-        self.currentEntries: typing.Set[str] = set()
+        self.valueToCustomData: typing.Dict[str, typing.Any] = dict()
 
         self.listView.installEventFilter(self)
 
@@ -34,6 +34,12 @@ class StandardListView(QtCore.QObject):
         self.showDeleteConfirmationDialog = False
 
         self.selectionModel.selectionChanged.connect(self._onSelectionChanged)
+
+    def hasEntry(self, value: str) -> bool:
+        return value in self.valueToCustomData
+
+    def getCustomData(self, value: str) -> typing.Any:
+        return self.valueToCustomData.get(value)
 
     def _onSelectionChanged(self, selected: QtCore.QItemSelection, deselected: QtCore.QItemSelection):
         self.onSelectionChanged(selected, deselected)
@@ -130,7 +136,7 @@ class StandardListView(QtCore.QObject):
     def clear(self, triggerDeleteEvent=True):
         values = self.getAllRowValues()
         self.model.clear()
-        self.currentEntries.clear()
+        self.valueToCustomData.clear()
 
         if triggerDeleteEvent and values and len(values) > 0:
             self.onDeletedRowValues(values)
@@ -150,7 +156,7 @@ class StandardListView(QtCore.QObject):
         for row in selectionModel.selectedRows():
             value = self.model.item(row.row()).text()
             selectedValues.append(value)
-            self.currentEntries.remove(value)
+            del self.valueToCustomData[value]
             selectedIndices.append(row.row())
         
         for rowIdx in sorted(selectedIndices, reverse=True):
@@ -182,7 +188,7 @@ class StandardListView(QtCore.QObject):
         return [v for v in self.yieldSelectedRowCustomData()]
 
     def addRow(self, txt: str, customData: typing.Any = None):
-        if self.entriesUnique and txt in self.currentEntries:
+        if self.entriesUnique and txt in self.valueToCustomData:
             return
 
         item = QStandardItem(txt)
@@ -190,7 +196,7 @@ class StandardListView(QtCore.QObject):
             item.setData(customData, QtCore.Qt.UserRole)
 
         self.model.appendRow(item)
-        self.currentEntries.add(txt)
+        self.valueToCustomData[txt] = customData
         self.onAddedRowValue(txt)
 
         self.listView.setRowHidden(self.model.rowCount()-1, not self.curFilter(txt, self.curFilterText))
