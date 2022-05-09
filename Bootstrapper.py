@@ -25,7 +25,6 @@ import sys
 from MetadataManagerCore.third_party_integrations.deadline.deadline_service import DeadlineService, DeadlineServiceInfo
 from MetadataManagerCore.actions.ActionManager import ActionManager
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
-import MDApi
 from ServiceRegistry import ServiceRegistry
 import resources_qrc
 from MetadataManagerCore.task_processor.TaskProcessor import TaskProcessor
@@ -221,11 +220,6 @@ class Bootstrapper(object):
                                                                        self.serviceRegistry.documentFilterManager,
                                                                        self.serviceRegistry.codeGenerator)
         self.serviceRegistry.services.append(self.serviceRegistry.visualScripting)
-
-        MDApi.ENVIRONMENT_MANAGER = self.serviceRegistry.environmentManager
-        MDApi.DB_MANAGER = self.dbManager
-        MDApi.SERVICE_REGISTRY = self.serviceRegistry
-        MDApi.ON_INITIALIZED()
 
     def onDBManagerConnected(self):
         self.initHostProcessController()
