@@ -21,6 +21,17 @@ def removeFiles(filenames):
         except Exception as e:
             print(str(e))
 
+def getDeadlineFilename(subfolder: str, ext: str, basename: str=None):
+    directory = os.path.join(DEADLINE_SERVICE.info.customJobInfoDirectory, subfolder, uuid.uuid4().hex)
+    os.makedirs(directory, exist_ok=True)
+
+    if basename:
+        filename = os.path.join(directory,  f'{basename}.{ext}')
+    else:    
+        filename = os.path.join(directory,  f'{uuid.uuid4().hex}.{ext}')
+
+    return filename
+
 @defNode("Submit Job Files", isExecutable=True, returnNames=["Job"], identifier=DEADLINE_IDENTIFIER)
 def submitJobFiles(jobInfoFilename, pluginInfoFilename, auxiliaryFilenames=None, quiet=True, returnJobIdOnly=True, removeAuxiliaryFilesAfterSubmission=False):
     if DEADLINE_SERVICE == None:
@@ -92,8 +103,8 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
     # Generate auxiliary pipeline info file:
     pipelineInfoFileHandle, tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")
     auxiliaryFilenames.append(tempPipelineInfoFilename)
-    with open(tempPipelineInfoFilename, "w+") as f:
-        json.dump(pipelineInfoDict, f, sort_keys=True, indent=4)
+    with open(tempPipelineInfoFilename, "w+", encoding='utf-8') as f:
+        json.dump(pipelineInfoDict, f, sort_keys=True, indent=4, ensure_ascii=False)
 
     os.close(pipelineInfoFileHandle)
 
@@ -101,6 +112,8 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
     maxScriptFileHandle, tempMaxScriptFilename = tempfile.mkstemp(suffix=".ms")
     auxiliaryFilenames.insert(0, tempMaxScriptFilename)
     
+    wrap = True
+
     with open(tempMaxScriptFilename, "w+") as f:
         f.write("global executePipelineRequest\n\n")
         f.write("python.Init()\n\n")
@@ -112,7 +125,7 @@ def submit_3dsMaxPipelineJob(pipelineMaxScriptFilename, pipelineInfoDict, jobInf
         f.write(f"  (dotNetClass \"System.Console\").Error.WriteLine (\"ERROR: \" + (getCurrentException()))\n")
         f.write(")\n")
         f.write('(dotNetClass "System.Console").WriteLine ("JOB FINISHED")\n')
-        f.write("\nquitMAX #noPrompt\n")
+        f.write("\nquitMAX #noPrompt exitCode:0\n")
 
     os.close(maxScriptFileHandle)
 
@@ -146,8 +159,8 @@ def submitNukeJob(jobInfoDict: dict, pluginInfoDict: dict, scriptFilename: str, 
         f.write(f'    infoDict = json.load(f)\n\n')
         f.write(f'{scriptModule}.process(infoDict)')
 
-    with open(infoFilename, 'w+') as f:
-        json.dump(scriptInfoDict, f, indent=4, sort_keys=True)
+    with open(infoFilename, 'w+', encoding='utf-8') as f:
+        json.dump(scriptInfoDict, f, indent=4, sort_keys=True, ensure_ascii=False)
 
     jobInfoDict["Plugin"] = getNukePluginName()
     pluginInfoDict["ScriptFilename"] = bootstrapScriptFilename
@@ -256,8 +269,8 @@ def submitBlenderPipelineJob(pipelineScriptFilename: str, pipelineInfoDict: dict
     # Generate auxiliary pipeline info file:
     pipelineInfoFileHandle, tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")
     auxiliaryFilenames.append(tempPipelineInfoFilename)
-    with open(tempPipelineInfoFilename, "w+") as f:
-        json.dump(pipelineInfoDict, f, sort_keys=True, indent=4)
+    with open(tempPipelineInfoFilename, "w+", encoding='utf-8') as f:
+        json.dump(pipelineInfoDict, f, sort_keys=True, indent=4, ensure_ascii=False)
 
     os.close(pipelineInfoFileHandle)
 
@@ -321,8 +334,8 @@ def submitUnrealEngineScriptJob(pipelineScriptFilename: str, pipelineInfoDict: d
     # Generate auxiliary pipeline info file:
     pipelineInfoFileHandle, tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")
     auxiliaryFilenames.append(tempPipelineInfoFilename)
-    with open(tempPipelineInfoFilename, "w+") as f:
-        json.dump(pipelineInfoDict, f, sort_keys=True, indent=4)
+    with open(tempPipelineInfoFilename, "w+", encoding='utf-8') as f:
+        json.dump(pipelineInfoDict, f, sort_keys=True, indent=4, ensure_ascii=False)
 
     os.close(pipelineInfoFileHandle)
 
@@ -385,8 +398,8 @@ def submitUnrealEngineRenderJob(pipelineInfoDict: dict, jobInfoDict: dict, unrea
     # Generate auxiliary pipeline info file:
     pipelineInfoFileHandle, tempPipelineInfoFilename = tempfile.mkstemp(suffix=".json")
     auxiliaryFilenames.append(tempPipelineInfoFilename)
-    with open(tempPipelineInfoFilename, "w+") as f:
-        json.dump(pipelineInfoDict, f, sort_keys=True, indent=4)
+    with open(tempPipelineInfoFilename, "w+", encoding='utf-8') as f:
+        json.dump(pipelineInfoDict, f, sort_keys=True, indent=4, ensure_ascii=False)
 
     os.close(pipelineInfoFileHandle)
 
@@ -403,8 +416,8 @@ def submitMetadataManagerJob(taskInfoDict, jobInfoDict, asPythonJob=False, quiet
 
     taskFileHandle, taskFilename = tempfile.mkstemp(suffix=".json")
     auxiliaryFilenames.append(taskFilename)
-    with open(taskFilename, "w+") as f:
-        json.dump(taskInfoDict, f, sort_keys=True, indent=4)
+    with open(taskFilename, "w+", encoding='utf-8') as f:
+        json.dump(taskInfoDict, f, sort_keys=True, indent=4, ensure_ascii=False)
 
     os.close(taskFileHandle)
 

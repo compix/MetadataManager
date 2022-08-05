@@ -16,7 +16,8 @@ class BlenderInputSceneCreationSubmitter(RenderingPipelineSubmitter):
         pluginName = deadline_nodes.getBlenderPipelinePluginName()
         jobName = self.pipeline.namingConvention.getInputSceneName(documentWithSettings)
         batchName = 'Input Scene'
-        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.baseDeadlinePriority + 4,
+        basePrio = self.getBaseDeadlinePriority(documentWithSettings)
+        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, basePrio + 4,
                                                    documentWithSettings.get(PipelineKeys.DeadlineInputScenePool), dependentJobIds=dependentJobIds)
 
         filename = self.pipeline.namingConvention.getCreatedInputSceneFilename(documentWithSettings)
@@ -54,7 +55,8 @@ class BlenderRenderSceneCreationSubmitter(RenderingPipelineSubmitter):
         pluginName = deadline_nodes.getBlenderPipelinePluginName()
         jobName = self.pipeline.namingConvention.getRenderSceneName(documentWithSettings)
         batchName = 'Render Scene'
-        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.baseDeadlinePriority + 3, 
+        basePrio = self.getBaseDeadlinePriority(documentWithSettings)
+        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, basePrio + 3, 
                                                    documentWithSettings.get(PipelineKeys.DeadlineRenderScenePool), dependentJobIds=dependentJobIds)
 
         filename = self.pipeline.namingConvention.getRenderSceneFilename(documentWithSettings)
@@ -92,7 +94,8 @@ class BlenderRenderingSubmitter(RenderingPipelineSubmitter):
         pluginName = deadline_nodes.getBlenderPluginName()
         jobName = self.pipeline.namingConvention.getRenderingName(documentWithSettings)
         batchName = 'Rendering'
-        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.baseDeadlinePriority + 2, 
+        basePrio = self.getBaseDeadlinePriority(documentWithSettings)
+        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, basePrio + 2, 
                                                    documentWithSettings.get(PipelineKeys.DeadlineRenderingPool), dependentJobIds=dependentJobIds)
 
         frames = documentWithSettings.get(PipelineKeys.getKeyWithPerspective(PipelineKeys.Frames, documentWithSettings.get(PipelineKeys.Perspective, '')), '')

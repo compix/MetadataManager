@@ -17,7 +17,8 @@ class BlenderCompositingSubmitter(RenderingPipelineSubmitter):
         pluginName = deadline_nodes.getBlenderPipelinePluginName()
         jobName = self.pipeline.namingConvention.getPostName(documentWithSettings)
         batchName = 'Blender Compositing'
-        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.baseDeadlinePriority + 1, 
+        basePrio = self.getBaseDeadlinePriority(documentWithSettings)
+        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, basePrio + 1, 
                                                    documentWithSettings.get(PipelineKeys.DeadlineBlenderCompositingPool), dependentJobIds=dependentJobIds)
 
         # Make sure the output folder exists:

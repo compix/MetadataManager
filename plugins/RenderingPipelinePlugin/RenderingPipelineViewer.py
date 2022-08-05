@@ -55,6 +55,7 @@ class RenderingPipelineViewer(object):
         self.viewerRegistry = viewerRegistry
         self.appInfo = appInfo
         self.environmentEntries: List[EnvironmentEntry] = []
+        self.activatedPipeline: RenderingPipeline = None
         
         self.renderingPipelineManager = renderingPipelineManager
         self.environmentManager = self.renderingPipelineManager.environmentManager
@@ -94,7 +95,7 @@ class RenderingPipelineViewer(object):
         self.dialog.statusLabel.setStyleSheet('color: red')
 
         self.dialog.pipelineNameComboBox.setValidator(RegexPatternInputValidator('^[a-zA-Z0-9_ ]*$'))
-        self.dialog.perspectiveCodesEdit.setValidator(RegexPatternInputValidator('^[a-zA-Z0-9_ ,]*$'))
+        self.dialog.perspectiveCodesEdit.setValidator(RegexPatternInputValidator('^[a-zA-Z0-9_\- ,]*$'))
         self.dialog.sidNamingEdit.setValidator(RegexPatternInputValidator('^[a-zA-Z0-9_\-/ \]\[]*$'))
         
         self.currentHeader = []
@@ -104,15 +105,19 @@ class RenderingPipelineViewer(object):
         self.formLayout.insertRow(1, "Base Project Folder", self.baseProjectFolderElement.layout)
         self.inputSceneCreationScriptElement = FileSelectionElement(self.dialog, None)
         self.renderSceneCreationScriptElement = FileSelectionElement(self.dialog, None)
+        self.renderPostLoadScriptElement = FileSelectionElement(self.dialog, None)
+        self.preFrameScriptElement = FileSelectionElement(self.dialog, None)
         self.nukeScriptElement = FileSelectionElement(self.dialog, None)
         self.blenderCompositingScriptElement = FileSelectionElement(self.dialog, None)
         self.renderSettingsElement = FileSelectionElement(self.dialog, None)
 
         self.formLayout.insertRow(6, "Input Scene Creation Script", self.inputSceneCreationScriptElement.layout)
         self.formLayout.insertRow(7, "Render Scene Creation Script", self.renderSceneCreationScriptElement.layout)
-        self.formLayout.insertRow(8, "Nuke Script", self.nukeScriptElement.layout)
-        self.formLayout.insertRow(10, "Blender Compositing Script", self.blenderCompositingScriptElement.layout)
-        self.formLayout.insertRow(11, "Render Settings", self.renderSettingsElement.layout)
+        self.formLayout.insertRow(8, "Render Post Load Script", self.renderPostLoadScriptElement.layout)
+        self.formLayout.insertRow(9, "Render Pre Frame Script", self.preFrameScriptElement.layout)
+        self.formLayout.insertRow(10, "Nuke Script", self.nukeScriptElement.layout)
+        self.formLayout.insertRow(11, "Blender Compositing Script", self.blenderCompositingScriptElement.layout)
+        self.formLayout.insertRow(12, "Render Settings", self.renderSettingsElement.layout)
 
         self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.BaseFolder, self.baseProjectFolderElement.edit))
 
@@ -121,6 +126,12 @@ class RenderingPipelineViewer(object):
 
         self.environmentEntries.append(ProjectFileEnvironmentEntry(PipelineKeys.RenderSceneCreationScript, 
             self.renderSceneCreationScriptElement.edit, self, self.renderSceneCreationScriptElement.selectButton))
+
+        self.environmentEntries.append(ProjectFileEnvironmentEntry(PipelineKeys.RenderPostLoadScript, 
+            self.renderPostLoadScriptElement.edit, self, self.renderPostLoadScriptElement.selectButton))
+
+        self.environmentEntries.append(ProjectFileEnvironmentEntry(PipelineKeys.PreFrameScript, 
+            self.preFrameScriptElement.edit, self, self.preFrameScriptElement.selectButton))
 
         self.environmentEntries.append(ProjectFileEnvironmentEntry(PipelineKeys.NukeScript, 
             self.nukeScriptElement.edit, self, self.nukeScriptElement.selectButton))
@@ -136,6 +147,8 @@ class RenderingPipelineViewer(object):
         self.environmentEntries.append(self.productTableEnvEntry)
 
         self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlinePriority, self.dialog.deadlinePriorityEdit, valueType=int))
+        self.environmentEntries.append(CheckBoxEnvironmentEntry(PipelineKeys.DeadlineRemovePadding, self.dialog.removeFilenamePaddingCheckBox, PipelineType.Max3ds, self.dialog.pipelineTypeComboBox))
+        self.environmentEntries.append(LineEditEnvironmentEntry(PipelineKeys.DeadlineConcurrentTasks, self.dialog.deadlineConcurrentTasksEdit, valueType=int))
         self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.Max3dsVersion, self.dialog.versionOf3dsMaxComboBox, PipelineType.Max3ds, self.dialog.pipelineTypeComboBox))
         self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.BlenderVersion, self.dialog.blenderVersionComboBox, PipelineType.Blender, self.dialog.pipelineTypeComboBox))
         self.environmentEntries.append(ComboBoxEnvironmentEntry(PipelineKeys.UnrealEngineVersion, self.dialog.unrealEngineVersionComboBox, PipelineType.UnrealEngine, self.dialog.pipelineTypeComboBox))
@@ -405,9 +418,21 @@ class RenderingPipelineViewer(object):
         if selectedPipelineName:
             pipeline = self.renderingPipelineManager.getPipelineFromName(selectedPipelineName)
             if pipeline:
-                pipeline.activate()
+                self.activatePipeline(pipeline)
                 self.viewerRegistry.environmentManagerViewer.setCurrentEnvironment(pipeline.environment)
             self.pipelineSelectionMenu.setTitle(f'Selected RP: {selectedPipelineName}')
+
+    def activatePipeline(self, pipeline: RenderingPipeline):
+        if self.activatedPipeline == pipeline:
+            return
+
+        if self.activatedPipeline:
+            self.activatedPipeline.deactivate()
+        
+        if pipeline:
+            pipeline.activate()
+
+        self.activatedPipeline = pipeline
 
     def onPipelineSelected(self, pipelineName: str):
         self.selectPipelineFromName(pipelineName)
@@ -415,7 +440,7 @@ class RenderingPipelineViewer(object):
     def selectPipelineFromName(self, pipelineName: str):
         pipeline = self.renderingPipelineManager.getPipelineFromName(pipelineName)
         if pipeline:
-            pipeline.activate()
+            self.activatePipeline(pipeline)
             self.viewerRegistry.collectionViewer.showSingleCollection(pipeline.dbCollectionName)
             self.viewerRegistry.environmentManagerViewer.setCurrentEnvironment(pipeline.environment)
             self.viewerRegistry.documentSearchFilterViewer.viewItems(saveSearchHistoryEntry=False)
@@ -515,12 +540,6 @@ class RenderingPipelineViewer(object):
         perspectiveCodesStr = self.dialog.perspectiveCodesEdit.text()
         renderingExtension = self.dialog.renderingExtensionComboBox.currentText()
         postOutputExtensionsStr = self.dialog.postOutputExtensionsEdit.text()
-
-        sidNaming = self.dialog.sidNamingEdit.text()
-
-        if not sidNaming:
-            self.dialog.statusLabel.setText(f'SID naming convention must be specified.')
-            return
 
         if not baseProjectFolder or not os.path.isabs(baseProjectFolder) or not os.path.exists(baseProjectFolder):
             self.dialog.statusLabel.setText(f'Please specify an existing base project folder.')

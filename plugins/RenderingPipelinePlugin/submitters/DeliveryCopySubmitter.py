@@ -11,7 +11,8 @@ class DeliveryCopySubmitter(RenderingPipelineSubmitter):
         pluginName = deadline_nodes.getMetadataManagerPluginName()
         jobName = self.pipeline.namingConvention.getDeliveryName(documentWithSettings)
         batchName = 'Delivery Copy'
-        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.baseDeadlinePriority, 
+        basePrio = self.getBaseDeadlinePriority(documentWithSettings)
+        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, basePrio, 
                                                    documentWithSettings.get(PipelineKeys.DeadlineDeliveryPool), dependentJobIds=dependentJobIds)
 
         # Make sure the output folder exists:

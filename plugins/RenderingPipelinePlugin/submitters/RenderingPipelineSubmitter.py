@@ -16,6 +16,13 @@ class RenderingPipelineSubmitter(Submitter):
         self.pipeline = pipeline
         self.initialStatus = 'Active'
 
+    def getBaseDeadlinePriority(self, doc: dict) -> int:
+        priority = doc.get(PipelineKeys.DeadlinePriority)
+        if priority == None:
+            return self.baseDeadlinePriority
+
+        return priority
+
     @property
     def baseDeadlinePriority(self):
         priority = self.pipeline.environmentSettings.get(PipelineKeys.DeadlinePriority)

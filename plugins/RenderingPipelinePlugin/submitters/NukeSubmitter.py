@@ -16,7 +16,8 @@ class NukeSubmitter(RenderingPipelineSubmitter):
         pluginName = deadline_nodes.getNukePluginName()
         jobName = self.pipeline.namingConvention.getPostName(documentWithSettings)
         batchName = 'Nuke'
-        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, self.baseDeadlinePriority + 1, 
+        basePrio = self.getBaseDeadlinePriority(documentWithSettings)
+        jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, basePrio + 1, 
                                                    documentWithSettings.get(PipelineKeys.DeadlineNukePool), dependentJobIds=dependentJobIds)
 
         # Make sure the output folder exists:

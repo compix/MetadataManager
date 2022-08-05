@@ -2,13 +2,8 @@ import typing
 from RenderingPipelinePlugin.filters.HasInputSceneFilter import HasInputSceneFilter
 from RenderingPipelinePlugin.filters.HasRenderSceneFilter import HasRenderSceneFilter
 from RenderingPipelinePlugin.filters.HasRenderingFilter import HasRenderingFilter
-from RenderingPipelinePlugin.submitters.BlenderCompositingSubmitter import BlenderCompositingSubmitter
-from RenderingPipelinePlugin.submitters.DeliveryCopySubmitter import DeliveryCopySubmitter
-from RenderingPipelinePlugin.submitters.MetadataManagerSubmissionTaskSettings import MetadataManagerSubmissionTaskSettings
 from RenderingPipelinePlugin.submitters.MetadataManagerTaskSubmitter import MetadataManagerTaskSubmitter
-from RenderingPipelinePlugin.submitters.NukeSubmitter import NukeSubmitter
 from RenderingPipelinePlugin.submitters.SubmitterInfo import SubmitterInfo, getOrderedSubmitterInfos
-from RenderingPipelinePlugin.submitters.UnrealEngineSubmitter import UnrealEngineInputSceneCreationSubmitter, UnrealEngineRenderSceneCreationSubmitter, UnrealEngineRenderingSubmitter
 from table.Table import Table
 from viewers.ViewerRegistry import ViewerRegistry
 from qt_extensions import qt_util
@@ -18,8 +13,6 @@ from ApplicationMode import ApplicationMode
 from AppInfo import AppInfo
 from ServiceRegistry import ServiceRegistry
 from RenderingPipelinePlugin.submitters.Submitter import Submitter, SubmitterRequirementsResponse
-from RenderingPipelinePlugin.submitters.BlenderSubmitter import BlenderInputSceneCreationSubmitter, BlenderRenderSceneCreationSubmitter, BlenderRenderingSubmitter
-from RenderingPipelinePlugin.submitters.Max3dsSubmitter import Max3dsInputSceneCreationSubmitter, Max3dsRenderSceneCreationSubmitter, Max3dsRenderingSubmitter
 import asset_manager
 from typing import Callable, Dict, List
 from table import table_util
@@ -58,17 +51,20 @@ class RenderingPipeline(object):
         self._namingConvention = NamingConvention()
         self.rowSkipConditions: Callable[[dict],bool] = []
         self.customData = None
-        self.activated = False
+        self.activationInitialized = False
 
         self.submissionCheckBoxStates: typing.Dict[str, bool] = dict()
 
     def activate(self):
-        if not self.activated:
+        if not self.activationInitialized:
             self.registerAndLinkActions()
             self.addFilters()
 
-            self.activated = True
-
+            self.activationInitialized = True
+    
+    def deactivate(self):
+        pass
+    
     def setCustomDataEntry(self, key: str, value):
         if self.customData == None:
             self.customData = dict()
@@ -276,12 +272,10 @@ class RenderingPipeline(object):
 
         return postOutputExt
 
-    def getSID(self, documentWithSettings: dict, tableRow: List[str]):
+    def getSID(self, documentWithSettings: dict):
         sid = extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.SidNaming), documentWithSettings)
         if not sid:
-            # Concat all entries into one string:
-            rowStr = ''.join([v for v in tableRow if v]) + documentWithSettings.get(PipelineKeys.Perspective, "")
-            sid = hashlib.md5(rowStr.encode('utf-8')).hexdigest()
+            sid = uuid.uuid4().hex
 
         sid += f'_{self.dbCollectionName}'
         return sid
@@ -289,8 +283,15 @@ class RenderingPipeline(object):
     def copyForDelivery(self, documentWithSettings: dict):
         outputExtensions = RenderingPipelineUtil.getPostOutputExtensions(documentWithSettings)
 
+        mapping = documentWithSettings.get(PipelineKeys.Mapping)
+        if mapping:
+            postFileTargetDoc = self.dbManager.findOneBySidInCollections(mapping, [self.dbCollectionName])
+            postFileTargetDoc = self.combineDocumentWithSettings(postFileTargetDoc, self.environmentSettings)
+        else:
+            postFileTargetDoc = documentWithSettings
+
         for ext in outputExtensions:
-            postFilename = self.namingConvention.getPostFilename(documentWithSettings, ext=ext)
+            postFilename = self.namingConvention.getPostFilename(postFileTargetDoc, ext=ext)
             deliveryFilename= self.namingConvention.getDeliveryFilename(documentWithSettings, ext=ext)
 
             if os.path.exists(postFilename):
@@ -321,6 +322,9 @@ class RenderingPipeline(object):
     def processHeader(self, header: List[str], rowIndices: List[str]):
         pass
 
+    def postProcessHeader(self, header: List[str]):
+        pass
+
     def processDocumentDict(self, documentDict: dict, logHandler: Callable[[str],None] = None):
         return True
 
@@ -341,7 +345,34 @@ class RenderingPipeline(object):
 
         return perspectiveCodes
 
-    def processRows(self, table: Table, collectionName: str, header: typing.List[str], rowIndices: typing.List[int], environmentSettings: dict = None,
+    def generateDocuments(self, table: Table, header: typing.List[str], rowIndices: typing.List[int], environmentSettings: dict = None,
+                    onProgressUpdate: Callable[[float, str],None] = None, logHandler: Callable[[str],None] = None):
+        docs = []
+        rowIdx = 1
+        rowCount = table.nrows
+
+        if onProgressUpdate:
+            onProgressUpdate(0, 'Generating documents...')
+            
+        for row in table.getRowsWithoutHeader():
+            # Convert values to string for consistency
+            row = [str(v) if v != None else v for v in row]
+            documentDict = self.zipRowAndHeader(row, header, rowIndices)
+
+            docs.append(documentDict)
+
+            rowIdx += 1
+
+            if onProgressUpdate:
+                onProgressUpdate(float(rowIdx) / rowCount)
+
+        return docs
+
+    def preprocessDocuments(self, docs: typing.List[dict], environmentSettings: dict = None, 
+                            onProgressUpdate: Callable[[float, str],None] = None, logHandler: Callable[[str],None] = None):
+        return docs
+
+    def processDocuments(self, docs: typing.List[dict], collectionName: str, environmentSettings: dict = None,
                     onProgressUpdate: Callable[[float, str],None] = None, logHandler: Callable[[str],None] = None):
 
         # In case of rendering name duplicates, create mappings/links to the document with the first-assigned rendering.
@@ -349,13 +380,9 @@ class RenderingPipeline(object):
 
         sidSet = set()
         rowIdx = 1
-        rowCount = table.nrows
+        docCount = len(docs)
 
-        for row in table.getRowsWithoutHeader():
-            # Convert values to string for consistency
-            row = [str(v) if v != None else v for v in row]
-            documentDict = self.zipRowAndHeader(row, header, rowIndices)
-
+        for documentDict in docs:
             if any(rowSkipCondition(documentDict) for rowSkipCondition in self.rowSkipConditions):
                 continue
 
@@ -369,14 +396,14 @@ class RenderingPipeline(object):
             for perspectiveCode in perspectiveCodes:
                 documentDict[PipelineKeys.Perspective] = perspectiveCode
 
-                documentWithSettings = self.combineDocumentWithSettings(documentDict, environmentSettings)
-
-                sid = self.getSID(documentWithSettings, row)
-                documentDict[Keys.systemIDKey] = sid
-                documentWithSettings[Keys.systemIDKey] = sid
-
                 if not self.postProcessDocumentDict(documentDict, logHandler):
                     continue
+
+                documentWithSettings = self.combineDocumentWithSettings(documentDict, environmentSettings)
+
+                sid = self.getSID(documentWithSettings)
+                documentDict[Keys.systemIDKey] = sid
+                documentWithSettings[Keys.systemIDKey] = sid
 
                 if sid in sidSet:
                     m = f'Duplicate sid {sid} found at row {rowIdx}. This row will be skipped.'
@@ -403,7 +430,7 @@ class RenderingPipeline(object):
             rowIdx += 1
 
             if onProgressUpdate:
-                onProgressUpdate(float(rowIdx) / rowCount)
+                onProgressUpdate(float(rowIdx) / docCount)
 
     def readProductTable(self, productTablePath: str = None, productTableSheetname: str = None, environmentSettings: dict = None, 
                          onProgressUpdate: Callable[[float, str],None] = None, replaceExistingCollection=False, logHandler: Callable[[str],None] = None):
@@ -451,7 +478,10 @@ class RenderingPipeline(object):
                 raise RuntimeError(f'Failed to rename collection {collectionName} to temporary collection {tempCollectionName}. Maybe it already exists?')
 
         try:
-            self.processRows(table, collectionName, header, rowIndices, environmentSettings, onProgressUpdate, logHandler)
+            docs = self.generateDocuments(table, header, rowIndices, environmentSettings, onProgressUpdate, logHandler)
+            docs = self.preprocessDocuments(docs, environmentSettings, onProgressUpdate, logHandler)
+            self.processDocuments(docs, collectionName, environmentSettings, onProgressUpdate, logHandler)
+            self.postProcessHeader(header)
 
             if replaceExistingCollection:
                 self.dbManager.dropCollection(self.dbCollectionName + Keys.OLD_VERSIONS_COLLECTION_SUFFIX)
