@@ -70,6 +70,14 @@ class XlsxTable(ExcelTable):
         super().__init__(sheet)
 
         self.rows = list(self.sheet.rows)
+        self.nrows_computed = None
+        self.ncols_computed = None
+
+        if self.nrows == None:
+            self.nrows_computed = len(self.rows)
+        
+        if self.ncols == None:
+            self.ncols_computed = len(self.rows[0])
 
     def getRowValues(self, rowIndex):
         return [cell.value if cell else None for cell in self.rows[rowIndex]] if self.sheet != None else []
@@ -86,8 +94,14 @@ class XlsxTable(ExcelTable):
 
     @property
     def ncols(self):
-        return self.sheet.max_column if self.sheet != None else 0
+        if self.ncols_computed:
+            return self.ncols_computed
+        else:
+            return self.sheet.max_column if self.sheet != None else 0
 
     @property
     def nrows(self):
-        return self.sheet.max_row if self.sheet != None else 0
+        if self.nrows_computed:
+            return self.nrows_computed
+        else:
+            return self.sheet.max_row if self.sheet != None else 0
