@@ -90,7 +90,12 @@ class NamingConvention(object):
 
     def getPerspectiveDependentNaming(self, documentWithSettings: dict, namingKey: str):
         key = PipelineKeys.getKeyWithPerspective(namingKey, documentWithSettings.get(PipelineKeys.Perspective, ''))
-        return documentWithSettings.get(key, '')
+        naming = documentWithSettings.get(key, '')
+        if not naming:
+            key = PipelineKeys.getKeyWithPerspective(namingKey, 'default')
+            naming = documentWithSettings.get(key, '')
+
+        return naming
 
     def getRenderingName(self, documentWithSettings: dict):
         return os.path.basename(extractNameFromNamingConvention(self.getPerspectiveDependentNaming(documentWithSettings, PipelineKeys.RenderingNaming), documentWithSettings))

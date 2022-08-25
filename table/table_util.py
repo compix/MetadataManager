@@ -1,3 +1,4 @@
+import typing
 from table.Table import Table
 from table.ExcelTable import ExcelTable
 from table.CSVTable import CSVTable
@@ -33,3 +34,6 @@ def getSheetNames(tablePath: str):
         return sheetnames
 
     return None
+
+def zipRowAndHeader(row: typing.List[str], header: typing.List[str], rowIndices: typing.List[str]):
+    return {header[hi]: row[i] for hi, i in enumerate(rowIndices) if i < len(row)}

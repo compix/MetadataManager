@@ -5,6 +5,7 @@ from MetadataManagerCore.actions.ActionType import ActionType
 from viewers.HostProcessViewer import HostProcessViewer
 from viewers.service.ServiceManagerViewer import ServiceManagerViewer
 from PySide2 import QtCore, QtWidgets, QtUiTools, QtGui
+from PySide2.QtCore import Qt
 from enum import Enum
 from MetadataManagerCore.mongodb_manager import CollectionHeaderKeyInfo, MongoDBManager
 from qt_extensions import qt_util
@@ -26,7 +27,8 @@ from viewers.EnvironmentManagerViewer import EnvironmentManagerViewer
 from viewers.DocumentSearchFilterViewer import DocumentSearchFilterViewer
 from viewers.PluginManagerViewer import PluginManagerViewer
 from viewers.ViewerRegistry import ViewerRegistry
-
+import os
+from datetime import datetime
 from typing import List
 from AppInfo import AppInfo
 
@@ -71,9 +73,22 @@ class MainWindowManager(QtCore.QObject):
         self.setupDockWidgets()
         self.setupEventAndActionHandlers()
 
+        self.addSplitter()
         self.restoreState()
 
         self.documentSearchFilterViewer.viewItemsOverThreadPool(saveSearchHistoryEntry=False)
+
+    def addSplitter(self):
+        mainFrame: QtWidgets.QFrame = self.window.main_frame
+        self.splitter = QtWidgets.QSplitter()
+        mainFrame.layout().addWidget(self.splitter)
+        self.splitter.setOrientation(Qt.Vertical)
+        mainFrame.layout().removeWidget(self.window.documentSearchFilterFrame)
+        mainFrame.layout().removeWidget(self.window.tableViewFrame)
+        self.splitter.addWidget(self.window.documentSearchFilterFrame)
+        self.splitter.addWidget(self.window.tableViewFrame)
+        self.splitter.setOpaqueResize(False)
+        self.splitter.setCollapsible(1, False)
 
     @property
     def tabWidget(self) -> QtWidgets.QTabWidget:
@@ -287,7 +302,36 @@ class MainWindowManager(QtCore.QObject):
             item = self.dbManager.findOneInCollections(uid, self.collectionViewer.getSelectedCollectionNames())
             if item != None:
                 self.previewViewer.showPreview(item.get(Keys.preview))
-                self.inspector.showItem(uid)
+                self.showItem(uid)
+
+    def showItem(self, uid: str):
+        itemDict = self.dbManager.findOneInCollections(uid, self.collectionViewer.getSelectedCollectionNames())
+
+        if not itemDict:
+            self.inspector.showDictionary({})
+            return
+
+        previewFilename = itemDict.get('preview')
+        if previewFilename and os.path.exists(previewFilename):
+            stats = os.stat(previewFilename)
+            fileInfoDict = dict()
+            fileInfoDict['File Created'] = datetime.fromtimestamp(stats.st_ctime).strftime("%d.%m.%Y %H:%M:%S")
+            fileInfoDict['File Modified'] = datetime.fromtimestamp(stats.st_mtime).strftime("%d.%m.%Y %H:%M:%S")
+
+            fileSize = float(stats.st_size)
+            fileSizeInKb = fileSize / 1024.0
+            fileSizeInMb = fileSizeInKb / 1024.0
+            if int(round(fileSizeInMb)) > 0:
+                fileInfoDict['File Size'] = f'{int(round(fileSizeInMb))} MB'
+            elif int(round(fileSizeInKb)) > 0:
+                fileInfoDict['File Size'] = f'{int(round(fileSizeInKb))} KB'
+            else:
+                fileInfoDict['File Size'] = f'{int(round(fileSizeInKb))} B'
+
+            dataDict = {**itemDict, **fileInfoDict}
+            self.inspector.showDictionary(dataDict)
+        else:
+            self.inspector.showDictionary(itemDict)
 
     def extractSystemValues(self, item):
         vals = []
@@ -358,6 +402,9 @@ class MainWindowManager(QtCore.QObject):
         settings.setValue("windowState", self.window.saveState())
         settings.setValue("style", self.currentStyle)
 
+        settings.setValue("main_splitter_geo", self.splitter.saveGeometry())
+        settings.setValue("main_splitter_state", self.splitter.saveState())
+
         for dockWidget in self.dockWidgets:
             if isinstance(dockWidget, DockWidget):
                 dockWidget.saveState(settings)
@@ -371,6 +418,9 @@ class MainWindowManager(QtCore.QObject):
         self.settings = settings
         self.window.restoreGeometry(settings.value("geometry"))
         self.window.restoreState(settings.value("windowState"))
+        self.splitter.restoreGeometry(settings.value("main_splitter_geo"))
+        self.splitter.restoreState(settings.value("main_splitter_state"))
+
         try:
             self.setStyle(settings.value("style", Style.Dark))
         except:
