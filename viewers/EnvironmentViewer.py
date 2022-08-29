@@ -179,16 +179,17 @@ class EnvironmentViewer(object):
         if not self.allowSave:
             return
             
-        if self.environment != None and not self.environmentManager.hasEnvironmentId(self.environment.uniqueEnvironmentId): 
-            if self.environmentManager.isValidEnvironmentId(self.environment.uniqueEnvironmentId):
-                self.environmentManager.addEnvironment(self.environment)
-                self.onNewEnvironmentAdded(self.environment)
+        if self.environment: 
+            if not self.environmentManager.hasEnvironmentId(self.environment.uniqueEnvironmentId):
+                if self.environmentManager.isValidEnvironmentId(self.environment.uniqueEnvironmentId):
+                    self.environmentManager.upsert(self.environment)
+                    self.onNewEnvironmentAdded(self.environment)
+                else:
+                    QMessageBox.warning(self.widget, "Invalid Environment Name", "Please enter a valid environment name.")
+                    return
             else:
-                QMessageBox.warning(self.widget, "Invalid Environment Name", "Please enter a valid environment name.")
+                self.environmentManager.upsert(self.environment)
 
-        self.environmentManager.saveToDatabase()
-
-        if self.environment:
             self.exportSettingsAsJson(self.environment.autoExportPath)
 
     def validateCurrentEnvironment(self):

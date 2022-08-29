@@ -2,12 +2,9 @@
 from viewers.ViewerRegistry import ViewerRegistry
 from AppInfo import AppInfo
 from typing import List
-from MetadataManagerCore.mongodb_manager import MongoDBManager
 from MetadataManagerCore import Keys
 from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
-from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
 from MetadataManagerCore.Event import Event
-from RenderingPipelinePlugin import PipelineKeys
 import logging
 from ServiceRegistry import ServiceRegistry
 
@@ -137,8 +134,7 @@ class RenderingPipelineManager(object):
     def deletePipeline(self, pipelineName: str, archive=True):
         pipeline = self.getPipelineFromName(pipelineName)
         if pipeline:
-            if pipeline.environment:
-                self.environmentManager.archive(self.dbManager, pipeline.environment)
+            self.environmentManager.archive(self.dbManager, pipeline.environmentId)
 
             # Collections may not exist:
             try:

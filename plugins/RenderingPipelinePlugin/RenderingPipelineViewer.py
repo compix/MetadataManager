@@ -1,10 +1,8 @@
 import typing
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
-from MetadataManagerCore.third_party_integrations.deadline import deadline_service
 from RenderingPipelinePlugin.CharacterReplacementView import CharacterReplacementView
 from RenderingPipelinePlugin.CustomSubmissionTaskViewer import CustomSubmissionTaskViewer
 from RenderingPipelinePlugin.EnvironmentEntry import CheckBoxEnvironmentEntry, ComboBoxEnvironmentEntry, DeadlineNodeBlackWhitelistEnvironmentEntry, DeadlinePoolComboBoxEnvironmentEntry, DeadlineTimeoutEnvironmentEntry, EnvironmentEntry, LineEditEnvironmentEntry, NamingEnvironmentEntry, ProjectFileEnvironmentEntry, ProjectSubFolderEnvironmentEntry
-from RenderingPipelinePlugin.MetadataManagerTaskView import MetadataManagerTaskView
 from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
 from RenderingPipelinePlugin.TaskExecutionOrderView import TaskExecutionOrderView
 from RenderingPipelinePlugin.submitters.SubmitterInfo import getOrderedSubmitterInfos
@@ -625,7 +623,7 @@ class RenderingPipelineViewer(object):
                 progressDialog.close()
 
         self.renderingPipelineManager.addNewPipelineInstance(pipeline, replaceExisting=True)
-        self.environmentManager.addEnvironment(self.environment, save=True, replaceExisting=False)
+        self.environmentManager.upsert(self.environment)
 
         self.viewerRegistry.environmentManagerViewer.refreshEnvironmentsComboBox()
         self.viewerRegistry.collectionViewer.refreshCollections()
@@ -664,6 +662,9 @@ class RenderingPipelineViewer(object):
             if sheetNames:
                 for sheetName in sheetNames:
                     self.dialog.productTableSheetNameComboBox.addItem(sheetName)
+
+        if self.environment:
+            self.dialog.productTableSheetNameComboBox.setCurrentText(self.environment.settings.get(PipelineKeys.ProductTableSheetName, ''))
 
     def onProductTableSheetNameChanged(self, txt: str):
         self.updateExtractedTableHeader()

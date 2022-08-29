@@ -84,9 +84,10 @@ class CollectionUpdateAction(PipelineAction):
 
     def execute(self, productTablePath: str, productTableSheetName: str):
         self.pipeline.readProductTable(productTablePath, productTableSheetName, self.pipeline.environmentSettings, onProgressUpdate=self.updateProgress)
-        self.pipeline.environment.settings[PipelineKeys.ProductTable] = productTablePath.replace('\\', '/')
-        self.pipeline.environment.settings[PipelineKeys.ProductTableSheetName] = productTableSheetName
-        self.pipeline.environmentManager.saveToDatabase()
+        pipelineEnv = self.pipeline.environment
+        pipelineEnv.settings[PipelineKeys.ProductTable] = productTablePath.replace('\\', '/')
+        pipelineEnv.settings[PipelineKeys.ProductTableSheetName] = productTableSheetName
+        self.pipeline.environmentManager.upsert(pipelineEnv.uniqueEnvironmentId)
 
         if self.pipeline.viewerRegistry.documentSearchFilterViewer:
             self.pipeline.viewerRegistry.documentSearchFilterViewer.viewItemsOverThreadPool(saveSearchHistoryEntry=False)

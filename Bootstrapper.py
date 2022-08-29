@@ -179,7 +179,7 @@ class Bootstrapper(object):
         self.serviceRegistry.actionManager = ActionManager()
         self.serviceRegistry.services.append(self.serviceRegistry.actionManager)
         
-        self.serviceRegistry.environmentManager = EnvironmentManager(handleSharedChangeEvents=self.mode != ApplicationMode.Console)
+        self.serviceRegistry.environmentManager = EnvironmentManager()
         self.serviceRegistry.services.append(self.serviceRegistry.environmentManager)
 
         self.serviceRegistry.dbManager = self.dbManager

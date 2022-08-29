@@ -243,6 +243,10 @@ class RenderingPipeline(object):
         return self.name
 
     @property
+    def environmentId(self) -> str:
+        return self.environmentManager.getIdFromEnvironmentName(self.environmentName)
+
+    @property
     def environment(self) -> Environment:
         return self.environmentManager.getEnvironmentFromName(self.environmentName)
 

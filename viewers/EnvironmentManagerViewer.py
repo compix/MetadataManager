@@ -61,10 +61,11 @@ class EnvironmentManagerViewer(DockWidget):
         self.widget.layout().insertWidget(0, self.menuBar)
 
     def onArchiveEnvironment(self):
-        if self.environmentViewer.environment != None and self.environmentManager.hasEnvironmentId(self.environmentViewer.environment.uniqueEnvironmentId):
+        env = self.environmentViewer.environment
+        if env != None and self.environmentManager.hasEnvironmentId(env.uniqueEnvironmentId):
             ret = QMessageBox.question(self, "Archive Environment", "Are you sure you want to archive the selected environment?")
             if ret == QMessageBox.Yes:
-                self.environmentManager.archive(self.dbManager, self.environmentViewer.environment)
+                self.environmentManager.archive(self.dbManager, env.uniqueEnvironmentId)
                 self.refreshEnvironmentsComboBox()
                 self.environmentsComboBox.setCurrentIndex(0)
 
@@ -100,7 +101,7 @@ class EnvironmentManagerViewer(DockWidget):
 
         self.environmentsComboBox.clear()
 
-        for env in self.environmentManager.environments:
+        for env in self.environmentManager.yieldEnvironments():
             self.environmentsComboBox.addItem(env.displayName)
 
         if curDisplayName:
