@@ -21,11 +21,20 @@ class PreviewViewer(DockWidget):
         self.preview = PhotoViewer(self.widget)
         self.previewFilenames: typing.List[str] = []
         self.curPreviewFilenameIdx = 0
+        self.shownImageFilename: str = None
         self.preview.toggleDragMode()
         self.isPlaying = True
+        self.autoLoadBigFiles = True
         self.playIcon = QtGui.QIcon(':/icons/play_icon.png')
         self.pauseIcon = QtGui.QIcon(':/icons/pause_icon.png')
         self.widget.previewFrame.layout().addWidget(self.preview)
+
+        self.loadBigFileButton = QtWidgets.QPushButton('Load')
+        self.loadBigFileButton.setVisible(False)
+        self.loadBigFileButton.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Fixed)
+        self.loadBigFileButton.clicked.connect(lambda: self.displayPreview(self.shownImageFilename, force=True))
+        self.widget.previewFrame.layout().addWidget(self.loadBigFileButton)
+
         self.widget.playToggleButton.clicked.connect(self.onTogglePlay)
         self.widget.nextFrameButton.clicked.connect(self.onNextFrame)
         self.widget.previousFrameButton.clicked.connect(self.onPreviousFrame)
@@ -51,14 +60,14 @@ class PreviewViewer(DockWidget):
             prevIdx = self.curPreviewFilenameIdx
             self.curPreviewFilenameIdx = (self.curPreviewFilenameIdx + 1) % len(self.previewFilenames)
             if prevIdx != self.curPreviewFilenameIdx:
-                self.showPreview(self.previewFilenames[self.curPreviewFilenameIdx])
+                self.showPreview(self.previewFilenames[self.curPreviewFilenameIdx], autoLoadBigFiles=self.autoLoadBigFiles)
 
     def onPrevPreviewClick(self):
         if self.previewFilenames and len(self.previewFilenames) > 0:
             prevIdx = self.curPreviewFilenameIdx
             self.curPreviewFilenameIdx = (self.curPreviewFilenameIdx - 1 + len(self.previewFilenames)) % len(self.previewFilenames)
             if prevIdx != self.curPreviewFilenameIdx:
-                self.showPreview(self.previewFilenames[self.curPreviewFilenameIdx])
+                self.showPreview(self.previewFilenames[self.curPreviewFilenameIdx], autoLoadBigFiles=self.autoLoadBigFiles)
 
     def onAnimationSpeedSliderChanged(self, value):
         self.animationTimer.setInterval(self.widget.animationSpeedSlider.maximum() - value + 1)
@@ -78,15 +87,30 @@ class PreviewViewer(DockWidget):
     def onPreviousFrame(self):
         self.showPreviousFrame()
 
-    def displayPreview(self, path, resetZoom=True):
+    def displayPreview(self, path: str, resetZoom=True, force=False):
+        self.shownImageFilename = path
         validPath = True
         if not os.path.exists(path):
             path = asset_manager.getImagePath('missing_rendering.jpg')
             validPath = False
 
+        self.loadBigFileButton.setVisible(False)
+        self.preview.setVisible(True)
+
         if path in self.pixmapCacheDict:
             self.preview.setPhoto(self.pixmapCacheDict[path], resetZoom=resetZoom)
             return True
+
+        if not force and not self.autoLoadBigFiles:
+            stats = os.stat(path)
+            fileSize = float(stats.st_size)
+            fileSizeInMb = fileSize / 1024.0 / 1024.0
+
+            if fileSizeInMb > 2.5:
+                self.loadBigFileButton.setVisible(True)
+                self.loadBigFileButton.setText(f'Load ({int(round(fileSizeInMb*10))/10.0} MB)')
+                self.preview.setVisible(False)
+                return False
 
         scene = QtWidgets.QGraphicsScene()
         pixmap = QtGui.QPixmap(path)
@@ -96,7 +120,8 @@ class PreviewViewer(DockWidget):
 
         return validPath
 
-    def showPreview(self, path):
+    def showPreview(self, path: str, autoLoadBigFiles=True):
+        self.autoLoadBigFiles = autoLoadBigFiles
         self.pixmapCacheDict = dict()
 
         self.animationTimer.stop()
@@ -136,12 +161,13 @@ class PreviewViewer(DockWidget):
         self.backgroundColor = QtWidgets.QColorDialog.getColor()
         self.preview.setBackgroundBrush(self.backgroundColor)
 
-    def showMultiplePreviews(self, previewFilenames: typing.List[str]):
+    def showMultiplePreviews(self, previewFilenames: typing.List[str], autoLoadBigFiles=True):
+        self.autoLoadBigFiles = autoLoadBigFiles
         self.previewFilenames = previewFilenames
         self.curPreviewFilenameIdx = 0
 
         if not previewFilenames or len(self.previewFilenames) == 0:
-            self.showPreview(None)
+            self.showPreview(None, autoLoadBigFiles=self.autoLoadBigFiles)
             self.widget.nextPreviewButton.hide()
             self.widget.prevPreviewButton.hide()
             return
@@ -153,4 +179,4 @@ class PreviewViewer(DockWidget):
             self.widget.nextPreviewButton.hide()
             self.widget.prevPreviewButton.hide()
 
-        self.showPreview(previewFilenames[self.curPreviewFilenameIdx])
+        self.showPreview(previewFilenames[self.curPreviewFilenameIdx], autoLoadBigFiles=self.autoLoadBigFiles)

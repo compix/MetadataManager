@@ -8,7 +8,6 @@ from PySide2.QtCore import QThreadPool
 from MetadataManagerCore.third_party_integrations.deadline.deadline_service import DeadlineService, DeadlineServiceInfo
 import os
 from qt_extensions import qt_util
-from PySide2.QtCore import QThreadPool
 from PySide2.QtWidgets import QMessageBox
 from logging_extensions.QtTextAppendLoggingHandler import QtTextAppendLoggingHandler
 import logging

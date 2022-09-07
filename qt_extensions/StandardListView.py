@@ -8,6 +8,8 @@ class StandardListView(QtCore.QObject):
         super().__init__()
         self.listView = listView
 
+        listView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+
         self.model = QStandardItemModel()
         self.listView.setModel(self.model)
 
@@ -34,6 +36,52 @@ class StandardListView(QtCore.QObject):
         self.showDeleteConfirmationDialog = False
 
         self.selectionModel.selectionChanged.connect(self._onSelectionChanged)
+
+        self.moveUpAction: QtWidgets.QAction = None
+        self.moveDownAction: QtWidgets.QAction = None
+
+    def setShowMoveActions(self, showMoveActions: bool):
+        if showMoveActions:
+            if not self.moveUpAction:
+                self.moveUpAction = QtWidgets.QAction('Move Up')
+                self.moveUpAction.triggered.connect(self.onMoveUp)
+                self.contextMenu.addAction(self.moveUpAction)
+
+                self.moveDownAction = QtWidgets.QAction('Move Down')
+                self.moveDownAction.triggered.connect(self.onMoveDown)
+                self.contextMenu.addAction(self.moveDownAction)
+        else:
+            if self.moveUpAction:
+                self.moveUpAction.setParent(None)
+                self.moveUpAction.deleteLater()
+                self.moveUpAction = None
+
+            if self.moveDownAction:
+                self.moveDownAction.setParent(None)
+                self.moveDownAction.deleteLater()
+                self.moveDownAction = None
+
+    def onMoveUp(self):
+        selectedRows = self.selectionModel.selectedRows()
+        if len(selectedRows) != 1:
+            return
+
+        rowIdx: int = selectedRows[0].row()
+        prevRowIdx = (rowIdx - 1 + self.model.rowCount()) % self.model.rowCount()
+
+        curRow = self.model.takeRow(rowIdx)
+        self.model.insertRow(prevRowIdx, curRow)
+
+    def onMoveDown(self):
+        selectedRows = self.selectionModel.selectedRows()
+        if len(selectedRows) != 1:
+            return
+
+        rowIdx: int = selectedRows[0].row()
+        nextRowIdx = (rowIdx + 1) % self.model.rowCount()
+
+        curRow = self.model.takeRow(rowIdx)
+        self.model.insertRow(nextRowIdx, curRow)
 
     def hasEntry(self, value: str) -> bool:
         return value in self.valueToCustomData

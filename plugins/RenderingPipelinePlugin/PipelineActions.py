@@ -59,9 +59,13 @@ class SubmissionAction(PipelineDocumentAction):
     def displayName(self):
         return 'Submit'
 
-    def execute(self, document: dict, basePriority: int, submitters: List[Submitter], initialStatus: str):
+    def execute(self, document: dict, basePriority: int, submitters: List[Submitter], initialStatus: str, resX: int, resY: int):
         lastJobId = None
 
+        if resX != None and resY != None:
+            document[PipelineKeys.ResolutionOverwriteX] = resX
+            document[PipelineKeys.ResolutionOverwriteY] = resY
+            
         documentWithSettings = self.pipeline.combineDocumentWithSettings(document, self.pipeline.environmentSettings)
         self.pipeline.namingConvention.addFilenameInfo(documentWithSettings)
         

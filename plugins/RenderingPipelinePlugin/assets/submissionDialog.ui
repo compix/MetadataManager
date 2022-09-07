@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>386</width>
-    <height>122</height>
+    <height>157</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -65,6 +65,56 @@
            </property>
           </item>
          </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>Render Resolution</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QCheckBox" name="overwriteResCheckBox">
+            <property name="text">
+             <string>Overwrite Resolution</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="resXEdit">
+            <property name="toolTip">
+             <string>Resolution X</string>
+            </property>
+            <property name="inputMask">
+             <string/>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="placeholderText">
+             <string>Width</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="resYEdit">
+            <property name="toolTip">
+             <string>Resolution Y</string>
+            </property>
+            <property name="inputMask">
+             <string/>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="placeholderText">
+             <string>Height</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </item>

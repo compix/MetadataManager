@@ -58,6 +58,8 @@ SaveRenderScene = 'rp_save_render_scene'
 RenderInSceneCreationScript = 'rp_render_in_scene_creation_script'
 ApplyCameraFraming = 'rp_apply_camera_framing'
 Frames = 'rp_frames'
+ResolutionOverwriteX = 'rp_resolution_overwrite_x'
+ResolutionOverwriteY = 'rp_resolution_overwrite_y'
 
 # Deadline
 DeadlinePriority = 'rp_deadline_priority'

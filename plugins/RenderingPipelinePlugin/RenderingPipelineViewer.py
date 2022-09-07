@@ -610,6 +610,7 @@ class RenderingPipelineViewer(object):
             try:
                 replaceExistingCollection = pipelineExists and self.dialog.replaceExistingCollectionCheckBox.isChecked()
                 progressDialog = ProgressDialog()
+                progressDialog.setTitle('')
                 progressDialog.open()
                 self.dialog.statusLabel.setText('')
                 self.dialog.logTextEdit.clear()

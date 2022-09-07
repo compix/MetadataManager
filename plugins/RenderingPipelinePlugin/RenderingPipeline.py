@@ -99,6 +99,10 @@ class RenderingPipeline(object):
     def submitCheckboxLayout(self) -> QVBoxLayout:
         return self.submissionDialog.submitCheckboxLayout
 
+    @property
+    def supportsResolutionOverwrite(self) -> bool:
+        return False
+
     def onSubmit(self):
         submitters = self.submitters
         for i in range(self.submitCheckboxLayout.count()):
@@ -112,7 +116,21 @@ class RenderingPipeline(object):
         priority = int(self.submissionDialog.basePriorityEdit.text()) if self.submissionDialog.basePriorityEdit.text() else None
         initialStatus = self.submissionDialog.initialStatusComboBox.currentText()
 
-        self.submissionArgs = [priority, submitters, initialStatus]
+        if self.supportsResolutionOverwrite and self.submissionDialog.overwriteResCheckBox.isChecked():
+            try:
+                resX = int(self.submissionDialog.resXEdit.text())
+            except:
+                resX = None
+
+            try:
+                resY = int(self.submissionDialog.resYEdit.text())
+            except:
+                resY = None
+        else:
+            resX = None
+            resY = None
+
+        self.submissionArgs = [priority, submitters, initialStatus, resX, resY]
         self.submissionDialog.accept()
 
     def setupAndRegisterSubmissionAction(self):
@@ -121,6 +139,10 @@ class RenderingPipeline(object):
 
         uiFilePath = asset_manager.getPluginUIFilePath("RenderingPipelinePlugin", "assets/submissionDialog.ui")
         self.submissionDialog = asset_manager.loadDialogAbsolutePath(uiFilePath)
+
+        self.submissionDialog.overwriteResCheckBox.setEnabled(self.supportsResolutionOverwrite)
+        self.submissionDialog.resXEdit.setEnabled(self.supportsResolutionOverwrite)
+        self.submissionDialog.resYEdit.setEnabled(self.supportsResolutionOverwrite)
 
         self.submissionDialog.basePriorityEdit.setValidator(RegexPatternInputValidator('^\d*$'))
         self.submissionDialog.cancelButton.clicked.connect(self.submissionDialog.reject)
