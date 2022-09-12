@@ -60,6 +60,7 @@ class RenderingPipelineViewer(object):
         self.dbManager = self.renderingPipelineManager.dbManager
         self.pipelineSelectionMenu = None
         self.pipelineNameActions = []
+        self.loadedPipeline: RenderingPipeline = None
         self.loadingIcon = QtGui.QMovie(':/icons/eclipse_loading.gif')
         self.refreshIcon = QtGui.QIcon(':/icons/refresh.png')
 
@@ -230,7 +231,7 @@ class RenderingPipelineViewer(object):
         self.rowSkipConditions: List[RowSkipConditionUIElement] = []
         self.dialog.addRowSkipConditionButton.clicked.connect(self.onAddRowSkipConditionClick)
 
-        self.customSubmissionTaskViewer = CustomSubmissionTaskViewer(self.dialog, serviceRegistry, viewerRegistry)
+        self.customSubmissionTaskViewer = CustomSubmissionTaskViewer(self, serviceRegistry, viewerRegistry)
         self.taskExecutionOrderView = TaskExecutionOrderView(self.customSubmissionTaskViewer, self.dialog)
 
         self.dialog.selectProductTableInExplorerButton.clicked.connect(self.onSelectProductTableInExplorerClick)
@@ -695,12 +696,12 @@ class RenderingPipelineViewer(object):
 
     def loadPipeline(self, pipelineName: str):
         pipeline = self.renderingPipelineManager.getPipelineFromName(pipelineName)
+        self.loadedPipeline = pipeline
         self.environment = self.environmentManager.getEnvironmentFromName(pipeline.environmentName)
         if not self.environment:
             self.environment = Environment(EnvironmentManager.getIdFromEnvironmentName(pipelineName))
 
         environmentSettings = self.environment.settings
-        self.customSubmissionTaskViewer.load(self.environment)
 
         if pipeline:
             self.dialog.pipelineTypeComboBox.setCurrentText(environmentSettings.get(PipelineKeys.PipelineType, ''))
@@ -721,10 +722,13 @@ class RenderingPipelineViewer(object):
 
             self.loadRowSkipConditions(pipeline)
 
-            submitterInfos = getOrderedSubmitterInfos(environmentSettings)
-            self.taskExecutionOrderView.setSubmitterInfos(submitterInfos)
+            pipeline.registerAndLinkActions()
 
-            self.characterReplacementView.load(environmentSettings)
+        self.customSubmissionTaskViewer.load(self.environment)
+        submitterInfos = getOrderedSubmitterInfos(environmentSettings)
+        self.taskExecutionOrderView.setSubmitterInfos(submitterInfos)
+
+        self.characterReplacementView.load(environmentSettings)
 
         self.environmentViewer.setEnvironment(self.environment)
 

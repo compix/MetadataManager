@@ -42,7 +42,7 @@ def getOrderedSubmitterInfos(envSettings: dict) -> typing.List[SubmitterInfo]:
     nameToTaskSettings: typing.Dict[str, MetadataManagerSubmissionTaskSettings] = dict()
     if mdTaskSubmitterDicts:
         for taskDict in mdTaskSubmitterDicts:
-            taskSettings = MetadataManagerSubmissionTaskSettings.fromDict(taskDict)
+            taskSettings = MetadataManagerSubmissionTaskSettings(taskDict)
             nameToTaskSettings[taskSettings.name] = taskSettings
 
     if submitterInfoDicts:

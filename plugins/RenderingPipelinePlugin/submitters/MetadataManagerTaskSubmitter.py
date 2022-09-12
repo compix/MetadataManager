@@ -37,8 +37,9 @@ class MetadataManagerTaskSubmitter(RenderingPipelineSubmitter):
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineDeliveryTimeout)
 
         actionId = self.metadataManagerTaskSettings.actionId
+        taskType = self.metadataManagerTaskSettings.taskType or 'RenderingPipelineDocumentAction'
 
-        taskInfoDict = deadline_nodes.createMetadataManagerActionTaskDictForDocument(actionId=actionId, document=documentWithSettings, 
+        taskInfoDict = deadline_nodes.createMetadataManagerActionTaskDictForDocument(taskType=taskType, actionId=actionId, document=documentWithSettings, 
             collections=[self.pipeline.dbCollectionName], dataRetrievalType=DataRetrievalType.UseSubmittedData.value, submittedData=documentWithSettings)
 
         return deadline_nodes.submitMetadataManagerJob(taskInfoDict, jobInfoDict, jobDependencies=dependentJobIds)

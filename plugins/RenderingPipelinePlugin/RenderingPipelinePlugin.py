@@ -4,6 +4,7 @@ from RenderingPipelinePlugin.RenderingPipelineManager import RenderingPipelineMa
 from RenderingPipelinePlugin.RenderingPipelineViewer import RenderingPipelineViewer
 from plugin.Plugin import Plugin
 import RenderingPipelinePlugin.visual_scripting_nodes.rendering_pipeline_nodes as rp_nodes
+from RenderingPipelinePlugin.tasks.PipelineTaskPicker import PipelineTaskPicker
 
 class RenderingPipelinePlugin(Plugin):
     def __init__(self) -> None:
@@ -12,6 +13,8 @@ class RenderingPipelinePlugin(Plugin):
     def init(self):
         self.renderingPipelineManager = RenderingPipelineManager(self.serviceRegistry, self.viewerRegistry, self.appInfo)
         rp_nodes.RENDERING_PIPELINE_MANAGER = self.renderingPipelineManager
+
+        self.serviceRegistry.taskProcessor.addTaskPicker(PipelineTaskPicker(self.serviceRegistry.actionManager, self.renderingPipelineManager))
 
         if self.appInfo.mode == ApplicationMode.GUI:
             menuBar = self.viewerRegistry.mainWindowManager.menuBar

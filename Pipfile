@@ -18,6 +18,7 @@ requests = "*"
 openpyxl = "*"
 pika = "*"
 photoshop-python-api = "*"
+imagesize = "*"
 
 [requires]
 python_version = "*"

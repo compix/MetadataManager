@@ -1,18 +1,39 @@
+import typing
+
 class MetadataManagerSubmissionTaskSettings(object):
-    def __init__(self, actionId: str, name: str, outputFilenamesDict: dict) -> None:
+    def __init__(self, dataDict: dict) -> None:
         super().__init__()
 
-        self.actionId = actionId
-        self.name = name
-        self.outputFilenamesDict = outputFilenamesDict
+        self.dataDict = dataDict
 
-    @staticmethod
-    def fromDict(d: dict):
-        return MetadataManagerSubmissionTaskSettings(d.get('action_id', ''), d.get('name', ''), d.get('output_filenames', {}))
+    @property
+    def actionId(self) -> str:
+        return self.dataDict.get('action_id')
 
-    def toDict(self):
-        return {
-            'action_id': self.actionId,
-            'name': self.name,
-            'output_filenames': self.outputFilenamesDict
-        }
+    @actionId.setter
+    def actionId(self, value: str):
+        self.dataDict['action_id'] = value
+
+    @property
+    def name(self) -> str:
+        return self.dataDict.get('name')
+
+    @name.setter
+    def name(self, value: str):
+        self.dataDict['name'] = value
+
+    @property
+    def taskType(self) -> str:
+        return self.dataDict.get('task_type')
+
+    @taskType.setter
+    def taskType(self, value: str):
+        self.dataDict['task_type'] = value
+
+    @property
+    def outputFilenamesDict(self) -> typing.Dict[str, str]:
+        return self.dataDict.get('output_filenames') or dict()
+
+    @outputFilenamesDict.setter
+    def outputFilenamesDict(self, value: typing.Dict[str, str]):
+        self.dataDict['output_filenames'] = value

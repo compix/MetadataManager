@@ -3,16 +3,23 @@ import PySide2
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QComboBox, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QWidget
 from MetadataManagerCore.Event import Event
+from MetadataManagerCore.actions.Action import Action
 from MetadataManagerCore.actions.ActionManager import ActionManager
 from MetadataManagerCore.environment.Environment import Environment
+from RenderingPipelinePlugin.RenderingPipeline import RenderingPipeline
 from RenderingPipelinePlugin.submitters.MetadataManagerSubmissionTaskSettings import MetadataManagerSubmissionTaskSettings
 import asset_manager
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from RenderingPipelinePlugin.RenderingPipelineViewer import RenderingPipelineViewer
+
 class MetadataManagerTaskView(object):
-    def __init__(self, actionManager: ActionManager, taskIdx: int) -> None:
+    def __init__(self, actionManager: ActionManager, taskIdx: int, renderingPipelineViewer: "RenderingPipelineViewer") -> None:
         super().__init__()
         
         self.actionManager = actionManager
+        self.renderingPipelineViewer = renderingPipelineViewer
 
         uiFilePath = asset_manager.getPluginUIFilePath("RenderingPipelinePlugin", "assets/customTask.ui")
         self.widget = asset_manager.loadUIFileAbsolutePath(uiFilePath)
@@ -20,11 +27,12 @@ class MetadataManagerTaskView(object):
         self.formLayout: QFormLayout = self.widget.formLayout
         self.actionsComboBox: QComboBox = self.widget.actionsComboBox
 
-        ignoredCategories = ["Rendering Pipeline"]
-
+        self.actionIdSet = set()
+        
         for a in self.actionManager.actions:
-            if not a.category in ignoredCategories:
-                self.actionsComboBox.addItem(a.displayName, a.id)
+            self.addAction(a)
+
+        self.actionManager.registerActionEvent.subscribe(self.addAction)
 
         self.widget.addOutputFilenameButton.clicked.connect(self.addOutputFilenameRow)
 
@@ -38,6 +46,25 @@ class MetadataManagerTaskView(object):
         self.onNameChanged = Event()
 
         self.widget.nameEdit.textChanged.connect(lambda newName: self.onNameChanged(newName))
+
+    @property
+    def currentPipeline(self) -> RenderingPipeline:
+        return self.renderingPipelineViewer.loadedPipeline
+
+    def addAction(self, action: Action):
+        if action.id in self.actionIdSet:
+            return
+
+        collectionActionIds = []
+
+        if self.currentPipeline:
+            collectionActionIds = self.actionManager.getCollectionActionIds(self.currentPipeline.dbCollectionName)
+
+        if action.category == 'Rendering Pipeline' and not action.id in collectionActionIds:
+            return
+
+        self.actionIdSet.add(action.id)
+        self.actionsComboBox.addItem(action.displayName, action.id)
 
     @property
     def name(self):
@@ -86,7 +113,13 @@ class MetadataManagerTaskView(object):
             outputFilenames.add(labelEdit.text())
             outputFilenamesDict[labelEdit.text()] = filenameEdit.text()
 
-        return MetadataManagerSubmissionTaskSettings(self.actionsComboBox.currentData(), self.widget.nameEdit.text(), outputFilenamesDict)
+        taskSettings = MetadataManagerSubmissionTaskSettings({})
+        taskSettings.actionId = self.actionsComboBox.currentData()
+        taskSettings.name = self.widget.nameEdit.text()
+        taskSettings.outputFilenames = outputFilenamesDict
+        taskSettings.taskType = 'RenderingPipelineDocumentAction'
+
+        return taskSettings
 
     def save(self, infoDict: dict):
         if not self.actionManager.getActionById(self.actionsComboBox.currentData()):
@@ -95,12 +128,12 @@ class MetadataManagerTaskView(object):
         if self.widget.nameEdit.text().replace(' ', '') == '':
             raise RuntimeError(f'Please specify a batch name for task {self.taskIdx}')
 
-        d = self.getSettings().toDict()
+        d = self.getSettings().dataDict
         for key, value in d.items():
             infoDict[key] = value
 
     def load(self, infoDict: dict):
-        settings = MetadataManagerSubmissionTaskSettings.fromDict(infoDict)
+        settings = MetadataManagerSubmissionTaskSettings(infoDict)
         for i in range(self.actionsComboBox.count()):
             if self.actionsComboBox.itemData(i) == settings.actionId:
                 self.actionsComboBox.setCurrentIndex(i)

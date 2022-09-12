@@ -70,6 +70,7 @@ class Bootstrapper(object):
         self.serviceManager = None
         self.dbManager = None
         self.serviceRegistry = ServiceRegistry()
+        self.serviceRegistry.appInfo = self.appInfo
 
         self.restartRequested = False
         self.updater = None
@@ -81,7 +82,7 @@ class Bootstrapper(object):
             self.loaderWindow = LoaderWindow(self.app, self.appInfo, self.logger, self)
         elif self.mode == ApplicationMode.Console:
             dbInitTimeout = 60.0
-            self.consoleApp = ConsoleApp(self.appInfo, self.serviceRegistry, taskFilePath=self.taskFilePath, initTimeout = 120.0)
+            self.consoleApp = ConsoleApp(self.appInfo, self.serviceRegistry, taskFilePath=self.taskFilePath, initTimeout = 240.0)
         
         QThreadPool.globalInstance().start(qt_util.LambdaTask(self.initDataBaseManager, dbInitTimeout))
 
@@ -281,6 +282,9 @@ class Bootstrapper(object):
                 service.load(settings, self.dbManager)
 
     def save(self, settings = None):
+        if self.appInfo.mode == ApplicationMode.Console:
+            return
+            
         self.logger.info("Saving...")
         if settings == None:
             settings = QtCore.QSettings(self.appInfo.company, self.appInfo.appName)

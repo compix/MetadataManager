@@ -1,3 +1,4 @@
+from AppInfo import AppInfo
 from plugin.PluginManager import PluginManager
 from MetadataManagerCore.host.HostProcessController import HostProcessController
 from MetadataManagerCore.file.FileHandlerManager import FileHandlerManager
@@ -17,6 +18,7 @@ class ServiceRegistry(object):
 
         self.services = []
 
+        self.appInfo : AppInfo = None
         self.dbManager : MongoDBManager = None
         self.actionManager : ActionManager = None
         self.environmentManager : EnvironmentManager = None

@@ -8,18 +8,23 @@ from RenderingPipelinePlugin.MetadataManagerTaskView import MetadataManagerTaskV
 from ServiceRegistry import ServiceRegistry
 from viewers.ViewerRegistry import ViewerRegistry
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from RenderingPipelinePlugin.RenderingPipelineViewer import RenderingPipelineViewer
+    
 class CustomSubmissionTaskViewer(object):
-    def __init__(self, renderingPipelineDialog: QDialog, serviceRegistry: ServiceRegistry, viewerRegistry: ViewerRegistry) -> None:
+    def __init__(self, renderingPipelineViewer: "RenderingPipelineViewer", serviceRegistry: ServiceRegistry, viewerRegistry: ViewerRegistry) -> None:
         super().__init__()
 
         self.serviceRegistry = serviceRegistry
         self.viewerRegistry = viewerRegistry
-        self.renderingPipelineDialog = renderingPipelineDialog
+        self.renderingPipelineViewer = renderingPipelineViewer
+        self.renderingPipelineDialog = renderingPipelineViewer.dialog
         self.onSubmissionTaskViewDeleted = Event()
         self.onSubmissionTaskViewAdded = Event()
         self.onSubmissionTaskViewNameChanged = Event()
 
-        renderingPipelineDialog.newCustomTaskButton.clicked.connect(self.onNewCustomTaskClick)
+        self.renderingPipelineDialog.newCustomTaskButton.clicked.connect(self.onNewCustomTaskClick)
 
         self.taskViews: typing.List[MetadataManagerTaskView] = []
 
@@ -36,7 +41,7 @@ class CustomSubmissionTaskViewer(object):
         self.addCustomTask()
 
     def addCustomTask(self, customTaskDict: dict=None):
-        taskView = MetadataManagerTaskView(self.serviceRegistry.actionManager, len(self.taskViews))
+        taskView = MetadataManagerTaskView(self.serviceRegistry.actionManager, len(self.taskViews), self.renderingPipelineViewer)
         taskView.onBeforeDelete.subscribe(lambda: self.removeTask(taskView))
         self.taskViews.append(taskView)
 

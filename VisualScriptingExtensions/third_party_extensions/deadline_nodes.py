@@ -155,7 +155,7 @@ def submitNukeJob(jobInfoDict: dict, pluginInfoDict: dict, scriptFilename: str, 
         f.write(f'import {scriptModule}\n\n')
 
         unixInfoFilename = infoFilename.replace("\\", "/")
-        f.write(f'with open("{unixInfoFilename}") as f:\n')
+        f.write(f'with open("{unixInfoFilename}", "rb") as f:\n')
         f.write(f'    infoDict = json.load(f)\n\n')
         f.write(f'{scriptModule}.process(infoDict)')
 
