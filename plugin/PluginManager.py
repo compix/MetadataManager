@@ -302,3 +302,8 @@ class PluginManager(object):
             self.pluginAutoActivateStatus = dict()
 
         self.refreshPluginState()
+
+    def shutdown(self):
+        for plugin in self.pluginInfoMap.values():
+            if plugin.pluginInstance:
+                plugin.pluginInstance.shutdown()

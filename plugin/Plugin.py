@@ -19,3 +19,6 @@ class Plugin(object):
     @staticmethod
     def dependentPluginNames():
         return []
+
+    def shutdown(self):
+        pass
