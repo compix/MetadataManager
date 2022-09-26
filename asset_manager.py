@@ -3,6 +3,7 @@ from datetime import datetime
 from PySide2 import QtWidgets, QtCore, QtUiTools, QtGui
 from PySide2.QtWidgets import QDialog
 from PySide2.QtCore import Qt
+from PySide2.QtGui import QPixmapCache
 
 BASE_PLUGIN_PATH = path.join(path.dirname(path.realpath(__file__)), "plugins")
 PRIVATE_PATH = path.join(path.dirname(path.realpath(__file__)), "private")
@@ -10,29 +11,30 @@ BASE_PATH = path.join(path.dirname(path.realpath(__file__)), "assets")
 BASE_UI_FILES_PATH = path.join(BASE_PATH, "ui_files")
 BASE_DEFAULT_LAYOUT_FILES_PATH = path.join(BASE_PATH, "default_layouts")
 
-CACHED_ICONS = dict()
-
 DELETE_ICON: QtGui.QIcon = None
 PLUS_ICON: QtGui.QIcon = None
 
-def getCachedIconOrDefault(uri: str) -> QtGui.QIcon:
-    global CACHED_ICONS
-    icon = CACHED_ICONS.get(uri)
-    if icon:
-        return icon
+def getPixmapCached(uri: str) -> QtGui.QPixmap:
+    pixmap = QtGui.QPixmap()
 
-    icon = QtGui.QIcon(uri)
-    CACHED_ICONS[uri] = icon
-    return icon
+    if QPixmapCache.find(uri, pixmap):
+        return pixmap
+    
+    pixmap.load(uri)
+    QPixmapCache.insert(uri, pixmap)
+    return pixmap
+
+def getIconCached(uri: str) -> QtGui.QIcon:
+    return QtGui.QIcon(getPixmapCached(uri))
 
 def getDeleteIcon() -> QtGui.QIcon:
-    return getCachedIconOrDefault(':/icons/delete.png')
+    return getIconCached(':/icons/delete.png')
 
 def getPlusIcon() -> QtGui.QIcon:
-    return getCachedIconOrDefault(':/icons/plus.png')
+    return getIconCached(':/icons/plus.png')
 
 def getNewFileIcon() -> QtGui.QIcon:
-    return getCachedIconOrDefault(':/icons/new.png')
+    return getIconCached(':/icons/new.png')
 
 def getUIFilePath(uiFileName):
     return path.join(BASE_UI_FILES_PATH, uiFileName)
