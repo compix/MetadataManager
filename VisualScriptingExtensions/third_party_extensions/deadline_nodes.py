@@ -152,11 +152,12 @@ def submitNukeJob(jobInfoDict: dict, pluginInfoDict: dict, scriptFilename: str, 
     with open(bootstrapScriptFilename, 'w+') as f:
         f.write('import sys, json\n\n')
         f.write(f'sys.path.append("{scriptDirectory}")\n')
+        f.write(f'import codecs\n\n')
         f.write(f'import {scriptModule}\n\n')
 
         unixInfoFilename = infoFilename.replace("\\", "/")
-        f.write(f'with open("{unixInfoFilename}", "rb") as f:\n')
-        f.write(f'    infoDict = json.load(f)\n\n')
+        f.write(f'with codecs.open("{unixInfoFilename}", "r", "utf-8") as f:\n')
+        f.write(f'    infoDict = json.load(f, encoding="utf-8")\n\n')
         f.write(f'{scriptModule}.process(infoDict)')
 
     with open(infoFilename, 'w+', encoding='utf-8') as f:
