@@ -43,6 +43,7 @@ class Submitter(object):
 
         self.info: 'SubmitterInfo' = None
         self.active = False
+        self.batchNameSuffix: str = ''
 
     @property
     def name(self):

@@ -15,7 +15,7 @@ class Max3dsInputSceneCreationSubmitter(RenderingPipelineSubmitter):
         pipelineInfoDict = documentWithSettings
 
         pluginName = deadline_nodes.get3dsMaxPipelinePluginName()
-        jobName = self.pipeline.namingConvention.getInputSceneName(documentWithSettings)
+        jobName = self.pipeline.namingConvention.getCreatedInputSceneName(documentWithSettings)
         batchName = 'Input Scene'
         basePrio = self.getBaseDeadlinePriority(documentWithSettings)
         jobInfoDict = self.createJobInfoDictionary(pluginName, jobName, batchName, basePrio + 4,

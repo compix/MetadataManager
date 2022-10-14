@@ -79,6 +79,9 @@ class NamingConvention(object):
     def getInputSceneName(self, documentWithSettings: dict):
         return os.path.basename(extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.InputSceneNaming, ''), documentWithSettings))
 
+    def getCreatedInputSceneName(self, documentWithSettings: dict):
+        return os.path.basename(extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.CreatedInputSceneNaming, ''), documentWithSettings))
+        
     def getEnvironmentSceneName(self, documentWithSettings: dict):
         return os.path.basename(extractNameFromNamingConvention(documentWithSettings.get(PipelineKeys.EnvironmentSceneNaming, ''), documentWithSettings))
 

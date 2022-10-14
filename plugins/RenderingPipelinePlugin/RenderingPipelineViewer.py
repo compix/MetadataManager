@@ -239,6 +239,10 @@ class RenderingPipelineViewer(object):
 
         self.characterReplacementView = CharacterReplacementView(self.dialog)
 
+    def shutdown(self):
+        if self.activatedPipeline:
+            self.activatedPipeline.shutdown()
+
     def addDeadlineInfoEntry(self, label: str, envKey: str):
         blackWhitelistElement = DeadlineNodeBlackWhitelistElement(QtWidgets.QHBoxLayout())
         self.deadlineNodesBlackWhitelistForm: QtWidgets.QFormLayout = self.dialog.deadlineNodesBlackWhitelistForm

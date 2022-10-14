@@ -15,7 +15,7 @@ class RenderingPipelinePlugin(Plugin):
         rp_nodes.RENDERING_PIPELINE_MANAGER = self.renderingPipelineManager
 
         self.serviceRegistry.taskProcessor.addTaskPicker(PipelineTaskPicker(self.serviceRegistry.actionManager, self.renderingPipelineManager))
-
+        
         if self.appInfo.mode == ApplicationMode.GUI:
             menuBar = self.viewerRegistry.mainWindowManager.menuBar
             pipelineMenu = QtWidgets.QMenu("Rendering Pipeline")
@@ -27,7 +27,13 @@ class RenderingPipelinePlugin(Plugin):
             menuBar.addMenu(pipelineMenu)
 
             self.renderingPipelineViewer = RenderingPipelineViewer(self.viewerRegistry.mainWindowManager.window, self.renderingPipelineManager, self.serviceRegistry, self.viewerRegistry, self.appInfo)
+        else:
+            self.renderingPipelineViewer = None
 
     def onCreate(self):
         if self.appInfo.mode == ApplicationMode.GUI:
             self.renderingPipelineViewer.show()
+
+    def shutdown(self):
+        if self.renderingPipelineViewer:
+            self.renderingPipelineViewer.shutdown()

@@ -53,7 +53,7 @@ class RenderingPipelineSubmitter(Submitter):
     def createJobInfoDictionary(self, pluginName: str, name: str, batchName: str, priority: int, pool: str, dependentJobIds: List[str]=None):
         d = {"Plugin": pluginName, 
              "Name": replaceGermanCharacters(name),
-             "BatchName": replaceGermanCharacters(f'{self.pipeline.name} {batchName}'), 
+             "BatchName": replaceGermanCharacters(f'{self.pipeline.name} {batchName}{self.batchNameSuffix}'), 
              "Priority": priority, 
              "Department":"", 
              "Pool":pool, 

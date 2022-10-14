@@ -33,6 +33,9 @@ import time
 from ConsoleApp import ConsoleApp
 from MetadataManagerCore.file.PrintFileHandler import PrintFileHandler
 
+# Keep the following imports to ensure plugins have access to the modules.
+import MetadataManagerCore.communication.messaging
+
 # Visual Scripting imports:
 from VisualScriptingExtensions.ExtendedVisualScripting import ExtendedVisualScripting
 from VisualScriptingExtensions.CodeGenerator import CodeGenerator
@@ -120,6 +123,8 @@ class Bootstrapper(object):
 
         if self.appInfo.initialized:
             self.save()
+
+        self.dbManager.disconnect()
 
         QtCore.QThreadPool.globalInstance().waitForDone()
 

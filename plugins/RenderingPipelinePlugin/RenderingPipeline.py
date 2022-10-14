@@ -109,6 +109,7 @@ class RenderingPipeline(object):
             item = self.submitCheckboxLayout.itemAt(i)
             checkbox: QCheckBox = item.widget()
             submitter = submitters[i]
+            submitter.batchNameSuffix = self.submissionDialog.batchNameSuffixEdit.text()
             submitter.active = checkbox.isChecked()
             if submitter.info:
                 self.submissionCheckBoxStates[submitter.info.name] = checkbox.isChecked()
@@ -458,6 +459,20 @@ class RenderingPipeline(object):
             if onProgressUpdate:
                 onProgressUpdate(float(rowIdx) / docCount)
 
+    def readTable(self, productTablePath: str = None, excelSheetName: str = None):
+        return table_util.readTable(productTablePath, excelSheetName=excelSheetName)
+
+    def verifyHeader(self, headerKeys: typing.List[str]) -> typing.Tuple[bool,str]:
+        return True, None
+
+    def findMissingHeaderKeys(self, header: typing.List[str], expectedKeys: typing.List[str]):
+        missingKeys = []
+        for key in expectedKeys:
+            if not key in header:
+                missingKeys.append(key)
+
+        return missingKeys
+
     def readProductTable(self, productTablePath: str = None, productTableSheetname: str = None, environmentSettings: dict = None, 
                          onProgressUpdate: Callable[[float, str],None] = None, replaceExistingCollection=False, logHandler: Callable[[str],None] = None):
         """Generates a database collection with rendering entries from the given table.
@@ -471,7 +486,7 @@ class RenderingPipeline(object):
         Raises:
             RuntimeError: [description]
         """
-        table = table_util.readTable(productTablePath, excelSheetName=productTableSheetname)
+        table = self.readTable(productTablePath, excelSheetName=productTableSheetname)
 
         if not table:
             raise RuntimeError(f'Could not read table {productTablePath}' + (f' with sheet name {productTableSheetname}.' if productTableSheetname else '.'))
@@ -484,6 +499,10 @@ class RenderingPipeline(object):
                 rowIndices.append(i)
 
         self.processHeader(header, rowIndices)
+
+        ok, msg = self.verifyHeader(header)
+        if not ok:
+            raise RuntimeError(f"Header Verification Failed", f"{msg}")
 
         if onProgressUpdate:
             onProgressUpdate(0, 'Reading product table...')
@@ -526,3 +545,6 @@ class RenderingPipeline(object):
                 self.dbManager.db[tempCollectionName].rename(collectionName)
 
             raise e
+
+    def shutdown(self):
+        pass

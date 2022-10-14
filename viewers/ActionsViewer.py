@@ -178,6 +178,9 @@ class ActionsViewer(DockWidget):
     def documentActionConfirmationForSelectedItems(self, action: DocumentAction):
         count = len([i for i in self.mainWindowManager.selectedDocumentIds])
         if count > 0:
+            if not action.askForConfirmation:
+                return True
+                
             ret = QtWidgets.QMessageBox.question(self.parentWindow, f"Action Execution Confirmation", f"Execute \"{action.displayName}\" for {count} selected documents?")
             return ret == QtWidgets.QMessageBox.Yes
         else:
