@@ -24,6 +24,8 @@ class MetadataManagerTaskView(object):
         uiFilePath = asset_manager.getPluginUIFilePath("RenderingPipelinePlugin", "assets/customTask.ui")
         self.widget = asset_manager.loadUIFileAbsolutePath(uiFilePath)
 
+        self.widget.destroyed.connect(self.onDestroyed)
+
         self.formLayout: QFormLayout = self.widget.formLayout
         self.actionsComboBox: QComboBox = self.widget.actionsComboBox
 
@@ -46,6 +48,9 @@ class MetadataManagerTaskView(object):
         self.onNameChanged = Event()
 
         self.widget.nameEdit.textChanged.connect(lambda newName: self.onNameChanged(newName))
+
+    def onDestroyed(self):
+        self.actionManager.registerActionEvent.unsubscribe(self.addAction)
 
     @property
     def currentPipeline(self) -> RenderingPipeline:

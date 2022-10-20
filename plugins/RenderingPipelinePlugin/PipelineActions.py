@@ -77,6 +77,10 @@ class SubmissionAction(PipelineDocumentAction):
                 submitter.initialStatus = initialStatus
                 lastJobId = submitter.submit(documentWithSettings, dependentJobIds=lastJobId)
 
+    @property
+    def runsOnMainThread(self):
+        return False
+
 class CollectionUpdateAction(PipelineAction):
     @property
     def runsOnMainThread(self):

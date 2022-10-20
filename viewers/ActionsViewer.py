@@ -216,6 +216,7 @@ class ActionsViewer(DockWidget):
         i = 0
 
         for document in snapshot.yieldDocuments():
+            logger.info(f'Execution action {action.displayName} on document {document.get("_id")}')
             action.execute(document, *actionArgs)
 
             self.updateProgressAsync(action, float(i+1) / documentCount, action.currentProgressMessage)
@@ -231,6 +232,7 @@ class ActionsViewer(DockWidget):
         for i, uid in enumerate(selectedDocumentIds):
             document = self.dbManager.findOneInCollections(uid, collectionNames)
             if document != None:
+                logger.info(f'Execution action {action.displayName} on document {uid}')
                 action.execute(document, *actionArgs)
             else:
                 logger.warning(f'Could not find document with id {uid}')

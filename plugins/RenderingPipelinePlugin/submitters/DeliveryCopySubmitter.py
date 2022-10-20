@@ -28,8 +28,9 @@ class DeliveryCopySubmitter(RenderingPipelineSubmitter):
         self.setNodesBlackWhitelist(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineDeliveryInfo)
 
         actionId = f'{self.pipeline.name}_CopyForDeliveryDocumentAction'
+        taskType = 'RenderingPipelineDocumentAction'
 
-        taskInfoDict = deadline_nodes.createMetadataManagerActionTaskDictForDocument(actionId=actionId, document=documentWithSettings, collections=[self.pipeline.dbCollectionName])
+        taskInfoDict = deadline_nodes.createMetadataManagerActionTaskDictForDocument(taskType=taskType, actionId=actionId, document=documentWithSettings, collections=[self.pipeline.dbCollectionName])
 
         return deadline_nodes.submitMetadataManagerJob(taskInfoDict, jobInfoDict, jobDependencies=dependentJobIds)
 
