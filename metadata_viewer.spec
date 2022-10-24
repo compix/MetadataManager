@@ -7,7 +7,7 @@ import zipfile
 
 spec_root = os.path.abspath(SPECPATH)
 
-datas = [('VisualScripting/assets', 'VisualScripting/assets'), ('assets', 'assets'), ('custom','custom'),
+datas = [('VisualScripting/assets', 'VisualScripting/assets'), ('assets', 'assets'),
          ('VisualScripting_SaveData', 'VisualScripting_SaveData'),
          ('plugins', 'plugins'),
          ('MetadataManagerCore/third_party_integrations/deadline/plugins', 'MetadataManagerCore/third_party_integrations/deadline/plugins')]

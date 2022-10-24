@@ -1,4 +1,5 @@
 from typing import List
+from MetadataManagerCore.task_processor.DataRetrievalType import DataRetrievalType
 from RenderingPipelinePlugin import PipelineKeys
 from RenderingPipelinePlugin.submitters.RenderingPipelineSubmitter import RenderingPipelineSubmitter
 from RenderingPipelinePlugin.submitters.Submitter import SubmitterPipelineKeyRequirementsResponse
@@ -30,7 +31,8 @@ class DeliveryCopySubmitter(RenderingPipelineSubmitter):
         actionId = f'{self.pipeline.name}_CopyForDeliveryDocumentAction'
         taskType = 'RenderingPipelineDocumentAction'
 
-        taskInfoDict = deadline_nodes.createMetadataManagerActionTaskDictForDocument(taskType=taskType, actionId=actionId, document=documentWithSettings, collections=[self.pipeline.dbCollectionName])
+        taskInfoDict = deadline_nodes.createMetadataManagerActionTaskDictForDocument(taskType=taskType, actionId=actionId, document=documentWithSettings, 
+            collections=[self.pipeline.dbCollectionName], dataRetrievalType=DataRetrievalType.UseSubmittedData.value, submittedData=documentWithSettings)
 
         return deadline_nodes.submitMetadataManagerJob(taskInfoDict, jobInfoDict, jobDependencies=dependentJobIds)
 

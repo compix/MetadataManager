@@ -26,6 +26,8 @@ from MetadataManagerCore.third_party_integrations.deadline.deadline_service impo
 from MetadataManagerCore.actions.ActionManager import ActionManager
 from MetadataManagerCore.environment.EnvironmentManager import EnvironmentManager
 from ServiceRegistry import ServiceRegistry
+
+# Do not remove the resources_qrc import. It loads the custom resources/icons for Qt.
 import resources_qrc
 from MetadataManagerCore.task_processor.TaskProcessor import TaskProcessor
 from MetadataManagerCore.task_processor.ActionTaskPicker import ActionTaskPicker
@@ -48,12 +50,12 @@ import VisualScriptingExtensions.third_party_extensions.photoshop_nodes
 import VisualScriptingExtensions.environment_nodes
 
 class Bootstrapper(object):
-    def __init__(self, mode : ApplicationMode, taskFilePath: str, launcherFilename: str):
+    def __init__(self, mode : ApplicationMode, taskFilePath: str, launcherFilename: str, loggerLevel: str = None):
         super().__init__()
         self.mode = mode
         self.taskFilePath = taskFilePath
         self.launcherFilename = launcherFilename
-        self.initLogging()
+        self.initLogging(loggerLevel)
 
         self.logger.info(f"Initializing application with mode: {mode} and launcher: {launcherFilename}")
 
@@ -128,22 +130,35 @@ class Bootstrapper(object):
 
         QtCore.QThreadPool.globalInstance().waitForDone()
 
-    def initLogging(self):
+    def initLogging(self, loggerLevel: str):
         logFilename = asset_manager.getLogFilePath()
         if not os.path.isdir(os.path.dirname(logFilename)):
             os.makedirs(os.path.dirname(logFilename))
 
+        strToLoggerLevel = {
+            'debug': logging.DEBUG,
+            'info': logging.INFO,
+            'warning': logging.WARNING,
+            'error': logging.ERROR,
+            'critical': logging.CRITICAL
+        }
+
+        if loggerLevel:
+            loggerLevel = strToLoggerLevel.get(loggerLevel.lower())
+
+        if not loggerLevel:
+            loggerLevel = logging.INFO
+
         fileHandler = logging.FileHandler(logFilename)
-        fileHandler.setLevel(logging.DEBUG)
+        fileHandler.setLevel(loggerLevel)
 
         consoleHandler = logging.StreamHandler()
-        consoleHandler.setLevel(logging.DEBUG)
+        consoleHandler.setLevel(loggerLevel)
 
         logging.basicConfig(format='%(asctime)s %(name)s:%(threadName)s %(levelname)s: %(message)s', 
                             datefmt='%H:%M:%S', handlers=[fileHandler, consoleHandler], level=logging.DEBUG)
 
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
 
     def initDataBaseManager(self, timeout=None):
         connected = False

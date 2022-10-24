@@ -29,8 +29,10 @@ def main():
 
     parser.add_argument('-launcher', help='Path to the launcher.', type=str, default=None)
 
+    parser.add_argument('-loglevel', help='The level of the logger.', type=str, default=None)
+
     args = parser.parse_args()
-    bootstrapper = Bootstrapper(args.mode, args.task, args.launcher)
+    bootstrapper = Bootstrapper(args.mode, args.task, args.launcher, loggerLevel=args.loglevel)
     status = bootstrapper.run()
 
     if bootstrapper.restartRequested and args.launcher:

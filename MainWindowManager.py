@@ -32,8 +32,6 @@ from datetime import datetime
 from typing import List
 from AppInfo import AppInfo
 
-from custom import *
-
 import logging
 from ServiceRegistry import ServiceRegistry
 
@@ -295,14 +293,17 @@ class MainWindowManager(QtCore.QObject):
 
     def onTableSelectionChanged(self, newSelection, oldSelection):
         selectedRows = self.window.tableView.selectionModel().selectedRows()
+        selectedCount = len(selectedRows)
 
-        if len(selectedRows) > 0:
+        if selectedCount > 0:
             lastSelectedRowIdx = selectedRows[-1].row()
             uid = self.tableModel.getUID(lastSelectedRowIdx)
             item = self.dbManager.findOneInCollections(uid, self.collectionViewer.getSelectedCollectionNames())
             if item != None:
                 self.previewViewer.showPreview(item.get(Keys.preview))
                 self.showItem(uid)
+
+        self.window.selectedItemCountLabel.setText(f'Selected Count: {selectedCount}')
 
     def showItem(self, uid: str):
         itemDict = self.dbManager.findOneInCollections(uid, self.collectionViewer.getSelectedCollectionNames())

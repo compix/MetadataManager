@@ -451,7 +451,6 @@ class RenderingPipelineViewer(object):
             self.appInfo.settings.setValue('SelectedRenderingPipeline', pipeline.name)
 
     def fetchDeadlinePoolNames(self):
-        print('Fetched')
         poolNames = getDeadlinePoolNames(quiet=True)
         qt_util.runInMainThread(self.onDeadlinePoolNamesFetched, poolNames)
 

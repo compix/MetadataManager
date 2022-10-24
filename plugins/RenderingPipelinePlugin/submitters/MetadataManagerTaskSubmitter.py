@@ -34,6 +34,7 @@ class MetadataManagerTaskSubmitter(RenderingPipelineSubmitter):
             jobInfoDict[f'OutputDirectory{i}'] = outputDir
             jobInfoDict[f'OutputFilename{i}'] = os.path.basename(filename)
 
+        # TODO: Provide user input per custom task
         self.setTimeout(jobInfoDict, documentWithSettings, PipelineKeys.DeadlineDeliveryTimeout)
 
         actionId = self.metadataManagerTaskSettings.actionId

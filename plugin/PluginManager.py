@@ -212,7 +212,7 @@ class PluginManager(object):
                 
             loadingPluginNames.append(pluginName)
             pluginFolder = pluginInfo.pluginFolder
-            logger.info(f'Importing plugin {pluginFolder}.')
+            logger.debug(f'Importing plugin {pluginFolder}.')
 
             # The plugin folder must contain a .py file with the same name as the pluginFolder:
             pluginMainFile = os.path.join(pluginFolder, pluginName + '.py')

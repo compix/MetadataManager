@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "metadata_viewer.py",
             "console": "integratedTerminal",
-            "args": [] // "-mode", "Console", "-task", "Task.json"
+            "args": ["-loglevel", "debug"] // "-mode", "Console", "-task", "Task.json"
         }
     ]
 }
