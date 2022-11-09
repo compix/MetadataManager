@@ -82,7 +82,8 @@ class ActionManagerViewer(DockWidget):
         self.actionsTreeModel = QStandardItemModel(self.widget)
         self.actionsTreeView.setModel(self.actionsTreeModel)
 
-        self.widget.collectionActionsListView = CollectionActionListView(self.widget.scrollArea, self)
+        self.widget.collectionActionsListView = CollectionActionListView(None, self)
+        self.widget.collectionScrollAreaWidgetContents.layout().addWidget(self.widget.collectionActionsListView)
         self.collectionActionsListView = self.widget.collectionActionsListView
 
         self.collectionActionsListView.setDragEnabled(True)
