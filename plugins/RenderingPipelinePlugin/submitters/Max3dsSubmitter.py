@@ -139,18 +139,6 @@ class Max3dsRenderingSubmitter(RenderingPipelineSubmitter):
         pluginInfoDict = deadline_nodes.create3dsMaxPluginInfoDictionary(sceneFilename, Version=documentWithSettings.get(PipelineKeys.Max3dsVersion))
         removePadding = documentWithSettings.get(PipelineKeys.DeadlineRemovePadding)
         pluginInfoDict['RemovePadding'] = 'True' if removePadding else 'False'
-
-        #stateSet = documentWithSettings.get(PipelineKeys.DeadlineStateSet)
-        #if stateSet:
-        #    pluginInfoDict['RenderStateSet'] = '1'
-        #    pluginInfoDict['StateSetToRender'] = stateSet
-
-        """
-        jobInfoDict['Frames'] = '1'
-        pluginInfoDict['Camera'] = 'CAM_VANITY_UNIT_sloped'
-        pluginInfoDict['Camera0'] = 'CAM_VANITY_UNIT_sloped'
-        pluginInfoDict['Camera1'] = 'CAM_VANITY_UNIT_sloped'
-        """
         
         self.prepareScript(documentWithSettings, PipelineKeys.RenderPostLoadScript, 'PostLoadScript', pluginInfoDict)
         self.prepareScript(documentWithSettings, PipelineKeys.PreFrameScript, 'PreFrameScript', pluginInfoDict)
