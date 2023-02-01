@@ -80,7 +80,7 @@ class PluginManager(object):
             return False
 
         if not os.path.exists(pluginsFolder):
-            logger.error(f'The plugins folder {pluginsFolder} does not exist.')
+            logger.warn(f'The plugins folder {pluginsFolder} does not exist.')
             return False
 
         # The plugins folder must contain a __init__.py
