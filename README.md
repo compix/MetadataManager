@@ -1,23 +1,10 @@
 # Metadata-Manager (WIP)
 
-## Install
-* > pip install virtualenv
-* > virtualenv .env
-* > pip install pipenv
-* > pipenv install
-  
-**Windows**:
-* PowerShell: Run the following command as admin to allow environment activation-script execution:
-    ```powershell
-    Set-ExecutionPolicy Unrestricted -Force
-    ```
-
-## Installing new Packages
-* > pipenv install <package>
-* If version conflict errors occur the following may help:
-    * > pipenv lock --clear
-    * There may also be an importlib-metadata version conflict error. It may be resolvable with
-      > pip install -U pipenv
+## Setup
+* `python -m venv tutorial-env`
+* Activate env: 
+  * Windows with git bash: `source .env/Scripts/activate`
+* With activated env run: `pip install -r requirements.txt`
 
 ## Deploy
 ```shell
@@ -26,4 +13,4 @@ pyinstaller launcher/launcher.spec
 ```
 
 ## Update Qt Resource File
-- Run update_qrc.py
+- Run update_qrc.py (make sure pyside2-rcc is a known command)
