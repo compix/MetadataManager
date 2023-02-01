@@ -89,7 +89,7 @@ class EnvironmentManagerViewer(DockWidget):
             self.setCurrentEnvironment(env)
 
     def setCurrentEnvironment(self, env : Environment):
-        if env.displayName != self.environmentsComboBox.currentText():
+        if env and env.displayName != self.environmentsComboBox.currentText():
             self.environmentsComboBox.setCurrentText(env.displayName)
             
         self.environmentViewer.setEnvironment(env)
